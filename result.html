@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RE:LIFE | 模拟结果</title>
+
+    <!-- 全局样式 -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Chart.js（雷达图） -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- jsPDF（导出 PDF） -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+    <!-- 前端逻辑 -->
+    <script src="app.js"></script>
+</head>
+
+<body onload="loadResultPage()">
+
+<div class="page">
+
+    <!-- 顶部栏 -->
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h1 style="font-size:20px; letter-spacing:0.05em;">RE:LIFE · 模拟结果</h1>
+
+        <div class="btn-row">
+            <button onclick="copyResult()">
+                📋 <span id="btn-copy-text">复制结果</span>
+            </button>
+
+            <button onclick="exportPDF()">
+                📄 <span id="btn-export-text">导出 PDF</span>
+            </button>
+
+            <button onclick="goHome()">
+                🏠 <span id="btn-home-text">返回首页</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- 左侧：结果内容 -->
+        <div class="column column-left" style="flex:1;">
+            <div id="result-container"></div>
+        </div>
+
+        <!-- 右侧：雷达图 -->
+        <div class="column column-right" style="flex:0 0 40%; min-width:300px;">
+            <div class="section-title" id="score-title">自动评分雷达图</div>
+
+            <div class="chart-card">
+                <canvas id="radarChart" height="260"></canvas>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+/* 根据语言切换 UI 文案 */
+(function applyLang() {
+    const lang = localStorage.getItem("lang") || "zh";
+
+    if (lang === "en") {
+        document.title = "RE:LIFE | Simulation Result";
+
+        document.querySelector("h1").innerText = "RE:LIFE · Simulation Result";
+
+        document.getElementById("btn-copy-text").innerText = "Copy";
+        document.getElementById("btn-export-text").innerText = "Export PDF";
+        document.getElementById("btn-home-text").innerText = "Home";
+
+        document.getElementById("score-title").innerText = "Auto Score Radar Chart";
+    }
+})();
+</script>
+
+</body>
+</html>
