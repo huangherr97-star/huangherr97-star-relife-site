@@ -3,46 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RESET LIFE | 平行时空重塑</title>
+    <title>RE:LIFE | 回环 · 命运模拟器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --main: #000000; --bg: #f2f2f7; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 40px 20px; margin: 0; }
-        .card { background: white; width: 100%; max-width: 500px; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
-        .header { text-align: center; font-weight: 800; font-size: 20px; letter-spacing: 2px; margin-bottom: 30px; }
-        h2 { margin: 0 0 10px 0; font-size: 22px; }
-        p { color: #666; font-size: 14px; line-height: 1.5; }
-        textarea { width: 100%; height: 150px; padding: 15px; border: 1px solid #e5e5ea; border-radius: 16px; font-size: 16px; box-sizing: border-box; margin: 20px 0; outline: none; transition: border 0.3s; }
-        textarea:focus { border-color: var(--main); }
-        button { width: 100%; padding: 18px; background: var(--main); color: white; border: none; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.1s; }
-        button:active { transform: scale(0.98); }
-        button:disabled { background: #aeaeb2; cursor: not-allowed; }
-        #result { margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 16px; display: none; line-height: 1.8; color: #1c1c1e; border: 1px solid #efeff4; }
-        .loading { color: #8e8e93; font-style: italic; }
+        /* 采用附件档案定义的品牌规范 */
+        :root {
+            --bg: #0B1220;
+            --card: #0E1628;
+            --text: #E6EAF2;
+            --muted: #A7B0C0;
+            --primary: #4C6FFF;
+            --accent: #22D3EE;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            width: 100%;
+            max-width: 550px;
+        }
+        .card {
+            background: var(--card);
+            padding: 35px;
+            border-radius: 20px;
+            border: 1px solid #1C2433;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .header {
+            text-align: center;
+            font-weight: 800;
+            font-size: 24px;
+            letter-spacing: 6px;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(76, 111, 255, 0.3);
+        }
+        .tagline {
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        textarea {
+            width: 100%;
+            height: 140px;
+            padding: 18px;
+            background: #0a0f1d;
+            border: 1px solid #1C2433;
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        textarea:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(34, 211, 238, 0.1); }
+        
+        button {
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover { background: #3b5bdb; transform: translateY(-1px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        #resultWrapper { margin-top: 35px; display: none; }
+        #captureArea { 
+            background: var(--card); 
+            padding: 30px; 
+            border-radius: 16px; 
+            border: 1px solid #1C2433;
+            position: relative;
+        }
+        #captureArea::after {
+            content: "RESETLIFE.BLOG | NARRATIVE ENGINE";
+            position: absolute; bottom: 10px; right: 15px; font-size: 9px; color: #24314a;
+        }
+        #resultText { font-size: 16px; color: var(--text); white-space: pre-wrap; line-height: 2; }
+        .cursor { display: inline-block; width: 2px; height: 18px; background: var(--accent); margin-left: 4px; vertical-align: middle; animation: blink 0.8s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        #downloadBtn {
+            margin-top: 15px;
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="header">RESET LIFE</div>
-        <h2>重塑你的生命剧本</h2>
-        <p>描述一段经历，让时间在这一刻转折</p >
-        <textarea id="expInput" placeholder="输入你想要改变的那段经历..."></textarea>
-        <button id="mainBtn" onclick="generatePlot()">开始重塑人生</button>
-        <div id="result"></div>
+    <div class="container">
+        <div class="card">
+            <div class="header">RE:LIFE | 回环</div>
+            <div class="tagline">World Model → Policy Engine → Simulation</div>
+            
+            <textarea id="expInput" placeholder="输入你想要重塑的人生节点经历..."></textarea>
+            <button id="mainBtn" onclick="generatePlot()">执行模拟回路</button>
+
+            <div id="resultWrapper">
+                <div id="captureArea">
+                    <div id="resultText"></div>
+                </div>
+                <button id="downloadBtn" onclick="downloadCard()">导出命运报告 (.PNG)</button>
+            </div>
+        </div>
     </div>
 
     <script>
+        // 打字机渲染
+        function typeWriter(text, i, fnCallback) {
+            const ele = document.getElementById("resultText");
+            if (i < text.length) {
+                ele.innerHTML = text.substring(0, i+1) + '<span class="cursor"></span>';
+                setTimeout(() => typeWriter(text, i + 1, fnCallback), 40);
+            } else if (typeof fnCallback == 'function') {
+                ele.innerHTML = text; 
+                fnCallback();
+            }
+        }
+
         async function generatePlot() {
             const input = document.getElementById('expInput').value;
             const btn = document.getElementById('mainBtn');
-            const resultDiv = document.getElementById('result');
+            const wrapper = document.getElementById('resultWrapper');
+            const textDiv = document.getElementById('resultText');
 
-            if (!input.trim()) return alert("请输入您的经历");
+            if (!input.trim()) return alert("请输入经历");
 
-            // 进入加载状态
             btn.disabled = true;
-            btn.innerText = '正在链接 Edge 节点...';
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<span class="loading">正在通过 Vercel Edge 协议解析时空节点...</span>';
+            btn.innerText = '计算概率分布中...';
+            wrapper.style.display = 'block';
+            textDiv.innerHTML = '<span style="color:var(--muted)">命运引擎初始化...</span>';
 
             try {
                 const response = await fetch('/api/generate', {
@@ -52,20 +161,32 @@
                 });
 
                 const data = await response.json();
-
                 if (response.ok) {
-                    // 核心修复：这里必须对应后端返回的 data.story
-                    const storyContent = data.story || "时空重塑成功，但未返回具体剧情。";
-                    resultDiv.innerHTML = '<strong>平行时空结局：</strong><br><br>' + storyContent;
+                    typeWriter(data.story, 0, () => {
+                        btn.disabled = false;
+                        btn.innerText = '再次模拟人生';
+                    });
                 } else {
-                    resultDiv.innerHTML = '解析失败：' + (data.error || '连接超时');
+                    textDiv.innerHTML = "推演中断: " + (data.error || "未知波动");
+                    btn.disabled = false;
                 }
             } catch (err) {
-                resultDiv.innerHTML = '连接失败：请检查网络或域名解析状态。';
-            } finally {
+                textDiv.innerHTML = "时空节点丢失，请重试";
                 btn.disabled = false;
-                btn.innerText = '再次重塑人生';
             }
+        }
+
+        function downloadCard() {
+            const area = document.getElementById('captureArea');
+            html2canvas(area, {
+                backgroundColor: "#0E1628",
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'RE_LIFE_REPORT.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
         }
     </script>
 </body>
