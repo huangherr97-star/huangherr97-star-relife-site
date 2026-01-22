@@ -1,6 +1,15 @@
 import OpenAI from "openai";
 
 export default async function handler(req, res) {
+    // ---- 支持 CORS ----
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
+        return res.status(200).end();
+    }
+
     if (req.method !== "POST") {
         return res.status(405).json({ error: true, message: "Method not allowed" });
     }
@@ -77,6 +86,7 @@ export default async function handler(req, res) {
         });
 
         const raw = completion.choices[0].message.content || "";
+        console.log("模型返回内容：", raw);
 
         // ---- 清理模型输出 ----
         const cleaned = raw
