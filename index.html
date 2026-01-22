@@ -2,729 +2,523 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>RE:LIFE | 回环</title>
-  <meta name="description" content="理性人生模拟 · 非算命 · 非保证" />
   <style>
     :root{
-      --bg:#0B1220;
-      --card:#0F1A2E;
-      --card2:#0D1628;
-      --text:#E6EEF9;
-      --muted:#9DB0CC;
-      --line:rgba(255,255,255,.08);
-      --primary:#4C6FFF;
-      --cyan:#22D3EE;
-      --warn:#F59E0B;
-      --danger:#FB7185;
-      --ok:#34D399;
-      --shadow: 0 24px 60px rgba(0,0,0,.35);
+      --bg:#0B1220; --card:#0F1A2E; --card2:#0D1628;
+      --text:#E6EDF7; --muted:#9FB0CC;
+      --primary:#4C6FFF; --accent:#22D3EE; --warn:#F59E0B; --danger:#FF5A5F;
+      --border: rgba(255,255,255,0.08);
+      --shadow: 0 12px 40px rgba(0,0,0,.35);
       --radius: 18px;
-      --radius2: 14px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    *{box-sizing:border-box}
+    *{ box-sizing:border-box; }
     body{
-      margin:0;
-      font-family:var(--sans);
-      background:
-        radial-gradient(1200px 600px at 15% 20%, rgba(34,211,238,.16), transparent 60%),
-        radial-gradient(900px 500px at 75% 10%, rgba(76,111,255,.14), transparent 60%),
-        radial-gradient(700px 400px at 70% 80%, rgba(245,158,11,.10), transparent 60%),
-        var(--bg);
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Arial;
+      background: radial-gradient(1200px 700px at 50% -10%, rgba(76,111,255,.35), transparent 60%),
+                  radial-gradient(900px 500px at 85% 10%, rgba(34,211,238,.18), transparent 55%),
+                  var(--bg);
       color:var(--text);
-      min-height:100vh;
     }
-    .wrap{
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 40px 16px 60px;
+    .wrap{ max-width: 1200px; margin: 42px auto; padding: 0 18px; }
+    .title{
+      text-align:center; margin-bottom: 18px;
     }
-    header{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap:16px;
-      margin-bottom:18px;
-    }
-    h1{
-      margin:0;
-      font-size: 44px;
-      letter-spacing: 1px;
-      font-weight: 800;
-    }
-    .sub{
-      margin-top:8px;
-      color:var(--muted);
-      font-size: 14px;
-    }
-    .badge{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      color:var(--muted);
-      font-size:12px;
-      padding:8px 12px;
-      border:1px solid var(--line);
-      border-radius: 999px;
-      background: rgba(255,255,255,.03);
-    }
+    .title h1{ margin:0; font-size: 44px; letter-spacing:1px; }
+    .title p{ margin:10px 0 0; color:var(--muted); }
     .grid{
       display:grid;
-      grid-template-columns: 1.2fr .9fr;
-      gap: 16px;
-      margin-top: 18px;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
     }
-    @media (max-width: 960px){
-      .grid{grid-template-columns:1fr}
-      header{flex-direction:column; align-items:flex-start}
-      h1{font-size: 34px;}
+    @media (max-width: 980px){
+      .grid{ grid-template-columns:1fr; }
     }
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border: 1px solid var(--line);
+      border:1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
     }
-    .card .inner{ padding: 18px; }
-    .title{
-      font-weight: 800;
-      font-size: 18px;
-      margin: 4px 0 14px;
+    .card .hd{
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent);
     }
+    .hd .h{
+      font-size: 18px; font-weight: 700;
+    }
+    .pill{
+      font-size:12px; color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(0,0,0,.15);
+      user-select:none;
+    }
+    .bd{ padding: 16px 18px; }
     label{
-      display:block;
-      font-size: 13px;
-      color: var(--muted);
+      display:block; font-size: 13px; color: var(--muted);
       margin: 10px 0 6px;
     }
     input, textarea, select{
       width:100%;
-      background: rgba(0,0,0,.18);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      color: var(--text);
       padding: 12px 12px;
-      font-size: 14px;
-      outline:none;
-      transition: border .15s ease, box-shadow .15s ease;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline: none;
     }
     textarea{ min-height: 120px; resize: vertical; }
-    input:focus, textarea:focus, select:focus{
-      border-color: rgba(76,111,255,.55);
-      box-shadow: 0 0 0 3px rgba(76,111,255,.18);
-    }
-    .row2{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    @media (max-width: 600px){
-      .row2{grid-template-columns:1fr}
-    }
-    .btnbar{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top: 14px;
-      align-items:center;
-    }
-    button{
-      border:0;
-      cursor:pointer;
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-weight: 800;
-      color: #fff;
-      background: rgba(255,255,255,.06);
-      border: 1px solid var(--line);
-      transition: transform .06s ease, opacity .15s ease, background .15s ease, border .15s ease;
-      user-select:none;
-    }
-    button:active{ transform: translateY(1px); }
-    .primary{
-      background: linear-gradient(90deg, rgba(76,111,255,.95), rgba(76,111,255,.75));
-      border-color: rgba(76,111,255,.45);
-    }
-    .ghost{
-      background: rgba(255,255,255,.04);
-    }
-    .danger{
-      background: rgba(251,113,133,.10);
-      border-color: rgba(251,113,133,.35);
-      color: #ffd1da;
-    }
-    .small{
-      padding: 8px 10px;
-      font-size: 12px;
-      border-radius: 999px;
-      font-weight: 700;
-    }
-    .note{
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 8px;
-      line-height: 1.5;
-    }
-    .status{
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 10px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      border-top: 1px solid var(--line);
-      padding-top: 10px;
-    }
-    .ok{ color: var(--ok); }
-    .err{ color: var(--danger); }
-    .warn{ color: var(--warn); }
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px){ .row{ grid-template-columns:1fr; } }
 
-    .panel{
-      background: rgba(0,0,0,.14);
-      border: 1px solid var(--line);
-      border-radius: var(--radius2);
-      padding: 14px;
-      min-height: 400px;
-      overflow:auto;
+    .btns{ display:flex; gap: 10px; margin-top: 12px; flex-wrap:wrap; }
+    button{
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 700;
+      cursor:pointer;
+      color: #0b1220;
+      background: rgba(255,255,255,.85);
     }
-    .panel pre{
-      margin:0;
-      font-family: var(--mono);
-      font-size: 12.5px;
-      line-height: 1.55;
-      color: #dbe7ff;
+    button.primary{
+      background: linear-gradient(90deg, var(--primary), rgba(76,111,255,.75));
+      color:white;
+    }
+    button.ghost{
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    button.warn{
+      background: rgba(245,158,11,.18);
+      color: #FFD7A6;
+      border: 1px solid rgba(245,158,11,.35);
+    }
+    button:disabled{
+      opacity:.55; cursor:not-allowed;
+    }
+
+    .status{
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
       white-space: pre-wrap;
       word-break: break-word;
     }
-    .tools{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top: 12px;
+    .status .err{ color: #FFB4B4; }
+    .status .ok{ color: #B7F7D0; }
+    .box{
+      background: rgba(0,0,0,.22);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      min-height: 260px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.7;
     }
-    .hr{
-      height:1px;
-      background: var(--line);
-      margin: 18px 0;
-    }
-    footer{
+    .tools{ display:flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .foot{
       margin-top: 18px;
       color: var(--muted);
       font-size: 12px;
-      line-height: 1.6;
-      opacity: .9;
+      text-align:center;
+      opacity:.9;
     }
-    .kbd{
-      font-family: var(--mono);
-      background: rgba(255,255,255,.06);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 2px 6px;
-      font-size: 12px;
-      color: #cfe0ff;
+    .tiny{ font-size:12px; color: var(--muted); }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .split{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .chat{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .chatlog{
+      min-height: 190px;
+      max-height: 300px;
+      overflow:auto;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .chatbar{
+      display:flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .chatbar input{
+      flex:1;
+      padding: 12px;
     }
   </style>
 </head>
-
 <body>
   <div class="wrap">
-    <header>
-      <div>
-        <h1>RE:LIFE | 回环</h1>
-        <div class="sub">理性人生模拟 · 非算命 · 非保证</div>
-      </div>
-      <div class="badge">API: <span class="kbd" id="apiBadge">/api/generate</span></div>
-    </header>
+    <div class="title">
+      <h1>RE:LIFE | 回环</h1>
+      <p>理性人生模拟 · 非算命 · 非保证</p>
+    </div>
 
     <div class="grid">
-      <!-- LEFT: input -->
+      <!-- 左：输入 -->
       <div class="card">
-        <div class="inner">
-          <div class="title">你的信息</div>
+        <div class="hd">
+          <div class="h">你的信息</div>
+          <div class="pill mono" id="apiPill">API: /api/generate</div>
+        </div>
+        <div class="bd">
+          <label>个人背景（必填）</label>
+          <input id="background" placeholder="例如：28岁，工作3年，一事无成 / 或你自己的真实情况" />
 
-          <label for="background">个人背景（必填）</label>
-          <input id="background" placeholder="例如：28岁，工作3年，想转行/创业/考研..." />
+          <label>人生经历时间线（必填，越具体越好）</label>
+          <textarea id="timeline" placeholder="按时间写：\n- 18岁：...\n- 22岁：...\n- 26岁：...\n（越具体越好）"></textarea>
 
-          <label for="timeline">人生经历时间线（必填，越具体越好）</label>
-          <textarea id="timeline" placeholder="按时间写：\n- 2015：...\n- 2018：...\n- 2021：...\n（关键事件/选择/结果/原因）"></textarea>
-
-          <div class="row2">
+          <div class="row">
             <div>
-              <label for="target">想回到的时间点（必填）</label>
-              <input id="target" placeholder="例如：18岁高考、毕业那年、入职前..." />
+              <label>想回到的时间点（必填）</label>
+              <input id="target" placeholder="例如：18岁高考 / 22岁毕业 / 某年某月" />
             </div>
             <div>
-              <label for="mode">生成模式</label>
+              <label>生成模式</label>
               <select id="mode">
-                <option value="compare" selected>对比 A/B/C（推荐）</option>
-                <option value="single">单一路径（更深入）</option>
-                <option value="chat">对话模式（后续追问）</option>
+                <option value="abc" selected>对比 A/B/C（推荐）</option>
+                <option value="single">单一路线（更简洁）</option>
               </select>
             </div>
           </div>
 
-          <label for="resources">能力 / 资源（可选）</label>
-          <input id="resources" placeholder="例如：英语、代码基础、人脉、存款、可学习时间..." />
+          <label>能力 / 资源（可选）</label>
+          <input id="resources" placeholder="例如：英语不错 / 家里支持 / 有一笔存款 / 记忆力强..." />
 
-          <div class="btnbar">
+          <div class="btns">
             <button class="primary" id="btnRun">开始模拟</button>
             <button class="ghost" id="btnShare">生成分享链接</button>
-            <button class="danger" id="btnClear">清空</button>
+            <button class="warn" id="btnClear">清空</button>
           </div>
 
-          <div class="note">
-            提示：如果你看到 <span class="kbd">HTTP 400 Missing required fields</span>，
-            说明请求体缺少 <span class="kbd">background / timeline / target</span>。
-            本页面会自动检查必填项并提示。
+          <div class="status" id="status">
+            状态：就绪
+            <div class="tiny">提示：如果返回 <span class="mono">HTTP 400 Missing required fields</span>，说明请求体缺少 background / timeline / target，本页会自动校验并提示缺哪项。</div>
           </div>
-
-          <div class="status" id="status">状态：就绪</div>
         </div>
       </div>
 
-      <!-- RIGHT: output -->
+      <!-- 右：结果 + 对话 -->
       <div class="card">
-        <div class="inner">
-          <div class="title">结果</div>
-          <div class="panel" id="panel">
-            <pre id="output"></pre>
-          </div>
+        <div class="hd">
+          <div class="h">结果</div>
+          <div class="pill mono" id="pingPill">/api/ping</div>
+        </div>
+        <div class="bd split">
+          <div class="box" id="resultBox">（点击“开始模拟”后，这里会出现生成内容）</div>
 
           <div class="tools">
-            <button class="small ghost" id="btnExpand">全部展开</button>
-            <button class="small ghost" id="btnCollapse">全部折叠</button>
-            <button class="small ghost" id="btnCopy">复制全部</button>
-            <button class="small ghost" id="btnPing">测试 API（/api/ping）</button>
+            <button class="ghost" id="btnExpand">全部展开</button>
+            <button class="ghost" id="btnCollapse">全部折叠</button>
+            <button class="ghost" id="btnCopy">复制全部</button>
+            <button class="ghost" id="btnPing">测试 API（/api/ping）</button>
           </div>
 
-          <div class="hr"></div>
+          <div class="chat">
+            <div class="tiny">对话模式（可选）：基于你刚刚的输入 + 结果继续追问。不会算命，只做理性推演。</div>
+            <div class="chatlog" id="chatLog">（对话记录保存在浏览器本地 localStorage）</div>
+            <div class="chatbar">
+              <input id="chatInput" placeholder="例如：我更适合继续读书吗？最小风险方案是什么？" />
+              <button class="primary" id="btnSend">发送</button>
+              <button class="ghost" id="btnChatClear">清空对话</button>
+            </div>
+          </div>
 
-          <div class="title" style="margin-top:0;">对话模式（可选）</div>
-          <div class="note" style="margin-top:-6px;">
-            对话模式：基于你刚刚的输入 + 结果继续追问。不含“算命”，只做理性推演。
-          </div>
-          <label for="chatInput" style="margin-top:10px;">追问</label>
-          <input id="chatInput" placeholder="例如：我更适合继续读书吗？最小风险方案是什么？" />
-          <div class="btnbar" style="margin-top:10px;">
-            <button class="primary" id="btnChat">发送</button>
-            <button class="ghost" id="btnChatClear">清空对话</button>
-          </div>
-          <div class="note">对话上下文保存在浏览器本地（localStorage）。</div>
         </div>
       </div>
     </div>
 
-    <footer>
-      RE:LIFE 提供的是基于用户输入的信息推演与理性分析，不构成现实建议、预测或保证。你对自己的选择负责。
-    </footer>
+    <div class="foot">
+      RE:LIFE 提供的是基于用户输入的情景推演与理性分析，不构成现实建议、预测或保证。你对自己的选择负责。
+    </div>
   </div>
 
 <script>
-/** =========================
- *  Utils
- *  ========================= */
-const $ = (id) => document.getElementById(id);
-const STORAGE_KEY = "relife_state_v1";
-const CHAT_KEY = "relife_chat_v1";
+  // ========= 工具 =========
+  const $ = (id) => document.getElementById(id);
 
-function safeText(str){
-  // 防止把返回内容当 HTML 执行
-  return String(str ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function setStatus(text, type=""){
-  const el = $("status");
-  el.className = "status";
-  if(type==="ok") el.classList.add("ok");
-  if(type==="err") el.classList.add("err");
-  if(type==="warn") el.classList.add("warn");
-  el.textContent = text;
-}
-
-function nowISO(){
-  return new Date().toISOString();
-}
-
-function readForm(){
-  return {
-    background: $("background").value.trim(),
-    timeline: $("timeline").value.trim(),
-    target: $("target").value.trim(),
-    resources: $("resources").value.trim(),
-    mode: $("mode").value
-  };
-}
-
-function validateRequired(payload){
-  const need = [];
-  if(!payload.background) need.push("background");
-  if(!payload.timeline) need.push("timeline");
-  if(!payload.target) need.push("target");
-  return need;
-}
-
-function saveState(){
-  const payload = readForm();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-}
-
-function loadState(){
-  const q = new URLSearchParams(location.search);
-  const hasShare = q.has("background") || q.has("timeline") || q.has("target");
-  if(hasShare){
-    $("background").value = q.get("background") || "";
-    $("timeline").value = q.get("timeline") || "";
-    $("target").value = q.get("target") || "";
-    $("resources").value = q.get("resources") || "";
-    $("mode").value = q.get("mode") || "compare";
-    return;
+  function setStatus(text, type){
+    const el = $("status");
+    const tag = type === "err" ? "err" : type === "ok" ? "ok" : "";
+    el.innerHTML = "状态：<span class='"+tag+"'>" + escapeHtml(text) + "</span>";
   }
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if(!raw) return;
-  try{
-    const s = JSON.parse(raw);
-    $("background").value = s.background || "";
-    $("timeline").value = s.timeline || "";
-    $("target").value = s.target || "";
-    $("resources").value = s.resources || "";
-    $("mode").value = s.mode || "compare";
-  }catch{}
-}
 
-function saveChat(messages){
-  localStorage.setItem(CHAT_KEY, JSON.stringify(messages));
-}
-function loadChat(){
-  try{
-    const raw = localStorage.getItem(CHAT_KEY);
-    return raw ? JSON.parse(raw) : [];
-  }catch{
-    return [];
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (c)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
   }
-}
 
-/** =========================
- *  Render helpers
- *  ========================= */
-function setOutput(text){
-  $("output").innerHTML = safeText(text);
-  $("panel").scrollTop = 0;
-}
-
-// ✅ 修复版：不要写错括号，避免你之前的正则崩溃
-// 这个正则用于检测“行首的 1) / 2) / ### 标题”等标记
-const MARK_RE = /^(?:\d+\)|#+)/;
-
-function collapseMarkdown(text){
-  // 简易折叠：保留标题行 + 列表开头，其余压缩
-  const lines = String(text || "").split("\n");
-  const out = [];
-  for(const line of lines){
-    const t = line.trim();
-    if(!t){
-      out.push("");
-      continue;
-    }
-    if(MARK_RE.test(t) || t.startsWith("- ") || t.startsWith("* ")){
-      out.push(line);
-    }else{
-      // 折叠普通段落：只留前 1 行
-      if(out.length===0 || out[out.length-1] !== "…"){
-        out.push("…");
-      }
-    }
+  function nowISO(){
+    const d = new Date();
+    return d.toISOString().replace("T"," ").slice(0,19);
   }
-  return out.join("\n");
-}
 
-function expandMarkdown(text){
-  return String(text || "");
-}
+  function saveFormToUrl(){
+    const data = getForm();
+    const q = new URLSearchParams();
+    q.set("background", data.background);
+    q.set("timeline", data.timeline);
+    q.set("target", data.target);
+    q.set("resources", data.resources || "");
+    q.set("mode", data.mode || "abc");
+    const url = location.origin + location.pathname + "?" + q.toString();
+    navigator.clipboard?.writeText(url);
+    setStatus("已复制分享链接到剪贴板", "ok");
+  }
 
-/** =========================
- *  API calls
- *  ========================= */
-async function apiPost(url, payload){
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type":"application/json" },
-    body: JSON.stringify(payload)
-  });
+  function loadFormFromUrl(){
+    const q = new URLSearchParams(location.search);
+    const bg = q.get("background");
+    const tl = q.get("timeline");
+    const tg = q.get("target");
+    if(bg) $("background").value = bg;
+    if(tl) $("timeline").value = tl;
+    if(tg) $("target").value = tg;
+    const rs = q.get("resources");
+    if(rs !== null) $("resources").value = rs;
+    const mode = q.get("mode");
+    if(mode) $("mode").value = mode;
+  }
 
-  const ct = res.headers.get("content-type") || "";
-  const isJson = ct.includes("application/json");
+  function getForm(){
+    return {
+      background: $("background").value.trim(),
+      timeline: $("timeline").value.trim(),
+      target: $("target").value.trim(),
+      resources: $("resources").value.trim(),
+      mode: $("mode").value
+    };
+  }
 
-  let dataText = "";
-  let dataJson = null;
+  function validateForm(data){
+    const miss = [];
+    if(!data.background) miss.push("background");
+    if(!data.timeline) miss.push("timeline");
+    if(!data.target) miss.push("target");
+    return miss;
+  }
 
-  if(isJson){
+  function renderResult(text){
+    $("resultBox").textContent = text || "（空）";
+  }
+
+  function copyResult(){
+    const txt = $("resultBox").textContent || "";
+    navigator.clipboard?.writeText(txt);
+    setStatus("已复制结果到剪贴板", "ok");
+  }
+
+  // 简单“展开/折叠”演示：不再做危险正则解析（你之前的正则就是这里炸的）
+  function expandAll(){
+    $("resultBox").style.maxHeight = "none";
+    setStatus("已展开", "ok");
+  }
+  function collapseAll(){
+    $("resultBox").style.maxHeight = "260px";
+    $("resultBox").style.overflow = "auto";
+    setStatus("已折叠（滚动查看）", "ok");
+  }
+
+  // ========= API 调用 =========
+  async function postJSON(url, body, timeoutMs=90000){
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
     try{
-      dataJson = await res.json();
-    }catch(e){
-      dataText = await res.text();
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: ctrl.signal
+      });
+
+      const ct = res.headers.get("content-type") || "";
+      let dataText = "";
+      let dataJson = null;
+
+      if(ct.includes("application/json")){
+        dataJson = await res.json().catch(()=>null);
+      }else{
+        dataText = await res.text().catch(()=> "");
+      }
+
+      if(!res.ok){
+        const msg = dataJson ? JSON.stringify(dataJson) : dataText || (res.status + " " + res.statusText);
+        const err = new Error(msg);
+        err.status = res.status;
+        err.payload = dataJson || dataText;
+        throw err;
+      }
+      return dataJson ?? { ok:true, text:dataText };
+    }finally{
+      clearTimeout(t);
     }
-  }else{
-    dataText = await res.text();
   }
 
-  if(!res.ok){
-    const msg = dataJson ? JSON.stringify(dataJson) : dataText;
-    const err = new Error(`HTTP ${res.status}: ${msg}`);
-    err.status = res.status;
-    err.payload = dataJson;
-    throw err;
+  async function getText(url, timeoutMs=15000){
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), timeoutMs);
+    try{
+      const res = await fetch(url, { method:"GET", signal: ctrl.signal });
+      const txt = await res.text().catch(()=> "");
+      return { ok: res.ok, status: res.status, text: txt };
+    }finally{ clearTimeout(t); }
   }
 
-  return dataJson ?? dataText;
-}
+  // ========= 业务：生成 =========
+  async function runGenerate(){
+    const data = getForm();
+    const miss = validateForm(data);
+    if(miss.length){
+      setStatus("缺少必填字段：" + miss.join(", "), "err");
+      return;
+    }
 
-function normalizeResult(resp){
-  // 兼容不同后端返回结构
-  if(resp == null) return "";
-  if(typeof resp === "string") return resp;
+    renderResult("⏳ 正在生成...\n（如果 10-30 秒无返回，请看右上角 Vercel Function Logs）");
+    setStatus("请求中...", "");
 
-  // 常见字段：{ text }, { result }, { output }, { data:{...} }
-  if(resp.text) return String(resp.text);
-  if(resp.result) return String(resp.result);
-  if(resp.output) return String(resp.output);
-  if(resp.data && typeof resp.data === "string") return resp.data;
-
-  // OpenAI proxy 常见：{ choices:[{message:{content}}] }
-  try{
-    const c = resp.choices?.[0]?.message?.content;
-    if(c) return String(c);
-  }catch{}
-
-  return JSON.stringify(resp, null, 2);
-}
-
-/** =========================
- *  Main actions
- *  ========================= */
-let lastFullText = "";
-let isCollapsed = false;
-
-async function runSimulate(extra = {}){
-  const base = readForm();
-  const payload = { ...base, ...extra };
-
-  // required check
-  const need = validateRequired(payload);
-  if(need.length){
-    setStatus(`状态：缺少必填项 -> ${need.join(", ")}`, "warn");
-    return;
-  }
-
-  saveState();
-
-  const apiUrl = "/api/generate";
-  $("apiBadge").textContent = apiUrl;
-
-  try{
-    setStatus("状态：请求中…", "");
-    $("btnRun").disabled = true;
-    $("btnRun").style.opacity = ".7";
-    setOutput("⏳ 正在生成…\n\n（如果 10-20 秒无返回，检查 Vercel Function Logs）");
-
-    const resp = await apiPost(apiUrl, payload);
-    const text = normalizeResult(resp);
-
-    lastFullText = text;
-    isCollapsed = false;
-    setOutput(text);
-    setStatus(`状态：成功 · ${nowISO()}`, "ok");
-  }catch(err){
-    lastFullText = "";
-    const msg = err?.message || String(err);
-    setStatus("状态：失败（查看下方错误）", "err");
-    setOutput(
-      `❌ 请求失败\n\n` +
-      `- ${msg}\n\n` +
-      `如果你看到 400 Missing required fields：请确认请求体包含 background/timeline/target。\n` +
-      `如果你看到 405：通常是路由/方法不匹配或不是 Function。\n` +
-      `如果你看到 404 NOT_FOUND：通常是 /api 路由未部署成功。\n`
-    );
-  }finally{
-    $("btnRun").disabled = false;
-    $("btnRun").style.opacity = "1";
-  }
-}
-
-async function pingApi(){
-  try{
-    setStatus("状态：测试 /api/ping …", "");
-    const res = await fetch("/api/ping", { method:"GET" });
-    const text = await res.text();
-    if(!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
-    setStatus("状态：/api/ping OK", "ok");
-    setOutput(`✅ /api/ping 返回：\n\n${text}`);
-  }catch(e){
-    setStatus("状态：/api/ping 失败", "err");
-    setOutput(`❌ /api/ping 失败\n\n${String(e?.message || e)}`);
-  }
-}
-
-function shareLink(){
-  const p = readForm();
-  const need = validateRequired(p);
-  if(need.length){
-    setStatus(`状态：无法生成链接，缺少：${need.join(", ")}`, "warn");
-    return;
-  }
-  const q = new URLSearchParams();
-  q.set("background", p.background);
-  q.set("timeline", p.timeline);
-  q.set("target", p.target);
-  if(p.resources) q.set("resources", p.resources);
-  if(p.mode) q.set("mode", p.mode);
-  const url = `${location.origin}${location.pathname}?${q.toString()}`;
-  navigator.clipboard?.writeText(url).catch(()=>{});
-  setStatus("状态：分享链接已复制到剪贴板", "ok");
-  setOutput(`🔗 分享链接（已复制）：\n\n${url}`);
-}
-
-function clearAll(){
-  $("background").value = "";
-  $("timeline").value = "";
-  $("target").value = "";
-  $("resources").value = "";
-  $("mode").value = "compare";
-  localStorage.removeItem(STORAGE_KEY);
-  setStatus("状态：已清空", "ok");
-  lastFullText = "";
-  setOutput("");
-}
-
-function toggleCollapse(collapse){
-  if(!lastFullText){
-    setStatus("状态：没有可折叠内容", "warn");
-    return;
-  }
-  if(collapse){
-    setOutput(collapseMarkdown(lastFullText));
-    isCollapsed = true;
-    setStatus("状态：已折叠显示", "ok");
-  }else{
-    setOutput(expandMarkdown(lastFullText));
-    isCollapsed = false;
-    setStatus("状态：已展开显示", "ok");
-  }
-}
-
-async function copyAll(){
-  const text = lastFullText || $("output").innerText || "";
-  if(!text){
-    setStatus("状态：没有可复制内容", "warn");
-    return;
-  }
-  try{
-    await navigator.clipboard.writeText(text);
-    setStatus("状态：已复制到剪贴板", "ok");
-  }catch{
-    setStatus("状态：复制失败（浏览器限制）", "err");
-  }
-}
-
-/** =========================
- *  Chat mode
- *  ========================= */
-async function sendChat(){
-  const q = $("chatInput").value.trim();
-  if(!q){
-    setStatus("状态：请输入追问内容", "warn");
-    return;
-  }
-  const base = readForm();
-  const need = validateRequired(base);
-  if(need.length){
-    setStatus(`状态：请先完成必填项并生成一次结果（缺少：${need.join(", ")}）`, "warn");
-    return;
-  }
-
-  const messages = loadChat();
-  // 追加当前上下文（轻量）
-  messages.push({ role:"user", content: q, at: nowISO() });
-  saveChat(messages);
-
-  try{
-    setStatus("状态：对话请求中…", "");
-    $("btnChat").disabled = true;
-    $("btnChat").style.opacity = ".7";
-
-    const payload = {
-      ...base,
-      mode: "chat",
-      question: q,
-      history: messages.slice(-10) // 只带最近10条
+    const body = {
+      background: data.background,
+      timeline: data.timeline,
+      target: data.target,
+      resources: data.resources,
+      mode: data.mode
     };
 
-    const resp = await apiPost("/api/generate", payload);
-    const text = normalizeResult(resp);
-
-    messages.push({ role:"assistant", content: text, at: nowISO() });
-    saveChat(messages);
-
-    // 将对话内容追加展示在输出区（不覆盖之前结果也可，这里做追加更直观）
-    const combined = (lastFullText ? (lastFullText + "\n\n---\n\n") : "") +
-      `【追问】${q}\n\n【回答】\n${text}`;
-    lastFullText = combined;
-    setOutput(isCollapsed ? collapseMarkdown(lastFullText) : lastFullText);
-    setStatus("状态：对话成功", "ok");
-    $("chatInput").value = "";
-  }catch(err){
-    setStatus("状态：对话失败（查看下方）", "err");
-    setOutput(`❌ 对话请求失败\n\n${String(err?.message || err)}`);
-  }finally{
-    $("btnChat").disabled = false;
-    $("btnChat").style.opacity = "1";
-  }
-}
-
-function clearChat(){
-  localStorage.removeItem(CHAT_KEY);
-  setStatus("状态：对话已清空", "ok");
-}
-
-/** =========================
- *  Bind
- *  ========================= */
-(function init(){
-  loadState();
-
-  $("btnRun").addEventListener("click", () => runSimulate());
-  $("btnShare").addEventListener("click", shareLink);
-  $("btnClear").addEventListener("click", clearAll);
-
-  $("btnExpand").addEventListener("click", () => toggleCollapse(false));
-  $("btnCollapse").addEventListener("click", () => toggleCollapse(true));
-  $("btnCopy").addEventListener("click", copyAll);
-  $("btnPing").addEventListener("click", pingApi);
-
-  $("btnChat").addEventListener("click", sendChat);
-  $("btnChatClear").addEventListener("click", clearChat);
-
-  // 自动保存输入
-  ["background","timeline","target","resources","mode"].forEach(id=>{
-    $(id).addEventListener("input", saveState);
-    $(id).addEventListener("change", saveState);
-  });
-
-  // Enter to send chat
-  $("chatInput").addEventListener("keydown", (e)=>{
-    if(e.key==="Enter"){
-      e.preventDefault();
-      sendChat();
+    try{
+      const out = await postJSON("/api/generate", body, 90000);
+      if(out && out.text){
+        renderResult(out.text);
+      }else{
+        renderResult(JSON.stringify(out, null, 2));
+      }
+      setStatus("生成完成 " + nowISO(), "ok");
+      // 把最后一次结果给对话用
+      localStorage.setItem("relife:lastResult", $("resultBox").textContent || "");
+    }catch(e){
+      const status = e.status ? ("HTTP " + e.status + "：") : "";
+      renderResult(status + (e.message || "请求失败"));
+      setStatus("生成失败（看结果框错误）", "err");
+      console.error(e);
     }
+  }
+
+  // ========= 对话：继续追问 =========
+  function loadChat(){
+    const raw = localStorage.getItem("relife:chat") || "";
+    $("chatLog").textContent = raw || "（对话记录保存在浏览器本地 localStorage）";
+  }
+  function appendChatLine(line){
+    const raw = localStorage.getItem("relife:chat") || "";
+    const next = (raw ? raw + "\n" : "") + line;
+    localStorage.setItem("relife:chat", next);
+    $("chatLog").textContent = next;
+    $("chatLog").scrollTop = $("chatLog").scrollHeight;
+  }
+
+  async function sendChat(){
+    const q = $("chatInput").value.trim();
+    if(!q) return;
+
+    const data = getForm();
+    const miss = validateForm(data);
+    if(miss.length){
+      setStatus("对话前先补齐必填字段：" + miss.join(", "), "err");
+      return;
+    }
+
+    const lastResult = localStorage.getItem("relife:lastResult") || "";
+    appendChatLine("你：" + q);
+
+    setStatus("对话请求中...", "");
+    $("chatInput").value = "";
+
+    const body = {
+      background: data.background,
+      timeline: data.timeline,
+      target: data.target,
+      resources: data.resources,
+      mode: "chat",
+      question: q,
+      lastResult
+    };
+
+    try{
+      const out = await postJSON("/api/generate", body, 90000);
+      const ans = out && out.text ? out.text : JSON.stringify(out);
+      appendChatLine("RE:LIFE：" + ans);
+      setStatus("对话完成 " + nowISO(), "ok");
+    }catch(e){
+      appendChatLine("（错误）" + (e.status ? "HTTP "+e.status+" " : "") + (e.message || "请求失败"));
+      setStatus("对话失败（看对话框错误）", "err");
+      console.error(e);
+    }
+  }
+
+  async function ping(){
+    setStatus("测试 /api/ping ...", "");
+    const r = await getText("/api/ping");
+    if(r.ok){
+      setStatus("Ping OK（" + r.status + "）", "ok");
+    }else{
+      setStatus("Ping 失败（" + r.status + "）", "err");
+    }
+    // 直接显示到结果框方便你看
+    renderResult("GET /api/ping -> " + r.status + "\n\n" + r.text);
+  }
+
+  // ========= 绑定 =========
+  $("btnRun").addEventListener("click", runGenerate);
+  $("btnShare").addEventListener("click", saveFormToUrl);
+  $("btnClear").addEventListener("click", ()=>{
+    $("background").value = "";
+    $("timeline").value = "";
+    $("target").value = "";
+    $("resources").value = "";
+    $("mode").value = "abc";
+    renderResult("（已清空）");
+    setStatus("已清空", "ok");
   });
 
-  setStatus("状态：就绪", "ok");
-})();
+  $("btnCopy").addEventListener("click", copyResult);
+  $("btnExpand").addEventListener("click", expandAll);
+  $("btnCollapse").addEventListener("click", collapseAll);
+  $("btnPing").addEventListener("click", ping);
+
+  $("btnSend").addEventListener("click", sendChat);
+  $("chatInput").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") sendChat();
+  });
+  $("btnChatClear").addEventListener("click", ()=>{
+    localStorage.removeItem("relife:chat");
+    loadChat();
+    setStatus("已清空对话", "ok");
+  });
+
+  // 初始化
+  loadFormFromUrl();
+  loadChat();
 </script>
 </body>
 </html>
