@@ -19,32 +19,9 @@ export default async function handler(req, res) {
         apiKey: process.env.OPENAI_API_KEY
     });
 
-    // 语言模板
-    const L = {
-        zh: {
-            system: "你是 RE:LIFE 回环人生模拟器。你必须严格输出 JSON，不得包含任何解释性文字。",
-            scoreLabels: ["整体满意度", "稳定性", "成长性", "自由度", "关系质量"],
-            routeA: "路线 A：",
-            routeB: "路线 B：",
-            routeC: "路线 C：",
-            summary: "总结：",
-            chat: "对话模式："
-        },
-        en: {
-            system: "You are RE:LIFE, a rational life simulation engine. You must output STRICT JSON with no explanation.",
-            scoreLabels: ["Satisfaction", "Stability", "Growth", "Freedom", "Relationships"],
-            routeA: "Route A:",
-            routeB: "Route B:",
-            routeC: "Route C:",
-            summary: "Summary:",
-            chat: "Chat Mode:"
-        }
-    };
-
-    const T = L[lang] || L.zh;
-
-    // Prompt 构建
     const prompt = `
+你是 RE:LIFE 人生回环模拟器，请根据以下用户信息生成结构化 JSON：
+
 用户输入：
 - 个人背景：${background}
 - 年龄学历城市：${basic}
@@ -52,26 +29,27 @@ export default async function handler(req, res) {
 - 想回到的时间点：${target}
 - 能力资源：${skills}
 - 模式：${mode}
+- 语言：${lang}
 
-请根据模式输出严格 JSON：
+请输出以下结构：
 
 {
   "language": "${lang}",
   "mode": "${mode}",
 
   "scores": {
-    "satisfaction": 1-10 的整数,
-    "stability": 1-10 的整数,
-    "growth": 1-10 的整数,
-    "freedom": 1-10 的整数,
-    "relationship": 1-10 的整数
+    "satisfaction": 整数 1-10,
+    "stability": 整数 1-10,
+    "growth": 整数 1-10,
+    "freedom": 整数 1-10,
+    "relationship": 整数 1-10
   },
 
   "routes": {
-    "A": "仅在 abc 模式输出",
-    "B": "仅在 abc 模式输出",
-    "C": "仅在 abc 模式输出",
-    "single": "仅在 single 模式输出"
+    "A": "仅 abc 模式输出",
+    "B": "仅 abc 模式输出",
+    "C": "仅 abc 模式输出",
+    "single": "仅 single 模式输出"
   },
 
   "chat": [
@@ -84,30 +62,30 @@ export default async function handler(req, res) {
 
 要求：
 - 必须是合法 JSON
-- 不得包含任何额外解释
-- 不得出现 markdown
-- 不得出现多余文本
+- 不得包含 markdown 或解释性文字
+- 不得输出多余文本
 `;
 
     try {
         const completion = await client.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: "gpt-4o",
             messages: [
-                { role: "system", content: T.system },
+                { role: "system", content: "你是 RE:LIFE 人生回环模拟器，必须严格输出 JSON。" },
                 { role: "user", content: prompt }
             ],
             temperature: 0.7
         });
 
         const raw = completion.choices[0].message.content;
+        console.log("模型返回内容：", raw);
 
-        // 解析 JSON
         let json;
         try {
             json = JSON.parse(raw);
         } catch (e) {
+            console.error("解析失败：", e.message);
             return res.status(500).json({
-                error: "模型返回的 JSON 无法解析",
+                error: "模型返回的内容不是合法 JSON",
                 raw
             });
         }
@@ -115,8 +93,10 @@ export default async function handler(req, res) {
         return res.status(200).json(json);
 
     } catch (err) {
+        console.error("OpenAI 请求失败：", err.message);
         return res.status(500).json({
-            error: err.message
+            error: "OpenAI 请求失败",
+            detail: err.message
         });
     }
 }
