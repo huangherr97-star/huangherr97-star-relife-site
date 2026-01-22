@@ -1,59 +1,120 @@
-import OpenAI from "openai";
-
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// 你也可以把 ALLOW_ORIGIN 改成固定域名：'https://resitelife.blog'
-const ALLOW_ORIGIN = "*";
+// api/generate.js
+// RE:LIFE | 回环 — Vercel Serverless (Zero-dependency)
+// Route: /api/generate
+//
+// Requires Vercel env var:
+//   OPENAI_API_KEY = sk-xxxxx
 
 function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", ALLOW_ORIGIN);
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET");
+  // 如果你只允许本站访问，可以改成：https://resitelife.blog
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Max-Age", "86400");
 }
 
-export default async function handler(req, res) {
+function isObject(v) {
+  return v && typeof v === "object" && !Array.isArray(v);
+}
+
+function safeParseJson(text) {
+  try { return JSON.parse(text); } catch { return null; }
+}
+
+module.exports = async (req, res) => {
   setCors(res);
 
-  // ✅ 预检请求：必须放行，否则就是你现在的 405
+  // ✅ OPTIONS 预检必须放行（否则经常 405）
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  // ✅ 健康检查：浏览器直接打开 /api/generate 不再看到 405
+  // ✅ GET 用于健康检查（浏览器直接打开 /api/generate 看是否正常）
   if (req.method === "GET") {
-    return res.status(200).json({ ok: true, message: "RE:LIFE API is alive" });
+    return res.status(200).json({
+      ok: true,
+      message: "RE:LIFE API is alive",
+      method: req.method,
+      ts: new Date().toISOString(),
+    });
   }
 
+  // ✅ 只允许 POST 进行推演
   if (req.method !== "POST") {
     return res.status(405).json({ success: false, error: "Method not allowed" });
   }
 
   try {
-    const { persona, timeline, rewind_point, traits, history = [] } = req.body || {};
-
-    if (!persona || !timeline || !rewind_point) {
-      return res.status(400).json({ success: false, error: "Missing required fields" });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({
+        success: false,
+        error: "Missing OPENAI_API_KEY in Vercel env",
+      });
     }
 
+    // Vercel 会自动解析 JSON body，但我们兼容一下字符串情况
+    let body = req.body;
+    if (typeof body === "string") body = safeParseJson(body);
+    if (!isObject(body)) body = {};
+
+    const { persona, timeline, rewind_point, traits, history } = body;
+
+    if (!persona || !timeline || !rewind_point) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: persona / timeline / rewind_point",
+      });
+    }
+
+    // history 允许为空；但必须是 messages 数组
+    const prior = Array.isArray(history) ? history : [];
+
+    // ✅ 强约束：只输出 JSON
     const systemPrompt = `
-你是 RE:LIFE｜回环 的人生模拟引擎。
-规则：
+你是「RE:LIFE｜回环」命运模拟引擎。
+硬规则：
 - 不使用算命、玄学、迷信语言
 - 基于现实因果与概率
-- 允许不确定性
-- 输出必须是 JSON
+- 明确不确定性来源
+- 不承诺成功/不提供保证
+- 最终输出必须是严格 JSON（不能带 Markdown 代码块）
 `;
 
     const userPrompt = `
-用户背景：${persona}
-人生经历：${timeline}
-回到时间点：${rewind_point}
-能力/资源：${traits || "未说明"}
+【用户背景】
+${persona}
 
-请严格按以下 JSON 格式输出：
+【已发生时间线】
+${timeline}
+
+【回到的时间点】
+${rewind_point}
+
+【能力 / 资源】
+${traits || "未说明"}
+
+请严格输出以下 JSON 结构（不要多任何字段，不要用代码块）：
 {
   "branches":[
+    {
+      "title":"",
+      "key_choice":"",
+      "mid_result":"",
+      "long_term":"",
+      "probability":"",
+      "risks":[],
+      "why":""
+    },
+    {
+      "title":"",
+      "key_choice":"",
+      "mid_result":"",
+      "long_term":"",
+      "probability":"",
+      "risks":[],
+      "why":""
+    },
     {
       "title":"",
       "key_choice":"",
@@ -69,29 +130,59 @@ export default async function handler(req, res) {
 }
 `;
 
-    const completion = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
-      temperature: 0.6,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...history,
-        { role: "user", content: userPrompt }
-      ]
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...prior,
+      { role: "user", content: userPrompt },
+    ];
+
+    // ✅ 直接调用 OpenAI HTTP API（无需 npm 依赖）
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        temperature: 0.6,
+        messages,
+      }),
     });
 
-    const content = completion.choices?.[0]?.message?.content || "";
+    const rawText = await r.text();
+    const json = safeParseJson(rawText);
 
-    let parsed;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      return res.status(500).json({ success: false, error: "AI output is not valid JSON", raw: content });
+    if (!r.ok) {
+      return res.status(r.status).json({
+        success: false,
+        error: "OpenAI API error",
+        detail: json || rawText,
+      });
     }
 
-    return res.status(200).json({ success: true, data: parsed });
+    const content = json?.choices?.[0]?.message?.content || "";
+    const parsed = safeParseJson(content);
 
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, error: "Server error" });
+    if (!parsed) {
+      return res.status(500).json({
+        success: false,
+        error: "AI output is not valid JSON",
+        raw: content,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: parsed,
+    });
+
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({
+      success: false,
+      error: "Server error",
+      detail: String(e?.message || e),
+    });
   }
-}
+};
