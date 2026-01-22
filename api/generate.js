@@ -76,27 +76,37 @@ export default async function handler(req, res) {
             temperature: 0.7
         });
 
-        const raw = completion.choices[0].message.content;
+        const raw = completion.choices[0].message.content || "";
         console.log("模型返回内容：", raw);
+
+        // ---- 清理模型输出（去掉 markdown、空行）----
+        const cleaned = raw
+            .replace(/```json/gi, "")
+            .replace(/```/g, "")
+            .trim();
 
         let json;
         try {
-            json = JSON.parse(raw);
+            json = JSON.parse(cleaned);
         } catch (e) {
             console.error("解析失败：", e.message);
-            return res.status(500).json({
-                error: "模型返回的内容不是合法 JSON",
-                raw
+            return res.status(200).json({
+                error: true,
+                message: "模型返回的内容不是合法 JSON",
+                raw: cleaned
             });
         }
 
         return res.status(200).json(json);
 
     } catch (err) {
-        console.error("OpenAI 请求失败：", err.message);
-        return res.status(500).json({
-            error: "OpenAI 请求失败",
-            detail: err.message
+        console.error("OpenAI 请求失败：", err);
+
+        // ---- 永远返回 JSON ----
+        return res.status(200).json({
+            error: true,
+            message: "OpenAI 请求失败",
+            detail: err.message || String(err)
         });
     }
 }
