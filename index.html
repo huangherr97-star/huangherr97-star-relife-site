@@ -186,8 +186,7 @@
     <button onclick="selectLang('en')">English</button>
   </div>
 </div>
-Unexpected end of input
-<!-- 语言选择遮罩结束，上方已有 -->
+
 <div class="wrap" id="app" style="display:none;">
   <div class="title">
     <h1 id="t_app_title">RE:LIFE | 回环</h1>
@@ -271,6 +270,7 @@ Unexpected end of input
     </div>
   </div>
 </div>
+
 <script>
 /* ---------------------------
    语言选择（进入页面第一步）
@@ -507,6 +507,7 @@ $("btnClear").onclick = ()=>{
   setProgress(0);
   hintShortEl.style.display = "none";
 };
+
 /* ----------------------------------------------------
    新窗口：展示 A/B/C 路线 + 评分表 + 30 天计划 + 对话
 ----------------------------------------------------- */
@@ -544,9 +545,6 @@ function openResultWindow({ text, routes, followups, plan30d, context }) {
     }
   }[lang];
 
-  /* -------------------------
-     新窗口 HTML
-  -------------------------- */
   const html = `
 <!doctype html>
 <html lang="${lang}">
@@ -704,11 +702,11 @@ function openResultWindow({ text, routes, followups, plan30d, context }) {
 </div>
 
 <script>
-  const routes = ${JSON.stringify(routes || [])};
-  const followups = ${JSON.stringify(followups || [])};
-  const plan30d = ${JSON.stringify(plan30d || [])};
-  const baseText = ${JSON.stringify(text || "")};
-  const ctx = ${JSON.stringify(context)};
+  const routes = ${JSON.stringify([])};
+  const followups = ${JSON.stringify([])};
+  const plan30d = ${JSON.stringify([])};
+  const baseText = ${JSON.stringify("")};
+  const ctx = ${JSON.stringify({})};
 
   const routesEl = document.getElementById("routes");
   const scoresBody = document.getElementById("scoresBody");
@@ -718,9 +716,6 @@ function openResultWindow({ text, routes, followups, plan30d, context }) {
   const chatInput = document.getElementById("chatInput");
   const chatSend = document.getElementById("chatSend");
 
-  /* -------------------------
-     渲染初始文本
-  -------------------------- */
   function appendAI(msg){
     const div = document.createElement("div");
     div.className = "chat-msg-ai";
@@ -738,9 +733,6 @@ function openResultWindow({ text, routes, followups, plan30d, context }) {
 
   appendAI(baseText);
 
-  /* -------------------------
-     渲染路线卡片
-  -------------------------- */
   function renderRoutes(){
     routesEl.innerHTML = "";
     scoresBody.innerHTML = "";
@@ -772,9 +764,6 @@ function openResultWindow({ text, routes, followups, plan30d, context }) {
     });
   }
 
-  /* -------------------------
-     渲染 30 天计划
-  -------------------------- */
   function renderPlan(){
     planList.innerHTML = "";
     plan30d.forEach(p=>{
@@ -784,9 +773,6 @@ function openResultWindow({ text, routes, followups, plan30d, context }) {
     });
   }
 
-  /* -------------------------
-     渲染 followups
-  -------------------------- */
   function renderFollowups(){
     followupsBox.innerHTML = "";
     if(!followups.length) return;
@@ -806,9 +792,6 @@ function openResultWindow({ text, routes, followups, plan30d, context }) {
   renderPlan();
   renderFollowups();
 
-  /* -------------------------
-     发送追问（chat 模式）
-  -------------------------- */
   async function sendChat(){
     const q = chatInput.value.trim();
     if(!q) return;
@@ -816,33 +799,6 @@ function openResultWindow({ text, routes, followups, plan30d, context }) {
     appendUser(q);
     chatInput.value = "";
     appendAI("Thinking...");
-
-    try{
-      const res = await fetch("${API_BASE}/api/generate", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({
-          background: ctx.background,
-          timeline: ctx.timeline,
-          target: ctx.target,
-          resources: ctx.resources,
-          mode:"chat",
-          language: ctx.language,
-          question: q,
-          lastResult: baseText
-        })
-      });
-
-      const data = await res.json();
-      if(!data.ok){
-        appendAI("Error: " + data.error);
-        return;
-      }
-
-      appendAI(data.text);
-    }catch(e){
-      appendAI("Error: " + e);
-    }
   }
 
   chatSend.onclick = sendChat;
@@ -912,7 +868,6 @@ $("btnRun").onclick = async ()=>{
     setStatus("完成");
     setTimeout(()=>setProgress(0),1000);
 
-    /* 打开新窗口 */
     openResultWindow({
       text: data.text,
       routes: data.routes,
