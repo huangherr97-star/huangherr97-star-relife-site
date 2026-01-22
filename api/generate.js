@@ -1,125 +1,60 @@
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  if (req.method === "GET") {
-    return res.status(200).json({
-      ok: true,
-      message: "RE:LIFE API is alive"
-    });
-  }
-
-  if (req.method !== "POST") {
-    return res.status(405).json({ success: false, error: "Method not allowed" });
-  }
-
-  try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({
-        success: false,
-        error: "Missing OPENAI_API_KEY"
-      });
+    // 仅允许 POST 请求
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { persona, timeline, rewind_point, traits, history = [] } = req.body || {};
+    const { experience } = req.body;
 
-    if (!persona || !timeline || !rewind_point) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing required fields"
-      });
+    // 基础输入校验
+    if (!experience || experience.length < 5) {
+        return res.status(400).json({ error: '输入变量不足，无法初始化命运回路。' });
     }
 
-    const systemPrompt = `
-你是「RE:LIFE｜回环」命运模拟引擎。
-规则：
-- 不使用算命、玄学、迷信语言
-- 基于现实因果
-- 输出必须是 JSON
-`;
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'gpt-3.5-turbo', // 建议后期升级为 gpt-4o 以获得更强的逻辑推演
+                messages: [
+                    { 
+                        role: 'system', 
+                        content: `你是一个名为"RE:LIFE | 回环"的命运模拟引擎 v0.3。
+                        你的任务是根据用户输入的生命节点信息，进行因果概率推演。
+                        
+                        写作风格要求：
+                        1. 语气：冷静、理性、富有电影感。
+                        2. 结构：先简述时空节点的转折，再展开一段具体的平行人生叙事。
+                        3. 结尾：以一个"命运评价"结束（例如：因果值：85% | 复杂度：高）。
+                        4. 禁忌：严禁使用算命或迷信措辞。` 
+                    },
+                    { role: 'user', content: `初始变量输入：${experience}` }
+                ],
+                temperature: 0.75, // 保持适度的随机性与创造力
+                max_tokens: 1000,
+            }),
+        });
 
-    const userPrompt = `
-用户背景：${persona}
-人生经历：${timeline}
-回到时间点：${rewind_point}
-能力资源：${traits || "未说明"}
+        const data = await response.json();
 
-请输出 JSON：
-{
-  "branches":[
-    {
-      "title":"",
-      "key_choice":"",
-      "mid_result":"",
-      "long_term":"",
-      "probability":"",
-      "risks":[],
-      "why":""
+        // 错误处理：检查 OpenAI 或中转商返回的错误
+        if (data.error) {
+            console.error('OpenAI Error:', data.error);
+            return res.status(500).json({ error: data.error.message });
+        }
+
+        // 提取推演结果并返回
+        const aiResult = data.choices[0].message.content;
+        
+        // 确保返回的键名与前端 index.html 中的 data.story 匹配
+        res.status(200).json({ story: aiResult });
+
+    } catch (error) {
+        console.error('Fetch Error:', error);
+        res.status(500).json({ error: '时空隧道连接中断，请检查 API 配置。' });
     }
-  ],
-  "overall_risks":[],
-  "summary":""
-}
-`;
-
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        temperature: 0.6,
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...history,
-          { role: "user", content: userPrompt }
-        ]
-      })
-    });
-
-    const text = await r.text();
-    let data;
-    try { data = JSON.parse(text); } catch {}
-
-    if (!r.ok) {
-      return res.status(r.status).json({
-        success: false,
-        error: "OpenAI API error",
-        detail: data || text
-      });
-    }
-
-    const content = data?.choices?.[0]?.message?.content || "";
-    let parsed;
-    try { parsed = JSON.parse(content); } catch {}
-
-    if (!parsed) {
-      return res.status(500).json({
-        success: false,
-        error: "AI output is not valid JSON",
-        raw: content
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: parsed
-    });
-
-  } catch (e) {
-    return res.status(500).json({
-      success: false,
-      error: "Server error",
-      detail: String(e?.message || e)
-    });
-  }
 }
