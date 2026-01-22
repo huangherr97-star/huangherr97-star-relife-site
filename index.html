@@ -3,115 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Life | 重塑人生 - 记录与生成你的生命剧本</title>
-    
-    <meta name="description" content="Reset Life 帮助你回顾人生经历，并通过 AI 生成独特的时间线剧情。">
-    <meta name="keywords" content="人生记录, 时间线, 剧情生成, Reset Life, 个人成长">
-
+    <title>RESET LIFE | 重塑人生</title>
     <style>
         :root {
-            --primary: #000000;
-            --accent: #6c5ce7;
-            --bg: #f5f6fa;
-            --card-bg: #ffffff;
+            --accent: #000000;
+            --bg: #f5f5f7;
+            --card: #ffffff;
         }
-        
         body {
-            margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg);
-            color: var(--primary);
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
         }
-
         .navbar {
             width: 100%;
-            padding: 20px 0;
+            padding: 20px;
             text-align: center;
-            background: white;
-            border-bottom: 1px solid #eee;
             font-weight: bold;
             letter-spacing: 2px;
+            border-bottom: 1px solid #ddd;
+            background: #fff;
         }
-
         .container {
-            width: 90%;
             max-width: 600px;
+            width: 90%;
             margin-top: 50px;
         }
-
         .app-card {
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 24px;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            text-align: center;
         }
-
+        h2 { margin-top: 0; font-size: 24px; }
+        p { color: #666; line-height: 1.6; }
         textarea {
             width: 100%;
-            height: 150px;
+            height: 120px;
+            padding: 15px;
             border: 1px solid #ddd;
             border-radius: 12px;
-            padding: 15px;
-            margin: 20px 0;
+            resize: none;
             font-size: 16px;
             box-sizing: border-box;
-            resize: none;
-            transition: border-color 0.3s;
+            margin: 20px 0;
         }
-
-        textarea:focus {
-            border-color: var(--accent);
-            outline: none;
-        }
-
         button {
             width: 100%;
-            background: var(--primary);
+            padding: 15px;
+            background: var(--accent);
             color: white;
             border: none;
-            padding: 16px;
             border-radius: 12px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: opacity 0.2s;
         }
-
-        button:hover {
-            background: var(--accent);
-            transform: translateY(-2px);
-        }
-
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
         #result {
             margin-top: 30px;
             padding: 20px;
             background: #f9f9f9;
             border-radius: 12px;
-            text-align: left;
-            display: none;
-            line-height: 1.6;
             border-left: 4px solid var(--accent);
+            display: none;
+            line-height: 1.8;
+            white-space: pre-wrap;
         }
-
         .loading-dots:after {
             content: '.';
             animation: dots 1.5s steps(5, end) infinite;
         }
-        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60% { content: '...'; } }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+        }
     </style>
 </head>
 <body>
     <div class="navbar">RESET LIFE</div>
-
     <div class="container">
         <div class="app-card">
             <h2>重塑你的生命剧本</h2>
-            <p style="color: #666;">描述一段经历，让时间在这一刻转折</p>
+            <p>输入一段遗憾或经历，让 AI 在平行时空为你改写结局。</p >
             <textarea id="expInput" placeholder="例如：2015年的那个雨天，我错过了一班公交车..."></textarea>
             <button onclick="generatePlot()" id="mainBtn">开始生成剧情</button>
             <div id="result"></div>
@@ -124,12 +104,11 @@
             const btn = document.getElementById('mainBtn');
             const resultDiv = document.getElementById('result');
 
-            if(!input) return alert("请先输入您的经历");
+            if (!input.trim()) return alert("请输入您的经历");
 
             btn.disabled = true;
-            btn.innerHTML = '正在链接 Edge 节点<span class="loading-dots"></span>';
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '正在通过 Vercel Edge 协议解析时空节点...';
+            resultDiv.innerHTML = '正在链接 Edge 节点并解析时空<span class="loading-dots"></span>';
 
             try {
                 const response = await fetch('/api/generate', {
@@ -137,10 +116,17 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ experience: input })
                 });
+
                 const data = await response.json();
-                resultDiv.innerHTML = `<strong>生成剧情：</strong><br>${data.story}`;
+                
+                if (response.ok) {
+                    // 核心：读取后端返回的 story 字段
+                    resultDiv.innerHTML = '<strong>平行时空结局：</strong><br><br>' + data.story;
+                } else {
+                    resultDiv.innerHTML = '连接失败：' + (data.error || '未知错误');
+                }
             } catch (err) {
-                resultDiv.innerHTML = '连接失败，请确保 API 已经部署到 Vercel。';
+                resultDiv.innerHTML = '连接失败，请确保域名已通过 Vercel 验证。';
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '再次重塑人生';
