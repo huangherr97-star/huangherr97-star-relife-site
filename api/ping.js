@@ -7,7 +7,8 @@ export default function handler(req, res) {
 
   return res.status(200).json({
     ok: true,
+    msg: "PING OK",
     method: req.method,
-    msg: "PING OK"
+    time: new Date().toISOString()
   });
 }
