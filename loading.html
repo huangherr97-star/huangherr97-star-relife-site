@@ -16,6 +16,9 @@
 </div>
 
 <script>
+/* -------------------------------
+   多语言文案
+-------------------------------- */
 const LANG = {
     zh: { loading: "正在回环你的时间线，请稍候…" },
     en: { loading: "Rewinding your timeline…" }
@@ -25,6 +28,9 @@ function getLang() {
     return localStorage.getItem("lang") || "zh";
 }
 
+/* -------------------------------
+   调用 API → 跳转 result.html
+-------------------------------- */
 async function runSimulation() {
     const lang = getLang();
     document.getElementById("loading-text").innerText = LANG[lang].loading;
@@ -32,12 +38,18 @@ async function runSimulation() {
     const payload = JSON.parse(localStorage.getItem("pendingPayload") || "{}");
 
     try {
-        const res = await fetch("/api/generate", {
+        /* 
+           ❗关键修复：
+           强制访问 Vercel 的 API 域名
+           避免 GitHub Pages 返回 405
+        */
+        const res = await fetch("https://www.resetlife.blog/api/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
+        /* ---- 安全解析 JSON（永不报 Unexpected token） ---- */
         const raw = await res.text();
         let data;
 
@@ -52,6 +64,7 @@ async function runSimulation() {
             return;
         }
 
+        /* ---- 保存结果并跳转 ---- */
         const id = "run_" + Date.now();
         localStorage.setItem(id, JSON.stringify(data));
 
@@ -62,6 +75,7 @@ async function runSimulation() {
     }
 }
 
+/* 自动执行 */
 runSimulation();
 </script>
 
