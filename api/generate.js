@@ -11,7 +11,7 @@ function json(res, code, obj) {
   res.end(JSON.stringify(obj));
 }
 
-function safeText(x) {
+function safe(x) {
   return (x ?? "").toString().trim();
 }
 
@@ -37,7 +37,7 @@ async function callOpenAI({ apiKey, prompt, timeoutMs = 85000, retries = 2 }) {
               content: [{ type: "input_text", text: prompt }],
             },
           ],
-          max_output_tokens: 1200,
+          max_output_tokens: 1500,
         }),
         signal: ctrl.signal,
       });
@@ -47,29 +47,21 @@ async function callOpenAI({ apiKey, prompt, timeoutMs = 85000, retries = 2 }) {
       const data = await r.json().catch(() => null);
 
       if (!r.ok) {
-        const errMsg = data ? JSON.stringify(data) : `${r.status} ${r.statusText}`;
-        const e = new Error(errMsg);
+        const msg = data ? JSON.stringify(data) : `${r.status} ${r.statusText}`;
+        const e = new Error(msg);
         e.status = r.status;
-        e.data = data;
         throw e;
       }
 
-      // 从 responses 结构中提取文本
+      // 提取文本
       let text = "";
-      if (data && Array.isArray(data.output)) {
-        const first = data.output[0];
-        if (first && Array.isArray(first.content)) {
-          const c0 = first.content[0];
-          if (c0 && typeof c0.text === "string") {
-            text = c0.text;
-          }
-        }
-      }
-      if (!text && typeof data.output_text === "string") {
+      if (data?.output?.[0]?.content?.[0]?.text) {
+        text = data.output[0].content[0].text;
+      } else if (typeof data.output_text === "string") {
         text = data.output_text;
       }
 
-      return { raw: data, text: text || "" };
+      return { raw: data, text };
     } catch (e) {
       clearTimeout(t);
       if (attempt < retries) {
@@ -84,133 +76,53 @@ async function callOpenAI({ apiKey, prompt, timeoutMs = 85000, retries = 2 }) {
 function buildPrompt({ background, timeline, target, resources, mode, question, lastResult, language }) {
   const isEn = language === "en";
 
-  const commonRulesZh = `
+  const rulesZh = `
 你是“RE:LIFE | 回环”人生模拟器的理性分析引擎。
-原则：
-- 不算命、不预测确定结果、不保证。
-- 只基于用户输入做“可解释的因果推演 + 可执行的计划”。
-- 语言：中文，冷静中带点共情，少术语，结构清晰。
-- 输出必须是严格的 JSON，便于前端解析。
+必须输出严格 JSON，不要输出 JSON 外的文字。
 `;
 
-  const commonRulesEn = `
-You are the reasoning engine of "RE:LIFE | Loop" life simulator.
-Principles:
-- No fortune-telling, no guaranteed outcomes.
-- Only causal reasoning + actionable planning based on user input.
-- Language: clear, calm, empathetic, low jargon.
-- Output MUST be strict JSON, easy for frontend to parse.
+  const rulesEn = `
+You are the reasoning engine of "RE:LIFE | Loop".
+You MUST output strict JSON only.
 `;
 
-  const commonRules = isEn ? commonRulesEn : commonRulesZh;
+  const rules = isEn ? rulesEn : rulesZh;
 
-  // chat 模式：追问
+  // chat 模式
   if (mode === "chat") {
-    const prompt = isEn
-      ? `
-${commonRules}
+    return `
+${rules}
 
-You will answer a follow-up question based on the user's background and previous result.
+You will answer a follow-up question.
 
-[User Background]
-${background}
-
-[Timeline]
-${timeline}
-
-[Target Point]
-${target}
-
-[Resources]
-${resources || "(not provided)"}
-
-[Previous Result]
-${lastResult || "(none)"}
-
-[User Question]
-${question}
-
-You MUST respond with a JSON object with the following shape:
-
+Return JSON:
 {
-  "text": "full natural language answer",
-  "followups": ["question1", "question2", ...],
-  "plan30d": ["week1 plan", "week2 plan", "week3 plan", "week4 plan"]
+  "text": "...",
+  "followups": ["...", "..."],
+  "plan30d": ["week1", "week2", "week3", "week4"]
 }
 
-- "text": answer the question directly, with 1-sentence conclusion + 3-6 reasons + concrete actions.
-- "followups": 2-4 good questions the user can think about next.
-- "plan30d": a 30-day action plan split by weeks.
-
-Do NOT include any extra keys. Do NOT include explanations outside JSON.
-`.trim()
-      : `
-${commonRules}
-
-你将基于用户的背景和上一次的完整结果，回答一个追问。
-
-【用户背景】
-${background}
-
-【经历时间线】
-${timeline}
-
-【想回到的时间点】
-${target}
-
-【能力/资源】
-${resources || "（未提供）"}
-
-【上一次的完整结果】
-${lastResult || "（无）"}
-
-【用户追问】
-${question}
-
-你必须返回一个 JSON 对象，结构如下：
-
-{
-  "text": "完整自然语言回答",
-  "followups": ["追问1", "追问2", ...],
-  "plan30d": ["第 1 周计划", "第 2 周计划", "第 3 周计划", "第 4 周计划"]
-}
-
-- "text"：先给一句话结论，再给 3-6 条理由，最后给可执行的具体动作。
-- "followups"：给出 2-4 个值得继续思考的追问。
-- "plan30d"：给出 30 天行动计划，按周拆分。
-
-不要返回 JSON 以外的解释或文字。
+Background: ${background}
+Timeline: ${timeline}
+Target: ${target}
+Resources: ${resources}
+LastResult: ${lastResult}
+Question: ${question}
 `.trim();
-
-    return prompt;
   }
 
-  // 非 chat 模式：A/B/C 路线 + 评分维度 + followups + 30 天计划
-  const modeTextZh = mode === "single"
-    ? "请给出一条最稳妥的单一路线（少而精）。"
-    : "请给出 3 条路线 A/B/C 并对比（推荐/次选/备选）。";
+  // A/B/C 模式
+  return `
+${rules}
 
-  const modeTextEn = mode === "single"
-    ? "Provide one most robust single route (concise but solid)."
-    : "Provide 3 routes A/B/C and compare them (recommended / alternative / backup).";
-
-  const modeText = isEn ? modeTextEn : modeTextZh;
-
-  const prompt = isEn
-    ? `
-${commonRules}
-
-The user wants to "go back to a certain point in life and choose differently".
-
-You MUST respond with a JSON object with this shape:
-
+Return JSON:
 {
-  "text": "full natural language explanation",
+  "text": "...",
   "routes": [
     {
       "id": "A",
-      "title": "short name",
-      "summary": "2-4 sentence summary",
+      "title": "...",
+      "summary": "...",
       "score": {
         "risk": 1-5,
         "reward": 1-5,
@@ -231,94 +143,16 @@ You MUST respond with a JSON object with this shape:
       "score": { ... }
     }
   ],
-  "followups": ["question1", "question2", ...],
-  "plan30d": ["week1 plan", "week2 plan", "week3 plan", "week4 plan"]
+  "followups": ["...", "..."],
+  "plan30d": ["week1", "week2", "week3", "week4"]
 }
 
-Scoring dimensions:
-- risk: 1 (very low) to 5 (very high)
-- reward: 1 (low) to 5 (very high)
-- timeCost: 1 (short) to 5 (very long)
-- mentalCost: 1 (light) to 5 (heavy)
-
-${modeText}
-
-[User Background]
-${background}
-
-[Timeline]
-${timeline}
-
-[Target Point]
-${target}
-
-[Resources]
-${resources || "(not provided)"}
-
-Do NOT include any extra keys. Do NOT include explanations outside JSON.
-`.trim()
-    : `
-${commonRules}
-
-用户要“回到某个时间点重新选择”。
-
-你必须返回一个 JSON 对象，结构如下：
-
-{
-  "text": "完整的自然语言说明",
-  "routes": [
-    {
-      "id": "A",
-      "title": "路线名称（简短）",
-      "summary": "2-4 句总结",
-      "score": {
-        "risk": 1-5,
-        "reward": 1-5,
-        "timeCost": 1-5,
-        "mentalCost": 1-5
-      }
-    },
-    {
-      "id": "B",
-      "title": "...",
-      "summary": "...",
-      "score": { ... }
-    },
-    {
-      "id": "C",
-      "title": "...",
-      "summary": "...",
-      "score": { ... }
-    }
-  ],
-  "followups": ["追问1", "追问2", ...],
-  "plan30d": ["第 1 周计划", "第 2 周计划", "第 3 周计划", "第 4 周计划"]
-}
-
-评分维度：
-- risk：风险（1 极低 ~ 5 极高）
-- reward：收益（1 较低 ~ 5 极高）
-- timeCost：时间成本（1 很短 ~ 5 很长）
-- mentalCost：心理成本（1 负担很轻 ~ 5 负担很重）
-
-${modeText}
-
-【用户背景】
-${background}
-
-【经历时间线】
-${timeline}
-
-【想回到的时间点】
-${target}
-
-【能力/资源】
-${resources || "（未提供）"}
-
-不要返回 JSON 以外的解释或文字。
+Background: ${background}
+Timeline: ${timeline}
+Target: ${target}
+Resources: ${resources}
+Language: ${language}
 `.trim();
-
-  return prompt;
 }
 
 export default async function handler(req, res) {
@@ -329,8 +163,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     return json(res, 200, {
       ok: true,
-      msg: "RE:LIFE generate endpoint is alive",
-      hint: "Use POST with JSON: {background,timeline,target,resources,mode,language}",
+      msg: "RE:LIFE generate endpoint alive",
       time: new Date().toISOString(),
     });
   }
@@ -341,10 +174,7 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return json(res, 500, {
-      ok: false,
-      error: "Missing OPENAI_API_KEY in Vercel Environment Variables",
-    });
+    return json(res, 500, { ok: false, error: "Missing OPENAI_API_KEY" });
   }
 
   let body = req.body || {};
@@ -352,58 +182,53 @@ export default async function handler(req, res) {
     try { body = JSON.parse(body); } catch { body = {}; }
   }
 
-  const background = safeText(body.background);
-  const timeline = safeText(body.timeline);
-  const target = safeText(body.target);
-  const resources = safeText(body.resources);
-  const mode = safeText(body.mode) || "abc";
-  const question = safeText(body.question);
-  const lastResult = safeText(body.lastResult);
-  const language = (safeText(body.language) || "zh").toLowerCase() === "en" ? "en" : "zh";
+  const background = safe(body.background);
+  const timeline = safe(body.timeline);
+  const target = safe(body.target);
+  const resources = safe(body.resources);
+  const mode = safe(body.mode) || "abc";
+  const question = safe(body.question);
+  const lastResult = safe(body.lastResult);
+  const language = safe(body.language) === "en" ? "en" : "zh";
 
-  const need = [];
-  if (!background) need.push("background");
-  if (!timeline) need.push("timeline");
-  if (!target) need.push("target");
-
-  if (mode !== "chat" && need.length) {
-    return json(res, 400, { ok: false, error: "Missing required fields", need });
+  if (mode !== "chat") {
+    if (!background || !timeline || !target) {
+      return json(res, 400, {
+        ok: false,
+        error: "Missing required fields",
+        need: ["background", "timeline", "target"],
+      });
+    }
   }
 
   if (mode === "chat" && !question) {
     return json(res, 400, { ok: false, error: "Missing question for chat mode" });
   }
 
-  const prompt = buildPrompt({ background, timeline, target, resources, mode, question, lastResult, language });
+  const prompt = buildPrompt({
+    background, timeline, target, resources, mode, question, lastResult, language
+  });
 
   try {
-    const { text: rawText } = await callOpenAI({ apiKey, prompt, timeoutMs: 85000 });
+    const { text } = await callOpenAI({ apiKey, prompt });
 
     let parsed = null;
-    try {
-      parsed = JSON.parse(rawText);
-    } catch {
-      parsed = { text: rawText };
-    }
+    try { parsed = JSON.parse(text); }
+    catch { parsed = { text }; }
 
     return json(res, 200, {
       ok: true,
-      text: parsed.text || rawText,
+      text: parsed.text || "",
       routes: parsed.routes || [],
       followups: parsed.followups || [],
       plan30d: parsed.plan30d || [],
-      meta: {
-        mode,
-        language,
-        time: new Date().toISOString(),
-      },
+      meta: { mode, language, time: new Date().toISOString() },
     });
   } catch (e) {
-    const status = e.status || 500;
-    return json(res, status, {
+    return json(res, e.status || 500, {
       ok: false,
       error: "OpenAI request failed",
-      detail: e.message || String(e),
+      detail: e.message,
     });
   }
 }
