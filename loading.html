@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RE:LIFE | Loading</title>
+
+    <!-- 全局样式 -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- 前端逻辑 -->
+    <script src="app.js"></script>
+</head>
+
+<body onload="runSimulation()">
+
+<div class="loading-page">
+
+    <!-- 动画圆环 -->
+    <div class="loading-spinner"></div>
+
+    <!-- 文案（由 app.js 根据语言自动替换） -->
+    <div id="loading-text" class="loading-text">
+        Loading…
+    </div>
+
+</div>
+
+</body>
+</html>
