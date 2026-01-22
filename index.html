@@ -141,343 +141,417 @@
       font-size:12px;
       color:var(--warn);
     }
+
+    /* 语言选择遮罩 */
+    #langMask{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.75);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+    }
+    #langBox{
+      background:#fff;
+      color:#111;
+      padding:30px;
+      border-radius:16px;
+      width:300px;
+      text-align:center;
+      box-shadow:0 10px 40px rgba(0,0,0,.3);
+    }
+    #langBox h2{margin:0 0 20px;font-size:20px;}
+    #langBox button{
+      width:100%;
+      margin:8px 0;
+      padding:12px;
+      border-radius:10px;
+      border:0;
+      cursor:pointer;
+      font-size:16px;
+      font-weight:600;
+      background:#4C6FFF;
+      color:#fff;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="title">
-      <h1>RE:LIFE | 回环</h1>
-      <div class="sub">理性人生模拟 · 非算命 · 非保证</div>
-      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-        <div class="pill">
-          API: <span id="apiLabel" class="mono"></span>
+
+<!-- 语言选择遮罩 -->
+<div id="langMask">
+  <div id="langBox">
+    <h2>选择语言 / Choose Language</h2>
+    <button onclick="selectLang('zh')">中文</button>
+    <button onclick="selectLang('en')">English</button>
+  </div>
+</div>
+<!-- 语言选择遮罩结束，上方已有 -->
+<div class="wrap" id="app" style="display:none;">
+  <div class="title">
+    <h1 id="t_app_title">RE:LIFE | 回环</h1>
+    <div class="sub" id="t_app_sub">理性人生模拟 · 非算命 · 非保证</div>
+
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <div class="pill">
+        API: <span id="apiLabel" class="mono"></span>
+      </div>
+      <button class="secondary theme-toggle" id="btnTheme">🌗</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 左侧输入卡片 -->
+    <div class="card">
+      <div class="hd"><h2 id="t_your_info">你的信息</h2></div>
+      <div class="bd">
+
+        <label id="t_background_label">个人背景（必填）</label>
+        <input id="background" placeholder="例：28岁，工作3年，想转行/想创业…" />
+
+        <label id="t_timeline_label">人生经历时间线（必填）</label>
+        <textarea id="timeline" placeholder="用要点写：学校/工作/关键事件/决策/资源/人脉…"></textarea>
+
+        <div class="row">
+          <div>
+            <label id="t_target_label">想回到的时间点（必填）</label>
+            <input id="target" placeholder="例：18岁高考 / 22岁毕业 / 2020年某次决定" />
+          </div>
+          <div>
+            <label id="t_mode_label">生成模式</label>
+            <select id="mode">
+              <option value="abc">对比 A/B/C（推荐）</option>
+              <option value="single">单一路线（更快）</option>
+              <option value="chat">追问模式（对话）</option>
+            </select>
+          </div>
         </div>
-        <button class="secondary theme-toggle" id="btnTheme">切换主题</button>
+
+        <label id="t_resources_label">能力 / 资源（可选）</label>
+        <input id="resources" placeholder="例：英语一般/有存款2万/家人支持/擅长写作…" />
+
+        <label id="t_language_label">语言 / Language</label>
+        <select id="language">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+
+        <div class="btns">
+          <button id="btnRun">开始模拟</button>
+          <button class="secondary" id="btnPing">测试 API</button>
+          <button class="secondary" id="btnCopy">复制结果</button>
+          <button class="secondary" id="btnPDF">导出 PDF</button>
+          <button class="secondary" id="btnShare">分享链接</button>
+          <button class="danger" id="btnClear">清空输出</button>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="status" id="status">状态：就绪</div>
+
+        <div class="hint-short" id="hintShort" style="display:none;">
+          建议补充信息（追问）：可以多写一些关键节点、转折点、你在意的东西。
+        </div>
+
       </div>
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <div class="hd"><h2>你的信息</h2></div>
-        <div class="bd">
-          <label>个人背景（必填） / Background</label>
-          <input id="background" placeholder="例：28岁，工作3年，想转行/想创业…" />
-
-          <label>人生经历时间线（必填） / Timeline</label>
-          <textarea id="timeline" placeholder="用要点写：学校/工作/关键事件/决策/资源/人脉…"></textarea>
-
-          <div class="row">
-            <div>
-              <label>想回到的时间点（必填） / Target Point</label>
-              <input id="target" placeholder="例：18岁高考 / 22岁毕业 / 2020年某次决定" />
-            </div>
-            <div>
-              <label>生成模式 / Mode</label>
-              <select id="mode">
-                <option value="abc" selected>对比 A/B/C（推荐）</option>
-                <option value="single">单一路线（更快）</option>
-                <option value="chat">追问模式（对话）</option>
-              </select>
-            </div>
-          </div>
-
-          <label>能力 / 资源（可选） / Resources</label>
-          <input id="resources" placeholder="例：英语一般/有存款2万/家人支持/擅长写作…" />
-
-          <label>语言 / Language</label>
-          <select id="language">
-            <option value="zh" selected>中文</option>
-            <option value="en">English</option>
-          </select>
-
-          <div class="btns">
-            <button id="btnRun">开始模拟 / Run</button>
-            <button class="secondary" id="btnPing">测试 API</button>
-            <button class="secondary" id="btnCopy">复制结果</button>
-            <button class="secondary" id="btnPDF">导出 PDF</button>
-            <button class="secondary" id="btnShare">分享链接</button>
-            <button class="danger" id="btnClear">清空输出</button>
-          </div>
-
-          <div class="progress-wrap">
-            <div class="progress-bar" id="progressBar"></div>
-          </div>
-
-          <div class="status" id="status">状态：就绪</div>
-          <div class="hint-short" id="hintShort" style="display:none;">
-            建议补充信息（追问）：可以多写一些关键节点、转折点、你在意的东西。
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="hd"><h2>结果 / Result</h2></div>
-        <div class="bd">
-          <div id="out" class="out">点击“开始模拟”生成内容。</div>
-          <div class="foot">
-            如果长时间无响应，可以先点“测试 API”确认 /api/ping 是否正常，再检查 OpenAI 配额。
-          </div>
+    <!-- 右侧结果卡片 -->
+    <div class="card">
+      <div class="hd"><h2 id="t_result_title">结果</h2></div>
+      <div class="bd">
+        <div id="out" class="out">点击“开始模拟”生成内容。</div>
+        <div class="foot" id="t_result_hint">
+          如果长时间无响应，可以先点“测试 API”确认 /api/ping 是否正常，再检查 OpenAI 配额。
         </div>
       </div>
     </div>
   </div>
-
+</div>
 <script>
+/* ---------------------------
+   语言选择（进入页面第一步）
+---------------------------- */
+function selectLang(lang){
+  localStorage.setItem("relife-lang", lang);
+  document.getElementById("langMask").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  applyLang(lang);
+}
+
+(function initLang(){
+  const saved = localStorage.getItem("relife-lang");
+  if(saved){
+    document.getElementById("langMask").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    applyLang(saved);
+  }
+})();
+
+/* ---------------------------
+   UI 文本（中英文）
+---------------------------- */
+const LANG = {
+  zh:{
+    app_title:"RE:LIFE | 回环",
+    app_sub:"理性人生模拟 · 非算命 · 非保证",
+    your_info:"你的信息",
+    background:"个人背景（必填）",
+    timeline:"人生经历时间线（必填）",
+    target:"想回到的时间点（必填）",
+    mode:"生成模式",
+    resources:"能力 / 资源（可选）",
+    language:"语言 / Language",
+    run:"开始模拟",
+    ping:"测试 API",
+    copy:"复制结果",
+    pdf:"导出 PDF",
+    share:"分享链接",
+    clear:"清空输出",
+    result:"结果",
+    result_hint:"如果长时间无响应，可以先点“测试 API”确认 /api/ping 是否正常，再检查 OpenAI 配额。",
+    short_hint:"建议补充信息（追问）：可以多写一些关键节点、转折点、你在意的东西。",
+    placeholder_bg:"例：28岁，工作3年，想转行/想创业…",
+    placeholder_tl:"用要点写：学校/工作/关键事件/决策/资源/人脉…",
+    placeholder_target:"例：18岁高考 / 22岁毕业 / 2020年某次决定"
+  },
+  en:{
+    app_title:"RE:LIFE | Loop",
+    app_sub:"Rational life simulation · No fortune telling · No guarantees",
+    your_info:"Your Information",
+    background:"Background (required)",
+    timeline:"Life Timeline (required)",
+    target:"Target Point (required)",
+    mode:"Mode",
+    resources:"Skills / Resources (optional)",
+    language:"Language",
+    run:"Run Simulation",
+    ping:"Test API",
+    copy:"Copy Result",
+    pdf:"Export PDF",
+    share:"Share Link",
+    clear:"Clear Output",
+    result:"Result",
+    result_hint:"If it takes too long, test /api/ping first, then check OpenAI billing.",
+    short_hint:"Suggested: add more details (key events, turning points, motivations).",
+    placeholder_bg:"e.g. 28 years old, 3 years working, want to switch career…",
+    placeholder_tl:"List key events: school, jobs, decisions, resources, network…",
+    placeholder_target:"e.g. age 18 exam / age 22 graduation / 2020 decision"
+  }
+};
+
+/* ---------------------------
+   应用语言到 UI
+---------------------------- */
+function applyLang(lang){
+  const t = LANG[lang];
+
+  document.getElementById("t_app_title").textContent = t.app_title;
+  document.getElementById("t_app_sub").textContent = t.app_sub;
+
+  document.getElementById("t_your_info").textContent = t.your_info;
+  document.getElementById("t_background_label").textContent = t.background;
+  document.getElementById("background").placeholder = t.placeholder_bg;
+
+  document.getElementById("t_timeline_label").textContent = t.timeline;
+  document.getElementById("timeline").placeholder = t.placeholder_tl;
+
+  document.getElementById("t_target_label").textContent = t.target;
+  document.getElementById("target").placeholder = t.placeholder_target;
+
+  document.getElementById("t_mode_label").textContent = t.mode;
+  document.getElementById("t_resources_label").textContent = t.resources;
+  document.getElementById("t_language_label").textContent = t.language;
+
+  document.getElementById("btnRun").textContent = t.run;
+  document.getElementById("btnPing").textContent = t.ping;
+  document.getElementById("btnCopy").textContent = t.copy;
+  document.getElementById("btnPDF").textContent = t.pdf;
+  document.getElementById("btnShare").textContent = t.share;
+  document.getElementById("btnClear").textContent = t.clear;
+
+  document.getElementById("t_result_title").textContent = t.result;
+  document.getElementById("t_result_hint").textContent = t.result_hint;
+
+  document.getElementById("hintShort").textContent = t.short_hint;
+}
+
+/* ---------------------------
+   API BASE 自动判断
+---------------------------- */
+const API_BASE = (location.hostname === "resetlife.blog")
+  ? "https://www.resetlife.blog"
+  : "";
+
+/* ---------------------------
+   DOM 快捷
+---------------------------- */
+const $ = id => document.getElementById(id);
+const outEl = $("out");
+const statusEl = $("status");
+const progressBar = $("progressBar");
+const hintShortEl = $("hintShort");
+
+$("apiLabel").textContent = API_BASE ? API_BASE + "/api" : "/api";
+
+/* ---------------------------
+   状态 & 进度条
+---------------------------- */
+function setStatus(s){ statusEl.textContent = s; }
+function setProgress(p){ progressBar.style.width = p + "%"; }
+
+/* ---------------------------
+   通用 POST JSON
+---------------------------- */
+async function postJSON(url, body){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), 90000);
+
+  try{
+    const res = await fetch(url, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    });
+
+    const text = await res.text();
+    const ct = res.headers.get("content-type") || "";
+
+    if(!ct.includes("application/json")){
+      throw new Error("Non-JSON response:\n" + text);
+    }
+
+    const data = JSON.parse(text);
+    if(!res.ok) throw new Error(JSON.stringify(data));
+
+    return data;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/* ---------------------------
+   测试 API
+---------------------------- */
+$("btnPing").onclick = async ()=>{
+  setStatus("Testing...");
+  setProgress(30);
+  try{
+    const r = await fetch(API_BASE + "/api/ping");
+    const t = await r.text();
+    outEl.textContent = t;
+    setStatus("OK");
+    setProgress(100);
+    setTimeout(()=>setProgress(0),800);
+  }catch(e){
+    outEl.textContent = "Ping failed:\n" + e;
+    setStatus("Failed");
+    setProgress(0);
+  }
+};
+
+/* ---------------------------
+   复制结果
+---------------------------- */
+$("btnCopy").onclick = async ()=>{
+  const text = outEl.textContent.trim();
+  if(!text){ alert("无内容"); return; }
+  await navigator.clipboard.writeText(text);
+  setStatus("已复制");
+};
+
+/* ---------------------------
+   分享链接
+---------------------------- */
+$("btnShare").onclick = ()=>{
+  const params = new URLSearchParams({
+    background:$("background").value,
+    timeline:$("timeline").value,
+    target:$("target").value,
+    resources:$("resources").value,
+    mode:$("mode").value,
+    language:$("language").value
+  });
+  const url = location.origin + location.pathname + "?" + params.toString();
+  navigator.clipboard.writeText(url);
+  alert("已复制分享链接：\n" + url);
+};
+
+/* ---------------------------
+   PDF 导出
+---------------------------- */
+$("btnPDF").onclick = ()=>{
+  const text = outEl.textContent.trim();
+  if(!text){ alert("无内容"); return; }
+
   const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:"pt", format:"a4" });
 
-  const API_BASE = (location.hostname === "resetlife.blog")
-    ? "https://www.resetlife.blog"
-    : "";
+  doc.text("RE:LIFE Result", 40, 40);
+  const lines = doc.splitTextToSize(text, 520);
+  doc.text(lines, 40, 80);
 
-  document.getElementById("apiLabel").textContent = API_BASE ? (API_BASE + "/api") : "/api";
+  doc.save("RE_LIFE.pdf");
+};
 
-  const $ = (id)=>document.getElementById(id);
-  const outEl = $("out");
-  const statusEl = $("status");
-  const progressBar = $("progressBar");
-  const hintShortEl = $("hintShort");
-
-  function setStatus(s){ statusEl.textContent = "状态：" + s; }
-
-  function setProgress(p){
-    progressBar.style.width = Math.max(0, Math.min(100, p)) + "%";
+/* ---------------------------
+   清空
+---------------------------- */
+$("btnClear").onclick = ()=>{
+  outEl.textContent = "";
+  setStatus("已清空");
+  setProgress(0);
+  hintShortEl.style.display = "none";
+};
+/* ----------------------------------------------------
+   新窗口：展示 A/B/C 路线 + 评分表 + 30 天计划 + 对话
+----------------------------------------------------- */
+function openResultWindow({ text, routes, followups, plan30d, context }) {
+  const w = window.open("", "_blank");
+  if (!w) {
+    alert("浏览器拦截了新窗口，请允许弹窗");
+    return;
   }
 
-  function formatError(e){
-    return [
-      "❌ 请求失败",
-      "",
-      "错误信息：",
-      String(e),
-      "",
-      "可能原因：",
-      "- API 未命中 Vercel（先点“测试 API”）",
-      "- 输入字段缺失或过短",
-      "- OpenAI 请求超时或限流",
-      "- 网络问题",
-      "",
-      "建议：",
-      "- 刷新页面重试",
-      "- 检查 /api/ping 是否正常",
-      "- 检查 OpenAI 账单与配额",
-    ].join("\n");
-  }
+  const lang = context.language === "en" ? "en" : "zh";
 
-  async function postJSON(path, body, timeoutMs=90000){
-    const ctrl = new AbortController();
-    const t = setTimeout(()=>ctrl.abort(), timeoutMs);
-    try{
-      const res = await fetch(path, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify(body),
-        signal: ctrl.signal,
-      });
-
-      const ct = res.headers.get("content-type") || "";
-      const text = await res.text();
-
-      if (!ct.includes("application/json")) {
-        const hint = [
-          `HTTP ${res.status} ${res.statusText}`,
-          `content-type: ${ct || "(none)"}`,
-          `server: ${res.headers.get("server") || "(none)"}`,
-          `x-vercel-id: ${res.headers.get("x-vercel-id") || "(none)"}`,
-          "",
-          text
-        ].join("\n");
-        throw new Error(hint);
-      }
-
-      const data = JSON.parse(text);
-      if(!res.ok){
-        throw new Error(`HTTP ${res.status}: ${JSON.stringify(data)}`);
-      }
-      return data;
-    } finally {
-      clearTimeout(t);
+  const T = {
+    zh:{
+      title:"RE:LIFE 模拟结果",
+      routes:"路线 A/B/C",
+      scores:"评分维度",
+      plan:"30 天行动计划",
+      chat:"追问对话",
+      ask:"提问",
+      placeholder:"例如：我更适合 B 吗？最小风险路线是什么？",
+      followups:"建议追问",
+      ctx:"上下文摘要"
+    },
+    en:{
+      title:"RE:LIFE Result",
+      routes:"Routes A/B/C",
+      scores:"Scores",
+      plan:"30-Day Plan",
+      chat:"Follow-up Chat",
+      ask:"Ask",
+      placeholder:"e.g. Am I more suitable for route B?",
+      followups:"Suggested follow-ups",
+      ctx:"Context Summary"
     }
-  }
+  }[lang];
 
-  async function getText(path, timeoutMs=15000){
-    const ctrl = new AbortController();
-    const t = setTimeout(()=>ctrl.abort(), timeoutMs);
-    try{
-      const res = await fetch(path, { signal: ctrl.signal });
-      const text = await res.text();
-      return { res, text };
-    } finally { clearTimeout(t); }
-  }
-
-  // 主题切换
-  $("btnTheme").onclick = ()=>{
-    const root = document.documentElement;
-    const cur = root.getAttribute("data-theme") || "dark";
-    const next = cur === "dark" ? "light" : "dark";
-    root.setAttribute("data-theme", next);
-    localStorage.setItem("relife-theme", next);
-  };
-  (function initTheme(){
-    const saved = localStorage.getItem("relife-theme");
-    if (saved) document.documentElement.setAttribute("data-theme", saved);
-  })();
-
-  // 清空
-  $("btnClear").onclick = ()=>{ outEl.textContent = ""; setStatus("已清空"); setProgress(0); hintShortEl.style.display = "none"; };
-
-  // ping
-  $("btnPing").onclick = async ()=>{
-    setStatus("ping 中…");
-    setProgress(20);
-    try{
-      const { res, text } = await getText(API_BASE + "/api/ping");
-      outEl.textContent =
-        `GET ${API_BASE}/api/ping\n` +
-        `HTTP ${res.status}\n` +
-        `server: ${res.headers.get("server") || "(none)"}\n` +
-        `x-vercel-id: ${res.headers.get("x-vercel-id") || "(none)"}\n\n` +
-        text;
-      setStatus("ping 完成");
-      setProgress(100);
-      setTimeout(()=>setProgress(0), 800);
-    }catch(e){
-      outEl.textContent = formatError(e);
-      setStatus("ping 失败");
-      setProgress(0);
-    }
-  };
-
-  // 复制结果
-  $("btnCopy").onclick = async ()=>{
-    const text = outEl.textContent.trim();
-    if (!text) {
-      alert("没有可复制的内容，请先生成结果。");
-      return;
-    }
-    try{
-      await navigator.clipboard.writeText(text);
-      setStatus("结果已复制到剪贴板");
-    }catch(e){
-      alert("复制失败：" + e);
-    }
-  };
-
-  // 导出 PDF
-  $("btnPDF").onclick = ()=>{
-    const content = outEl.textContent.trim();
-    if (!content) {
-      alert("没有可导出的内容，请先生成结果。");
-      return;
-    }
-
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const margin = 40;
-    let y = 60;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("RE:LIFE 模拟结果分享", margin, y);
-    y += 24;
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(120);
-    doc.text("生成时间：" + new Date().toLocaleString(), margin, y);
-    y += 20;
-
-    doc.setDrawColor(200);
-    doc.line(margin, y, 595 - margin, y);
-    y += 20;
-
-    doc.setFontSize(12);
-    doc.setTextColor(0);
-
-    const inputBlock = [
-      "【用户输入】",
-      "背景：" + ($("background").value || "（未填写）"),
-      "时间线：" + ($("timeline").value || "（未填写）"),
-      "回到时间点：" + ($("target").value || "（未填写）"),
-      "能力/资源：" + ($("resources").value || "（未填写）"),
-      "模式：" + ($("mode").value || "（未选择）"),
-      "语言：" + ($("language").value || "zh"),
-      "",
-      "【模拟结果】",
-      content
-    ].join("\n");
-
-    const lines = doc.splitTextToSize(inputBlock, 595 - margin * 2);
-    const pageHeight = doc.internal.pageSize.getHeight();
-    for (let i = 0; i < lines.length; i++) {
-      if (y > pageHeight - 60) {
-        doc.addPage();
-        y = 60;
-      }
-      doc.text(lines[i], margin, y);
-      y += 16;
-    }
-
-    doc.save("RE_LIFE_模拟结果.pdf");
-    setStatus("PDF 已导出");
-  };
-
-  // 分享链接
-  $("btnShare").onclick = ()=>{
-    const params = new URLSearchParams({
-      background: $("background").value,
-      timeline: $("timeline").value,
-      target: $("target").value,
-      resources: $("resources").value,
-      mode: $("mode").value,
-      language: $("language").value,
-    });
-    const url = location.origin + location.pathname + "?" + params.toString();
-    navigator.clipboard.writeText(url).then(()=>{
-      setStatus("分享链接已复制");
-      alert("分享链接已复制：\n" + url);
-    }).catch(e=>{
-      alert("复制失败：" + e);
-    });
-  };
-
-  // URL 参数自动填充
-  (function fillFromQuery(){
-    const p = new URLSearchParams(location.search);
-    if (p.get("background")) $("background").value = p.get("background");
-    if (p.get("timeline")) $("timeline").value = p.get("timeline");
-    if (p.get("target")) $("target").value = p.get("target");
-    if (p.get("resources")) $("resources").value = p.get("resources");
-    if (p.get("mode")) $("mode").value = p.get("mode");
-    if (p.get("language")) $("language").value = p.get("language");
-  })();
-
-  // 打开新窗口展示 A/B/C + 对话
-  function openResultWindow({ text, routes, followups, plan30d, context }) {
-    const w = window.open("", "_blank");
-    if (!w) {
-      alert("浏览器拦截了新窗口，请允许弹出窗口。");
-      return;
-    }
-
-    const lang = context.language === "en" ? "en" : "zh";
-
-    const title = lang === "en" ? "RE:LIFE Result" : "RE:LIFE 模拟结果";
-    const labelRoutes = lang === "en" ? "Routes" : "路线 A/B/C";
-    const labelChat = lang === "en" ? "Follow-up Chat" : "追问对话";
-    const labelScores = lang === "en" ? "Scores" : "评分维度";
-    const labelPlan = lang === "en" ? "30-Day Plan" : "30 天行动计划";
-    const labelAsk = lang === "en" ? "Ask" : "提问";
-    const labelPlaceholderQ = lang === "en"
-      ? "e.g. Am I more suitable for route B?"
-      : "例如：我更适合 B 吗？最小风险路线是什么？";
-    const labelFollowups = lang === "en" ? "Suggested follow-up questions" : "建议追问";
-    const labelContext = lang === "en" ? "Context" : "上下文摘要";
-
-    const html = `
+  /* -------------------------
+     新窗口 HTML
+  -------------------------- */
+  const html = `
 <!doctype html>
 <html lang="${lang}">
 <head>
 <meta charset="utf-8" />
-<title>${title}</title>
+<title>${T.title}</title>
 <style>
   body{
     margin:0;
@@ -485,17 +559,20 @@
     background:#0b1120;
     color:#e5e7eb;
   }
-  .wrap{max-width:1000px;margin:24px auto;padding:0 16px;}
-  h1{font-size:28px;margin:0 0 12px;}
+  .wrap{max-width:1100px;margin:24px auto;padding:0 16px;}
+  h1{font-size:28px;margin:0 0 16px;}
   h2{font-size:18px;margin:18px 0 8px;}
+
   .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;}
   @media (max-width:900px){.grid{grid-template-columns:1fr;}}
+
   .card{
     background:rgba(15,23,42,.9);
     border-radius:16px;
     border:1px solid rgba(148,163,184,.4);
     padding:16px;
   }
+
   .routes{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
   .route-pill{
     flex:1 1 0;
@@ -512,6 +589,7 @@
   }
   .route-pill h3{margin:0 0 4px;font-size:14px;}
   .route-pill p{margin:0;font-size:12px;color:#9ca3af;}
+
   .scores-table{
     width:100%;
     border-collapse:collapse;
@@ -523,20 +601,11 @@
     padding:4px 6px;
     text-align:center;
   }
-  .text-block{
-    white-space:pre-wrap;
-    font-size:13px;
-    line-height:1.6;
-    background:rgba(15,23,42,.8);
-    border-radius:10px;
-    padding:10px;
-    border:1px solid rgba(148,163,184,.4);
-  }
-  .chat-box{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
+
+  .plan-list{font-size:13px;margin-top:6px;}
+  .plan-list li{margin-bottom:4px;}
+
+  .chat-box{display:flex;flex-direction:column;gap:8px;}
   .chat-log{
     height:260px;
     overflow:auto;
@@ -548,11 +617,8 @@
   }
   .chat-msg-user{color:#e5e7eb;margin-bottom:6px;}
   .chat-msg-ai{color:#a5b4fc;margin-bottom:10px;}
-  .chat-input-row{
-    display:flex;
-    gap:8px;
-    margin-top:4px;
-  }
+
+  .chat-input-row{display:flex;gap:8px;margin-top:4px;}
   .chat-input-row input{
     flex:1;
     padding:8px 10px;
@@ -571,11 +637,8 @@
     font-weight:600;
     cursor:pointer;
   }
-  .followups{
-    font-size:12px;
-    color:#9ca3af;
-    margin-top:6px;
-  }
+
+  .followups{font-size:12px;color:#9ca3af;margin-top:6px;}
   .followups span{
     display:inline-block;
     padding:4px 8px;
@@ -584,27 +647,22 @@
     margin:2px;
     cursor:pointer;
   }
-  .plan-list{
-    font-size:13px;
-    margin-top:6px;
-  }
-  .plan-list li{margin-bottom:4px;}
-  .ctx{
-    font-size:11px;
-    color:#9ca3af;
-    margin-top:6px;
-  }
+
+  .ctx{font-size:11px;color:#9ca3af;margin-top:6px;}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>${title}</h1>
+  <h1>${T.title}</h1>
+
   <div class="grid">
+    <!-- 左侧：路线 + 评分 + 计划 -->
     <div class="card">
-      <h2>${labelRoutes}</h2>
+      <h2>${T.routes}</h2>
       <div class="routes" id="routes"></div>
-      <h2>${labelScores}</h2>
-      <table class="scores-table" id="scoresTable">
+
+      <h2>${T.scores}</h2>
+      <table class="scores-table">
         <thead>
           <tr>
             <th>Route</th>
@@ -616,28 +674,34 @@
         </thead>
         <tbody id="scoresBody"></tbody>
       </table>
-      <h2>${labelPlan}</h2>
+
+      <h2>${T.plan}</h2>
       <ul class="plan-list" id="planList"></ul>
+
       <div class="ctx">
-        <strong>${labelContext}:</strong><br/>
+        <strong>${T.ctx}:</strong><br/>
         ${context.background}<br/>
         ${context.timeline}<br/>
-        ${context.target ? "Target: " + context.target : ""}
+        ${context.target}
       </div>
     </div>
+
+    <!-- 右侧：对话 -->
     <div class="card">
-      <h2>${labelChat}</h2>
+      <h2>${T.chat}</h2>
       <div class="chat-box">
         <div class="chat-log" id="chatLog"></div>
         <div class="followups" id="followupsBox"></div>
+
         <div class="chat-input-row">
-          <input id="chatInput" placeholder="${labelPlaceholderQ}" />
-          <button id="chatSend">${labelAsk}</button>
+          <input id="chatInput" placeholder="${T.placeholder}" />
+          <button id="chatSend">${T.ask}</button>
         </div>
       </div>
     </div>
   </div>
 </div>
+
 <script>
   const routes = ${JSON.stringify(routes || [])};
   const followups = ${JSON.stringify(followups || [])};
@@ -653,49 +717,79 @@
   const chatInput = document.getElementById("chatInput");
   const chatSend = document.getElementById("chatSend");
 
-  function renderRoutes() {
+  /* -------------------------
+     渲染初始文本
+  -------------------------- */
+  function appendAI(msg){
+    const div = document.createElement("div");
+    div.className = "chat-msg-ai";
+    div.textContent = msg;
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+  function appendUser(msg){
+    const div = document.createElement("div");
+    div.className = "chat-msg-user";
+    div.textContent = "You: " + msg;
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  appendAI(baseText);
+
+  /* -------------------------
+     渲染路线卡片
+  -------------------------- */
+  function renderRoutes(){
     routesEl.innerHTML = "";
     scoresBody.innerHTML = "";
+
     routes.forEach((r, idx)=>{
       const div = document.createElement("div");
-      div.className = "route-pill" + (idx === 0 ? " active" : "");
-      div.dataset.id = r.id || ("R" + (idx+1));
-      div.innerHTML = "<h3>" + (r.id || ("R" + (idx+1))) + " · " + (r.title || "") + "</h3>" +
-                      "<p>" + (r.summary || "") + "</p>";
+      div.className = "route-pill" + (idx===0 ? " active" : "");
+      div.innerHTML = `
+        <h3>${r.id} · ${r.title}</h3>
+        <p>${r.summary}</p>
+      `;
       div.onclick = ()=>{
         document.querySelectorAll(".route-pill").forEach(x=>x.classList.remove("active"));
         div.classList.add("active");
-        appendAI("[" + (r.id || ("R" + (idx+1))) + "] " + (r.summary || ""));
+        appendAI("[" + r.id + "] " + r.summary);
       };
       routesEl.appendChild(div);
 
       const s = r.score || {};
       const tr = document.createElement("tr");
-      tr.innerHTML =
-        "<td>" + (r.id || ("R" + (idx+1))) + "</td>" +
-        "<td>" + (s.risk ?? "-") + "</td>" +
-        "<td>" + (s.reward ?? "-") + "</td>" +
-        "<td>" + (s.timeCost ?? "-") + "</td>" +
-        "<td>" + (s.mentalCost ?? "-") + "</td>";
+      tr.innerHTML = `
+        <td>${r.id}</td>
+        <td>${s.risk ?? "-"}</td>
+        <td>${s.reward ?? "-"}</td>
+        <td>${s.timeCost ?? "-"}</td>
+        <td>${s.mentalCost ?? "-"}</td>
+      `;
       scoresBody.appendChild(tr);
     });
   }
 
-  function renderPlan() {
+  /* -------------------------
+     渲染 30 天计划
+  -------------------------- */
+  function renderPlan(){
     planList.innerHTML = "";
-    (plan30d || []).forEach((p)=>{
+    plan30d.forEach(p=>{
       const li = document.createElement("li");
       li.textContent = p;
       planList.appendChild(li);
     });
   }
 
-  function renderFollowups() {
+  /* -------------------------
+     渲染 followups
+  -------------------------- */
+  function renderFollowups(){
     followupsBox.innerHTML = "";
-    if (!followups || !followups.length) return;
-    const label = document.createElement("div");
-    label.textContent = "${labelFollowups}：";
-    followupsBox.appendChild(label);
+    if(!followups.length) return;
+
     followups.forEach(q=>{
       const span = document.createElement("span");
       span.textContent = q;
@@ -707,33 +801,19 @@
     });
   }
 
-  function appendUser(msg) {
-    const div = document.createElement("div");
-    div.className = "chat-msg-user";
-    div.textContent = "You: " + msg;
-    chatLog.appendChild(div);
-    chatLog.scrollTop = chatLog.scrollHeight;
-  }
-
-  function appendAI(msg) {
-    const div = document.createElement("div");
-    div.className = "chat-msg-ai";
-    div.textContent = msg;
-    chatLog.appendChild(div);
-    chatLog.scrollTop = chatLog.scrollHeight;
-  }
-
-  appendAI(baseText || "No result text.");
-
   renderRoutes();
   renderPlan();
   renderFollowups();
 
-  async function sendChat() {
+  /* -------------------------
+     发送追问（chat 模式）
+  -------------------------- */
+  async function sendChat(){
     const q = chatInput.value.trim();
-    if (!q) return;
-    chatInput.value = "";
+    if(!q) return;
+
     appendUser(q);
+    chatInput.value = "";
     appendAI("Thinking...");
 
     try{
@@ -745,107 +825,108 @@
           timeline: ctx.timeline,
           target: ctx.target,
           resources: ctx.resources,
-          mode: "chat",
+          mode:"chat",
           language: ctx.language,
           question: q,
           lastResult: baseText
         })
       });
+
       const data = await res.json();
-      if (!res.ok || !data.ok) {
-        appendAI("Error: " + (data.error || res.status));
+      if(!data.ok){
+        appendAI("Error: " + data.error);
         return;
       }
-      appendAI(data.text || "");
+
+      appendAI(data.text);
     }catch(e){
       appendAI("Error: " + e);
     }
   }
 
   chatSend.onclick = sendChat;
-  chatInput.addEventListener("keydown", (e)=>{
-    if (e.key === "Enter") {
+  chatInput.addEventListener("keydown", e=>{
+    if(e.key==="Enter"){
       e.preventDefault();
       sendChat();
     }
   });
 </script>
+
 </body>
 </html>
 `;
 
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+/* ----------------------------------------------------
+   开始模拟（主窗口）
+----------------------------------------------------- */
+$("btnRun").onclick = async ()=>{
+  const background = $("background").value.trim();
+  const timeline = $("timeline").value.trim();
+  const target = $("target").value.trim();
+  const resources = $("resources").value.trim();
+  const mode = $("mode").value;
+  const language = $("language").value;
+
+  if(background.length + timeline.length < 60){
+    hintShortEl.style.display = "block";
+  } else {
+    hintShortEl.style.display = "none";
   }
 
-  // 开始模拟
-  $("btnRun").onclick = async ()=>{
-    const background = $("background").value.trim();
-    const timeline = $("timeline").value.trim();
-    const target = $("target").value.trim();
-    const resources = $("resources").value.trim();
-    const mode = $("mode").value;
-    const language = $("language").value;
+  if(!background || !timeline || !target){
+    outEl.textContent = "请填写完整信息";
+    return;
+  }
 
-    const totalLen = background.length + timeline.length;
-    if (totalLen < 60) {
-      hintShortEl.style.display = "block";
-    } else {
-      hintShortEl.style.display = "none";
-    }
+  setStatus("生成中...");
+  setProgress(10);
+  outEl.textContent = "⏳ 正在生成，请稍候…";
 
-    if(!background || !timeline || !target){
-      outEl.textContent = "请把：个人背景 / 时间线 / 想回到的时间点 填完整（必填）。";
-      setStatus("缺少必填项");
-      setProgress(0);
+  try{
+    let fake = 10;
+    const timer = setInterval(()=>{
+      fake = Math.min(fake+5, 85);
+      setProgress(fake);
+    }, 800);
+
+    const data = await postJSON(API_BASE + "/api/generate", {
+      background, timeline, target, resources, mode, language
+    });
+
+    clearInterval(timer);
+    setProgress(100);
+
+    if(!data.ok){
+      outEl.textContent = JSON.stringify(data, null, 2);
       return;
     }
 
-    setStatus("请求中…");
-    setProgress(10);
-    outEl.textContent = "⏳ 正在生成…（通常 10~30 秒，如长时间无响应可先测试 API）";
+    outEl.textContent = data.text;
+    setStatus("完成");
+    setTimeout(()=>setProgress(0),1000);
 
-    try{
-      let fake = 10;
-      const timer = setInterval(()=>{
-        fake = Math.min(fake + 5, 85);
-        setProgress(fake);
-      }, 800);
+    /* 打开新窗口 */
+    openResultWindow({
+      text: data.text,
+      routes: data.routes,
+      followups: data.followups,
+      plan30d: data.plan30d,
+      context:{ background, timeline, target, resources, language }
+    });
 
-      const data = await postJSON(API_BASE + "/api/generate", {
-        background, timeline, target, resources, mode, language
-      }, 120000);
-
-      clearInterval(timer);
-      setProgress(100);
-
-      if (!data.ok) {
-        outEl.textContent = JSON.stringify(data, null, 2);
-        setStatus("后端返回错误");
-        setTimeout(()=>setProgress(0), 1000);
-        return;
-      }
-
-      const text = data.text || JSON.stringify(data, null, 2);
-      outEl.textContent = text;
-      setStatus("完成");
-      setTimeout(()=>setProgress(0), 1000);
-
-      // 打开新窗口展示 A/B/C + 对话
-      openResultWindow({
-        text: data.text,
-        routes: data.routes,
-        followups: data.followups,
-        plan30d: data.plan30d,
-        context: { background, timeline, target, resources, language }
-      });
-    }catch(e){
-      outEl.textContent = formatError(e);
-      setStatus("失败（看输出细节）");
-      setProgress(0);
-    }
-  };
+  }catch(e){
+    outEl.textContent = "错误：\n" + e;
+    setStatus("失败");
+    setProgress(0);
+  }
+};
 </script>
+
 </body>
 </html>
