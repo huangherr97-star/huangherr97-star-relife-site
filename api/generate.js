@@ -1,5 +1,4 @@
-export default async function handler(req, res) {
-  // CORS
+module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
@@ -9,13 +8,19 @@ export default async function handler(req, res) {
 
   try {
     const { background, timeline, target, resources } = req.body || {};
+
     if (!background || !timeline || !target) {
-      return res.status(400).json({ error: "Missing required fields: background, timeline, target" });
+      return res.status(400).json({
+        error: "Missing required fields",
+        need: ["background", "timeline", "target"]
+      });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: "Server missing OPENAI_API_KEY env var" });
+      return res.status(500).json({
+        error: "Missing env OPENAI_API_KEY (set it in Vercel Project → Settings → Environment Variables)"
+      });
     }
 
     const prompt =
@@ -33,15 +38,15 @@ ${target}
 【能力/资源（可选）】
 ${resources || "无"}
 
-请输出（用清晰小标题）：
+请输出（用清晰小标题，尽量通俗）：
 1）关键信息提炼（3-6条）
 2）回到该时间点后，最可能的3条路径（每条分：短期/中期/长期）
 3）每条路径的关键风险与“可行动的规避策略”
 4）最建议的1条主线 + 2个备选（解释原因）
 5）下一步的5个具体行动（可在一周内开始）
-语言：中文，尽量通俗，避免过度术语。`;
+`;
 
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+    const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -57,16 +62,20 @@ ${resources || "无"}
       })
     });
 
-    const data = await r.json();
+    const data = await upstream.json();
 
-    if (!r.ok) {
-      const msg = data?.error?.message || JSON.stringify(data);
-      return res.status(500).json({ error: "OpenAI API error: " + msg });
+    if (!upstream.ok) {
+      return res.status(500).json({
+        error: "OpenAI upstream error",
+        detail: data?.error?.message || data
+      });
     }
 
-    const result = data?.choices?.[0]?.message?.content || "";
-    return res.status(200).json({ result });
-  } catch (err) {
-    return res.status(500).json({ error: err?.message || String(err) });
+    return res.status(200).json({
+      ok: true,
+      result: data?.choices?.[0]?.message?.content || ""
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e?.message || String(e) });
   }
-}
+};
