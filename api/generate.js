@@ -1,63 +1,49 @@
-// api/generate.js
-// 引入 OpenAI API 库，但对于 Edge Function，我们通常直接使用 fetch API
-// 如果想用官方库，需要确保其兼容 Edge 环境，或者使用轻量级替代品
-// 这里为了示例简洁，直接用 fetch
+export default async function handler(req, res) {
+  // 只允许 POST 请求
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
-export const config = { runtime: 'edge' };
+  const { experience } = req.body;
 
-export default async (req) => {
-    if (req.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+  // 检查 API Key 是否配置
+  if (!process.env.OPENAI_API_KEY) {
+    return res.status(500).json({ error: '未配置 OpenAI API Key，请在 Vercel 后台设置' });
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { 
+            role: 'system', 
+            content: '你是一个平行时空推演专家。请根据用户提供的真实经历，撰写一个跌宕起伏的平行人生故事。要求：语言优美，富有哲理，字数在 300 字左右。' 
+          },
+          { role: 'user', content: experience }
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message);
     }
 
-    try {
-        const { experience } = await req.json();
+    // 提取 AI 生成的文本
+    const aiContent = data.choices[0].message.content;
 
-        // 从 Vercel 环境变量中获取 API Key
-        const openaiApiKey = process.env.OPENAI_API_KEY;
-        if (!openaiApiKey) {
-            return new Response(JSON.stringify({ error: 'OpenAI API Key not configured.' }), { status: 500 });
-        }
-
-        // 构造 OpenAI API 请求体
-        const payload = {
-            model: "gpt-3.5-turbo", // 你也可以尝试 gpt-4
-            messages: [
-                { role: "system", content: "你是一个专业的编剧和人生导师，善于根据用户的简短经历，生成一段富有哲理、启发性或戏剧性的生命剧本。风格是积极向上且富有想象力的。" },
-                { role: "user", content: `请根据以下经历，为我生成一段引人入胜的生命剧本，包含时间点和转折："${experience}"。字数控制在150字左右。` }
-            ],
-            temperature: 0.7, // 创造性程度，0-1，越高越有创造性
-            max_tokens: 200, // 最大生成 token 数
-            top_p: 1,
-            frequency_penalty: 0,
-            presence_penalty: 0,
-        };
-
-        // 发送请求到 OpenAI API
-        const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${openaiApiKey}`,
-            },
-            body: JSON.stringify(payload),
-        });
-
-        if (!openaiResponse.ok) {
-            const errorData = await openaiResponse.json();
-            console.error("OpenAI API error:", errorData);
-            return new Response(JSON.stringify({ error: `OpenAI API error: ${errorData.error.message || 'Unknown error'}` }), { status: openaiResponse.status });
-        }
-
-        const data = await openaiResponse.json();
-        const generatedStory = data.choices[0].message.content;
-
-        return new Response(JSON.stringify({ story: generatedStory }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-    } catch (error) {
-        console.error("Internal Server Error:", error);
-        return new Response(JSON.stringify({ error: `Internal Server Error: ${error.message}` }), { status: 500 });
-    }
-};
+    // 关键：返回的键名必须叫 story，与前端 index.html 匹配
+    res.status(200).json({ story: aiContent });
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ error: '时空隧道发生波动：' + error.message });
+  }
+}
