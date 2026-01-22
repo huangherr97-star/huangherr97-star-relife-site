@@ -1,60 +1,72 @@
 export default async function handler(req, res) {
-    // 仅允许 POST 请求
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
+  // CORS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+
+  try {
+    const { background, timeline, target, resources } = req.body || {};
+    if (!background || !timeline || !target) {
+      return res.status(400).json({ error: "Missing required fields: background, timeline, target" });
     }
 
-    const { experience } = req.body;
-
-    // 基础输入校验
-    if (!experience || experience.length < 5) {
-        return res.status(400).json({ error: '输入变量不足，无法初始化命运回路。' });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "Server missing OPENAI_API_KEY env var" });
     }
 
-    try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'gpt-3.5-turbo', // 建议后期升级为 gpt-4o 以获得更强的逻辑推演
-                messages: [
-                    { 
-                        role: 'system', 
-                        content: `你是一个名为"RE:LIFE | 回环"的命运模拟引擎 v0.3。
-                        你的任务是根据用户输入的生命节点信息，进行因果概率推演。
-                        
-                        写作风格要求：
-                        1. 语气：冷静、理性、富有电影感。
-                        2. 结构：先简述时空节点的转折，再展开一段具体的平行人生叙事。
-                        3. 结尾：以一个"命运评价"结束（例如：因果值：85% | 复杂度：高）。
-                        4. 禁忌：严禁使用算命或迷信措辞。` 
-                    },
-                    { role: 'user', content: `初始变量输入：${experience}` }
-                ],
-                temperature: 0.75, // 保持适度的随机性与创造力
-                max_tokens: 1000,
-            }),
-        });
+    const prompt =
+`你是“理性但带点共情”的人生推演助手。你不算命，不保证结果，只做基于输入的合理推演与建议。
 
-        const data = await response.json();
+【个人背景】
+${background}
 
-        // 错误处理：检查 OpenAI 或中转商返回的错误
-        if (data.error) {
-            console.error('OpenAI Error:', data.error);
-            return res.status(500).json({ error: data.error.message });
-        }
+【人生经历时间线】
+${timeline}
 
-        // 提取推演结果并返回
-        const aiResult = data.choices[0].message.content;
-        
-        // 确保返回的键名与前端 index.html 中的 data.story 匹配
-        res.status(200).json({ story: aiResult });
+【想回到的时间点】
+${target}
 
-    } catch (error) {
-        console.error('Fetch Error:', error);
-        res.status(500).json({ error: '时空隧道连接中断，请检查 API 配置。' });
+【能力/资源（可选）】
+${resources || "无"}
+
+请输出（用清晰小标题）：
+1）关键信息提炼（3-6条）
+2）回到该时间点后，最可能的3条路径（每条分：短期/中期/长期）
+3）每条路径的关键风险与“可行动的规避策略”
+4）最建议的1条主线 + 2个备选（解释原因）
+5）下一步的5个具体行动（可在一周内开始）
+语言：中文，尽量通俗，避免过度术语。`;
+
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "你是理性、克制、可执行的人生推演助手。不要神秘化，不要绝对化结论。" },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7
+      })
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      const msg = data?.error?.message || JSON.stringify(data);
+      return res.status(500).json({ error: "OpenAI API error: " + msg });
     }
+
+    const result = data?.choices?.[0]?.message?.content || "";
+    return res.status(200).json({ result });
+  } catch (err) {
+    return res.status(500).json({ error: err?.message || String(err) });
+  }
 }
