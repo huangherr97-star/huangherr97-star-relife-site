@@ -6,208 +6,769 @@
   <title>RE:LIFE | 回环</title>
   <style>
     :root{
-      --bg:#0B1220; --card:rgba(255,255,255,.04); --card2:rgba(255,255,255,.03);
-      --text:#E8EEF9; --muted:rgba(232,238,249,.7);
-      --primary:#4C6FFF; --border:rgba(255,255,255,.08);
-      --shadow:0 20px 80px rgba(0,0,0,.45);
+      --bg:#0B1220;
+      --panel:#0f1a2c;
+      --panel2:#0c1526;
+      --text:#EAF0FF;
+      --muted:#9FB1D1;
+      --line:rgba(255,255,255,.08);
+      --primary:#4C6FFF;
+      --primary2:#2D4DFF;
+      --warn:#F59E0B;
+      --ok:#22C55E;
+      --danger:#EF4444;
+      --shadow:0 10px 40px rgba(0,0,0,.35);
       --radius:18px;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial;
-      background: radial-gradient(1200px 500px at 50% 0%, rgba(76,111,255,.25), transparent 70%),
-                  radial-gradient(900px 500px at 15% 15%, rgba(34,211,238,.18), transparent 60%),
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(1200px 600px at 50% -10%, rgba(76,111,255,.25), transparent 60%),
+                  radial-gradient(900px 500px at 15% 20%, rgba(34,211,238,.12), transparent 55%),
                   var(--bg);
       color:var(--text);
-      min-height:100vh;
     }
-    .wrap{max-width:1100px; margin:0 auto; padding:52px 18px 40px;}
-    h1{margin:0; font-size:44px; letter-spacing:.5px}
-    .sub{margin-top:10px; color:var(--muted)}
-    .panel{
-      margin-top:22px;
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:26px;
+    .wrap{max-width:1040px;margin:0 auto;padding:34px 18px 60px}
+    header{margin-bottom:18px}
+    h1{margin:0;font-size:42px;letter-spacing:.5px}
+    .subtitle{margin-top:8px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns: 1.15fr .85fr;gap:18px;align-items:start}
+    @media (max-width: 980px){.grid{grid-template-columns:1fr}}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
     }
-    .title{font-size:22px; font-weight:700; margin:0 0 14px}
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:14px;
+    .card-hd{
+      padding:18px 18px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
     }
-    .field{display:flex; flex-direction:column; gap:8px}
-    label{font-size:13px; color:var(--muted)}
-    input, textarea{
+    .card-hd h2{margin:0;font-size:18px}
+    .card-bd{padding:16px 18px 18px}
+    label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
+    input, textarea, select{
       width:100%;
       background: rgba(0,0,0,.18);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:12px 12px;
+      border:1px solid rgba(255,255,255,.10);
       color:var(--text);
+      border-radius: 12px;
+      padding:12px 12px;
       outline:none;
     }
-    textarea{min-height:130px; resize:vertical}
-    input:focus, textarea:focus{border-color: rgba(76,111,255,.6)}
-    .full{grid-column:1/-1}
+    textarea{min-height:120px;resize:vertical;line-height:1.45}
+    input:focus, textarea:focus, select:focus{border-color: rgba(76,111,255,.65);box-shadow:0 0 0 3px rgba(76,111,255,.18)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width: 720px){.row{grid-template-columns:1fr}}
     .btn{
-      margin-top:16px;
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      border:none;color:white;
+      padding:12px 14px;border-radius: 12px;
+      cursor:pointer;font-weight:700;
       width:100%;
-      border:none;
-      background: linear-gradient(90deg, rgba(76,111,255,1), rgba(76,111,255,.85));
-      color:white;
-      padding:14px 16px;
-      border-radius:14px;
-      font-weight:700;
-      cursor:pointer;
-      font-size:15px;
+      transition: transform .06s ease;
     }
-    .btn:disabled{opacity:.6; cursor:not-allowed}
-    .hint{margin-top:10px; color:var(--muted); font-size:12px}
+    .btn:active{transform: translateY(1px)}
+    .btn.secondary{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:600;
+    }
+    .btn.small{width:auto;padding:9px 12px;font-size:13px}
+    .btn.danger{
+      background: rgba(239,68,68,.12);
+      border:1px solid rgba(239,68,68,.28);
+      color:#ffd7d7;
+      font-weight:700;
+    }
+    .muted{color:var(--muted);font-size:13px}
+    .hint{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background: rgba(245,158,11,.08);
+      border:1px solid rgba(245,158,11,.22);
+      color:#ffe8b7;
+      font-size:13px;
+    }
     .status{
       margin-top:12px;
       padding:10px 12px;
-      border:1px solid var(--border);
-      border-radius:14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
       background: rgba(0,0,0,.16);
-      font-size:13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
       white-space:pre-wrap;
       word-break:break-word;
     }
-    .out{
-      margin-top:12px;
-      padding:16px;
-      border:1px solid var(--border);
-      border-radius:14px;
-      background: rgba(0,0,0,.20);
-      white-space:pre-wrap;
-      line-height:1.6;
+
+    /* result */
+    .result-shell{padding:0}
+    .result-top{
+      padding:14px 18px;
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.12);
     }
-    .footer{
-      margin-top:22px;
-      padding-top:18px;
-      border-top:1px solid rgba(255,255,255,.06);
-      color:rgba(232,238,249,.55);
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
       font-size:12px;
     }
-    @media (max-width: 820px){
-      h1{font-size:34px}
-      .grid{grid-template-columns:1fr}
+    .pill .dot{width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,.25)}
+    .pill.ok .dot{background: rgba(34,197,94,.9)}
+    .pill.bad .dot{background: rgba(239,68,68,.9)}
+    .result-body{padding:16px 18px 18px}
+    .cards{display:flex;flex-direction:column;gap:12px}
+    details{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      overflow:hidden;
+      background: rgba(0,0,0,.14);
     }
+    summary{
+      cursor:pointer;
+      list-style:none;
+      padding:12px 12px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      user-select:none;
+    }
+    summary::-webkit-details-marker{display:none}
+    .sum-title{font-weight:800}
+    .sum-meta{color:var(--muted);font-size:12px}
+    .panel{
+      border-top:1px solid rgba(255,255,255,.08);
+      padding:12px 12px 12px;
+      line-height:1.65;
+      color:#e8f0ff;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .kv{display:grid;grid-template-columns:120px 1fr;gap:8px 12px;margin:0}
+    .kv div{padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.08)}
+    .kv div:nth-last-child(-n+2){border-bottom:none}
+    .kv .k{color:var(--muted);font-size:12px}
+    .kv .v{color:var(--text)}
+    .follow{
+      margin-top:14px;
+      border-top:1px solid var(--line);
+      padding-top:14px;
+    }
+    .follow-actions{display:flex;gap:10px;margin-top:10px}
+    @media (max-width:720px){.follow-actions{flex-direction:column}}
+    .history{
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .history-item{
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      cursor:pointer;
+    }
+    .history-item:hover{border-color:rgba(76,111,255,.45)}
+    .history-title{font-weight:800}
+    .history-sub{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.35}
+    footer{margin-top:20px;color:var(--muted);font-size:12px;line-height:1.6}
+    .split{height:1px;background:rgba(255,255,255,.08);margin:18px 0}
   </style>
 </head>
+
 <body>
   <div class="wrap">
-    <h1>RE:LIFE | 回环</h1>
-    <div class="sub">理性人生模拟 · 非算命 · 非保证</div>
+    <header>
+      <h1>RE:LIFE | 回环</h1>
+      <div class="subtitle">理性人生模拟 · 非算命 · 非保证</div>
+    </header>
 
-    <div class="panel">
-      <div class="title">你的信息</div>
-
-      <div class="grid">
-        <div class="field">
-          <label>个人背景（简短）</label>
-          <input id="background" placeholder="例如：28岁，工作3年，想转行" />
+    <div class="grid">
+      <!-- left: input -->
+      <section class="card">
+        <div class="card-hd">
+          <h2>你的信息</h2>
+          <span class="pill" id="pill">
+            <span class="dot"></span>
+            <span id="pillText">待输入</span>
+          </span>
         </div>
+        <div class="card-bd">
+          <div class="row">
+            <div>
+              <label>个人背景（简短）</label>
+              <input id="bg" placeholder="例如：28岁，工作3年，想转行…" />
+            </div>
+            <div>
+              <label>想回到的时间点</label>
+              <input id="backTo" placeholder="例如：18岁高考 / 2020年毕业前…" />
+            </div>
+          </div>
 
-        <div class="field">
-          <label>想回到的时间点</label>
-          <input id="target" placeholder="例如：18岁高考 / 大二转专业 / 2021年入职前" />
-        </div>
-
-        <div class="field full">
           <label>人生经历时间线（越具体越好）</label>
-          <textarea id="timeline" placeholder="按年份/阶段写：发生了什么、做了哪些选择、结果如何、你当时的资源/限制是什么…"></textarea>
-        </div>
+          <textarea id="timeline" placeholder="按时间写：2015… 2019… 2022…（关键事件、选择、结果、遗憾）"></textarea>
 
-        <div class="field full">
           <label>能力 / 资源（可选）</label>
-          <input id="resources" placeholder="例如：英语一般 / 有家人支持 / 有存款 / 过目不忘…" />
+          <input id="resources" placeholder="例如：家人支持、存款、学历、技能、人脉、城市…" />
+
+          <div class="hint">
+            提示：如果一直失败，请先打开 <b>/api/ping</b> 看是否返回 PING OK。
+          </div>
+
+          <div style="margin-top:12px;">
+            <button class="btn" id="btnRun">开始模拟</button>
+          </div>
+
+          <div class="status" id="status" style="display:none;"></div>
+        </div>
+      </section>
+
+      <!-- right: history -->
+      <aside class="card">
+        <div class="card-hd">
+          <h2>本地历史</h2>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn small secondary" id="btnExport">导出</button>
+            <button class="btn small danger" id="btnClear">清空</button>
+          </div>
+        </div>
+        <div class="card-bd">
+          <div class="muted" style="margin-bottom:10px;">自动保存在你的浏览器（localStorage）。</div>
+          <div class="history" id="history"></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="split"></div>
+
+    <!-- result -->
+    <section class="card result-shell">
+      <div class="result-top">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="font-weight:900;">生成结果</div>
+          <span class="pill" id="apiPill">
+            <span class="dot"></span>
+            <span id="apiPillText">未运行</span>
+          </span>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn small secondary" id="btnCopy">复制全文</button>
+          <button class="btn small secondary" id="btnNew">新会话</button>
         </div>
       </div>
 
-      <button id="btn" class="btn">开始模拟</button>
+      <div class="result-body">
+        <div id="empty" class="muted">点击“开始模拟”，结果会以「卡片+可折叠」方式展示。你也可以继续追问来推演不同分支。</div>
 
-      <div class="hint">提示：如果一直失败，先打开 <code>/api/ping</code> 看后端是否部署成功。</div>
-      <div id="status" class="status">状态：待开始</div>
-      <div id="out" class="out" style="display:none"></div>
+        <div id="result" style="display:none;">
+          <div class="cards" id="cards"></div>
 
-      <div class="footer">
-        RE:LIFE 提供的是基于用户输入的信息推演与理性分析，不构成现实建议、预测或保证。用户需对自身人生决策负责。
+          <div class="follow">
+            <div style="font-weight:900;margin-bottom:8px;">继续追问（在同一会话推演）</div>
+            <input id="followup" placeholder="例如：如果我在上海、预算2万、家里不支持，会怎样？给出可执行方案" />
+            <div class="follow-actions">
+              <button class="btn secondary" id="btnFollow">继续推演</button>
+              <button class="btn secondary" id="btnSummarize">只要更短总结</button>
+            </div>
+            <div class="muted" style="margin-top:8px;">追问会携带本次会话上下文（不需要你重复输入）。</div>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <footer>
+      RE:LIFE 提供的是基于用户输入的情景推演与理性分析，不构成现实建议、预测或保证。<br/>
+      用户需对自身人生决策负责。
+    </footer>
   </div>
 
 <script>
+(() => {
+  // -------------------------
+  // Config
+  // -------------------------
+  const API_URL = "/api/generate";
+  const HISTORY_KEY = "relife_history_v1";
+  const SESSION_KEY = "relife_session_v1";
+
+  // -------------------------
+  // DOM
+  // -------------------------
   const $ = (id) => document.getElementById(id);
 
-  async function checkPing() {
-    try {
-      const r = await fetch("/api/ping", { method: "GET" });
-      const text = await r.text();
-      $("status").textContent = `状态：PING ${r.status}\n${text}`;
-      return r.ok;
-    } catch (e) {
-      $("status").textContent = `状态：PING 请求失败\n${e?.message || e}`;
-      return false;
+  const el = {
+    bg: $("bg"),
+    backTo: $("backTo"),
+    timeline: $("timeline"),
+    resources: $("resources"),
+    btnRun: $("btnRun"),
+    status: $("status"),
+
+    pill: $("pill"),
+    pillText: $("pillText"),
+    apiPill: $("apiPill"),
+    apiPillText: $("apiPillText"),
+
+    empty: $("empty"),
+    result: $("result"),
+    cards: $("cards"),
+
+    followup: $("followup"),
+    btnFollow: $("btnFollow"),
+    btnSummarize: $("btnSummarize"),
+
+    history: $("history"),
+    btnClear: $("btnClear"),
+    btnExport: $("btnExport"),
+
+    btnCopy: $("btnCopy"),
+    btnNew: $("btnNew"),
+  };
+
+  // -------------------------
+  // State
+  // -------------------------
+  let session = loadJSON(SESSION_KEY, null); // { id, createdAt, inputs, turns: [{q,a,ts}] }
+  if (!session) session = newSession();
+
+  renderHistory();
+  renderSessionToInputs(session);
+
+  // -------------------------
+  // UI helpers
+  // -------------------------
+  function setTopPill(state, text){
+    el.pill.classList.remove("ok","bad");
+    el.pillText.textContent = text || "";
+    const dot = el.pill.querySelector(".dot");
+    if (state === "ok") { el.pill.classList.add("ok"); dot.style.background="rgba(34,197,94,.9)"; }
+    else if (state === "bad") { el.pill.classList.add("bad"); dot.style.background="rgba(239,68,68,.9)"; }
+    else { dot.style.background="rgba(255,255,255,.25)"; }
+  }
+  function setApiPill(state, text){
+    el.apiPill.classList.remove("ok","bad");
+    el.apiPillText.textContent = text || "";
+    const dot = el.apiPill.querySelector(".dot");
+    if (state === "ok") { el.apiPill.classList.add("ok"); dot.style.background="rgba(34,197,94,.9)"; }
+    else if (state === "bad") { el.apiPill.classList.add("bad"); dot.style.background="rgba(239,68,68,.9)"; }
+    else { dot.style.background="rgba(255,255,255,.25)"; }
+  }
+
+  function showStatus(msg){
+    el.status.style.display = "block";
+    el.status.textContent = msg;
+  }
+  function hideStatus(){
+    el.status.style.display = "none";
+    el.status.textContent = "";
+  }
+
+  function showResultCards(cards){
+    el.empty.style.display = "none";
+    el.result.style.display = "block";
+    el.cards.innerHTML = "";
+    cards.forEach((c, idx) => {
+      const d = document.createElement("details");
+      d.open = idx === 0; // 默认展开第一张
+      const s = document.createElement("summary");
+      const left = document.createElement("div");
+      left.className = "sum-title";
+      left.textContent = c.title || `内容 ${idx+1}`;
+      const right = document.createElement("div");
+      right.className = "sum-meta";
+      right.textContent = c.meta || "";
+      s.appendChild(left);
+      s.appendChild(right);
+      const p = document.createElement("div");
+      p.className = "panel";
+      p.textContent = c.body || "";
+      d.appendChild(s);
+      d.appendChild(p);
+      el.cards.appendChild(d);
+    });
+  }
+
+  function getInputs(){
+    return {
+      background: el.bg.value.trim(),
+      timeline: el.timeline.value.trim(),
+      backTo: el.backTo.value.trim(),
+      resources: el.resources.value.trim(),
+    };
+  }
+
+  function validateInputs(inputs){
+    if (!inputs.background) return "请填写：个人背景";
+    if (!inputs.timeline) return "请填写：人生经历时间线";
+    if (!inputs.backTo) return "请填写：想回到的时间点";
+    return null;
+  }
+
+  // -------------------------
+  // History
+  // -------------------------
+  function loadHistory(){
+    return loadJSON(HISTORY_KEY, []);
+  }
+  function saveHistory(list){
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  }
+  function pushHistory(sess){
+    const list = loadHistory();
+    const slim = {
+      id: sess.id,
+      createdAt: sess.createdAt,
+      inputs: sess.inputs,
+      lastAt: Date.now(),
+      preview: previewText(sess),
+      turns: sess.turns || [],
+    };
+    // upsert
+    const idx = list.findIndex(x => x.id === slim.id);
+    if (idx >= 0) list[idx] = slim;
+    else list.unshift(slim);
+
+    // limit
+    while(list.length > 30) list.pop();
+    saveHistory(list);
+  }
+
+  function renderHistory(){
+    const list = loadHistory();
+    el.history.innerHTML = "";
+    if (!list.length){
+      el.history.innerHTML = `<div class="muted">暂无历史。完成一次模拟后会自动保存。</div>`;
+      return;
+    }
+    list.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "history-item";
+      div.innerHTML = `
+        <div class="history-title">${new Date(item.createdAt).toLocaleString()}</div>
+        <div class="history-sub">${escapeHtml(item.preview || "（无预览）")}</div>
+      `;
+      div.addEventListener("click", () => {
+        // load to current session
+        session = {
+          id: item.id,
+          createdAt: item.createdAt,
+          inputs: item.inputs,
+          turns: item.turns || [],
+        };
+        saveSession(session);
+        renderSessionToInputs(session);
+        renderTurns(session);
+        setTopPill("ok", "已载入历史");
+      });
+      el.history.appendChild(div);
+    });
+  }
+
+  function previewText(sess){
+    const i = sess.inputs || {};
+    const bg = (i.background || "").slice(0, 38);
+    const bt = (i.backTo || "").slice(0, 22);
+    return `${bg}${bg.length>=38?"…":""} ｜ 回到：${bt}${bt.length>=22?"…":""}`;
+  }
+
+  // -------------------------
+  // Session
+  // -------------------------
+  function newSession(){
+    return {
+      id: "s_" + Math.random().toString(36).slice(2) + Date.now().toString(36),
+      createdAt: Date.now(),
+      inputs: { background:"", timeline:"", backTo:"", resources:"" },
+      turns: [],
+    };
+  }
+  function saveSession(sess){
+    localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
+  }
+  function renderSessionToInputs(sess){
+    const i = sess.inputs || {};
+    el.bg.value = i.background || "";
+    el.timeline.value = i.timeline || "";
+    el.backTo.value = i.backTo || "";
+    el.resources.value = i.resources || "";
+    renderTurns(sess);
+  }
+
+  function renderTurns(sess){
+    // 把最后一次回答展示为卡片
+    if (!sess.turns || !sess.turns.length){
+      el.empty.style.display = "block";
+      el.result.style.display = "none";
+      setApiPill(null, "未运行");
+      return;
+    }
+    const last = sess.turns[sess.turns.length - 1];
+    const text = last.a || "";
+    const cards = toCards(text, sess.turns.length);
+    showResultCards(cards);
+    setApiPill("ok", `已生成 · 第 ${sess.turns.length} 次`);
+  }
+
+  // -------------------------
+  // API
+  // -------------------------
+  async function callGenerate(payload){
+    const r = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    // 兼容：后端可能返回 HTML（比如 405 / 502）
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    if (!ct.includes("application/json")){
+      const t = await r.text();
+      const short = t.slice(0, 1200);
+      throw new Error(`HTTP ${r.status}：\n${short}`);
+    }
+
+    const data = await r.json();
+
+    // 兼容各种字段
+    const text =
+      data.text ||
+      data.result ||
+      data.content ||
+      data.message ||
+      (data.choices && data.choices[0] && (data.choices[0].message?.content || data.choices[0].text)) ||
+      "";
+
+    if (!r.ok){
+      throw new Error(`HTTP ${r.status}：${text || JSON.stringify(data).slice(0,800)}`);
+    }
+    if (!text) {
+      throw new Error("后端未返回可显示的文本（text/result/content 为空）");
+    }
+    return { raw: data, text };
+  }
+
+  async function runInitial(){
+    hideStatus();
+    setTopPill(null, "请求中…");
+    setApiPill(null, "生成中…");
+    el.btnRun.disabled = true;
+
+    try{
+      const inputs = getInputs();
+      const err = validateInputs(inputs);
+      if (err) throw new Error(err);
+
+      // persist inputs into session
+      session.inputs = inputs;
+      saveSession(session);
+
+      const payload = {
+        type: "initial",
+        inputs,
+        // 你后端如果支持 mode/tone，可加上
+        // tone: "rational_empathy",
+      };
+
+      const { text } = await callGenerate(payload);
+
+      // store turn
+      session.turns.push({ q: "开始模拟", a: text, ts: Date.now() });
+      saveSession(session);
+      pushHistory(session);
+      renderHistory();
+      renderTurns(session);
+
+      setTopPill("ok", "完成");
+      hideStatus();
+    }catch(e){
+      setTopPill("bad", "失败");
+      setApiPill("bad", "失败");
+      showStatus(String(e.message || e));
+    }finally{
+      el.btnRun.disabled = false;
     }
   }
 
-  async function generate(payload) {
-    const r = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const dataText = await r.text();
-    let data;
-    try { data = JSON.parse(dataText); } catch { data = { raw: dataText }; }
-    return { ok: r.ok, status: r.status, data };
+  async function runFollowup(mode){
+    hideStatus();
+    setTopPill(null, "请求中…");
+    setApiPill(null, "推演中…");
+    el.btnFollow.disabled = true;
+    el.btnSummarize.disabled = true;
+
+    try{
+      const q = el.followup.value.trim();
+      if (!q) throw new Error("请输入追问内容");
+      // ensure session has base inputs
+      const err = validateInputs(session.inputs || {});
+      if (err) throw new Error("请先完成一次“开始模拟”，再追问。");
+
+      const payload = {
+        type: "followup",
+        inputs: session.inputs,
+        history: session.turns.slice(-6), // 带最近几轮上下文（防止太长）
+        followup: q,
+        mode: mode || "normal", // normal | summarize
+      };
+
+      const { text } = await callGenerate(payload);
+
+      session.turns.push({ q, a: text, ts: Date.now() });
+      saveSession(session);
+      pushHistory(session);
+      renderHistory();
+      renderTurns(session);
+
+      setTopPill("ok", "完成");
+      hideStatus();
+      el.followup.value = "";
+    }catch(e){
+      setTopPill("bad", "失败");
+      setApiPill("bad", "失败");
+      showStatus(String(e.message || e));
+    }finally{
+      el.btnFollow.disabled = false;
+      el.btnSummarize.disabled = false;
+    }
   }
 
-  $("btn").addEventListener("click", async () => {
-    $("out").style.display = "none";
-    $("out").textContent = "";
+  // -------------------------
+  // Text -> Cards
+  // -------------------------
+  function toCards(text, turnNo){
+    // 尝试按 markdown 标题拆分：### / #### / ## / 1) 2) 3)
+    const clean = (text || "").replace(/\r\n/g, "\n").trim();
 
-    const payload = {
-      background: $("background").value.trim(),
-      timeline: $("timeline").value.trim(),
-      target: $("target").value.trim(),
-      resources: $("resources").value.trim()
+    // 如果有明显标题，就按标题拆
+    const lines = clean.split("\n");
+    const blocks = [];
+    let cur = { title: `第 ${turnNo} 次结果`, body: "" };
+
+    const pushCur = () => {
+      if (cur && (cur.body.trim() || cur.title)) blocks.push({
+        title: cur.title || "内容",
+        body: cur.body.trim(),
+        meta: cur.meta || ""
+      });
     };
 
-    if (!payload.background || !payload.timeline || !payload.target) {
-      $("status").textContent = "状态：请填写【个人背景】、【人生经历时间线】、【想回到的时间点】";
-      return;
-    }
+    const titleFromLine = (ln) => {
+      // markdown
+      const m1 = ln.match(/^\s*#{2,4}\s+(.+?)\s*$/);
+      if (m1) return m1[1].trim();
+      // numbered section like "1) xxx" / "1. xxx" / "### 1) xxx"
+      const m2 = ln.match(/^\s*(?:\d+)[\)\.\、]\s*(.+?)\s*$/);
+      if (m2) return m2[1].trim();
+      // Chinese-style "一、xxx"
+      const m3 = ln.match(/^\s*[一二三四五六七八九十]+[、\.]\s*(.+?)\s*$/);
+      if (m3) return m3[1].trim();
+      return null;
+    };
 
-    $("btn").disabled = true;
-    $("status").textContent = "状态：检查后端 /api/ping ...";
-    const pingOK = await checkPing();
-    if (!pingOK) {
-      $("btn").disabled = false;
-      return;
-    }
-
-    $("status").textContent = "状态：生成中（/api/generate）...";
-    try {
-      const r = await generate(payload);
-      if (!r.ok) {
-        $("status").textContent = `状态：生成失败 HTTP ${r.status}\n${JSON.stringify(r.data, null, 2)}`;
-        $("btn").disabled = false;
-        return;
+    for (let i=0;i<lines.length;i++){
+      const ln = lines[i];
+      const t = titleFromLine(ln);
+      if (t){
+        // new card
+        pushCur();
+        cur = { title: t, body: "" };
+      } else {
+        cur.body += (cur.body ? "\n" : "") + ln;
       }
-      $("status").textContent = `状态：完成 ✅ HTTP ${r.status}`;
-      $("out").style.display = "block";
-      $("out").textContent = r.data?.result || "(无内容)";
-    } catch (e) {
-      $("status").textContent = `状态：生成请求异常\n${e?.message || e}`;
-    } finally {
-      $("btn").disabled = false;
     }
+    pushCur();
+
+    // 如果拆出来太少，补一个“原文”
+    if (blocks.length <= 1){
+      return [{
+        title: `第 ${turnNo} 次结果`,
+        meta: "可折叠查看",
+        body: clean
+      }];
+    }
+
+    // 给第一张卡加 meta
+    blocks[0].meta = "建议先看这一张";
+    return blocks;
+  }
+
+  // -------------------------
+  // Utils
+  // -------------------------
+  function loadJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    }catch{
+      return fallback;
+    }
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+
+  // -------------------------
+  // Events
+  // -------------------------
+  el.btnRun.addEventListener("click", runInitial);
+
+  el.btnFollow.addEventListener("click", () => runFollowup("normal"));
+  el.btnSummarize.addEventListener("click", () => runFollowup("summarize"));
+
+  el.btnClear.addEventListener("click", () => {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+    setTopPill(null, "已清空历史");
   });
+
+  el.btnExport.addEventListener("click", () => {
+    const list = loadHistory();
+    const blob = new Blob([JSON.stringify(list, null, 2)], { type:"application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "relife_history.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  el.btnCopy.addEventListener("click", async () => {
+    if (!session.turns.length) return;
+    const t = session.turns[session.turns.length - 1].a || "";
+    await navigator.clipboard.writeText(t);
+    setApiPill("ok", "已复制到剪贴板");
+    setTimeout(()=>setApiPill("ok", `已生成 · 第 ${session.turns.length} 次`), 900);
+  });
+
+  el.btnNew.addEventListener("click", () => {
+    session = newSession();
+    saveSession(session);
+    renderSessionToInputs(session);
+    el.followup.value = "";
+    hideStatus();
+    setTopPill(null, "新会话");
+  });
+
+  // auto-update pill when typing
+  ["input","change"].forEach(evt=>{
+    [el.bg, el.timeline, el.backTo, el.resources].forEach(x=>{
+      x.addEventListener(evt, () => setTopPill(null, "已编辑"));
+    });
+  });
+
+  // initial pills
+  setTopPill(null, "已载入");
+})();
 </script>
 </body>
 </html>
