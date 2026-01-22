@@ -1,182 +1,193 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RE:LIFE | 回环</title>
-  <style>
-    :root{--bg:#0B1220;--card:#0E1628;--border:#1C2433;--text:#E6EAF2;--muted:#A7B0C0;--primary:#4C6FFF;}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI','Noto Sans SC',sans-serif;line-height:1.6}
-    main{max-width:920px;margin:0 auto;padding:28px 16px 60px}
-    h1{margin:0 0 6px}
-    .subtitle{color:var(--muted);font-size:14px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
-    label{display:block;margin-top:12px;font-size:14px;color:var(--muted)}
-    input,textarea{width:100%;margin-top:6px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0B1220;color:var(--text);resize:vertical}
-    button{margin-top:16px;width:100%;padding:12px;border-radius:12px;border:none;background:var(--primary);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
-    button:disabled{opacity:.6;cursor:not-allowed}
-    .status{font-size:13px;color:var(--muted);margin-top:10px}
-    .status b{color:var(--text)}
-    .error{color:#ffb4b4}
-    .ok{color:#b7f7d2}
-    .branch{border-left:4px solid var(--primary);padding-left:12px;margin:14px 0}
-    .branch h3{margin:4px 0 8px}
-    .kv{margin:4px 0}
-    .small{color:var(--muted);font-size:13px;white-space:pre-wrap}
-    footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--border);color:var(--muted);font-size:12px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RE:LIFE | 回环 · 命运模拟器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* 采用附件档案定义的品牌规范 */
+        :root {
+            --bg: #0B1220;
+            --card: #0E1628;
+            --text: #E6EAF2;
+            --muted: #A7B0C0;
+            --primary: #4C6FFF;
+            --accent: #22D3EE;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            width: 100%;
+            max-width: 550px;
+        }
+        .card {
+            background: var(--card);
+            padding: 35px;
+            border-radius: 20px;
+            border: 1px solid #1C2433;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .header {
+            text-align: center;
+            font-weight: 800;
+            font-size: 24px;
+            letter-spacing: 6px;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(76, 111, 255, 0.3);
+        }
+        .tagline {
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        textarea {
+            width: 100%;
+            height: 140px;
+            padding: 18px;
+            background: #0a0f1d;
+            border: 1px solid #1C2433;
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        textarea:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(34, 211, 238, 0.1); }
+        
+        button {
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover { background: #3b5bdb; transform: translateY(-1px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        #resultWrapper { margin-top: 35px; display: none; }
+        #captureArea { 
+            background: var(--card); 
+            padding: 30px; 
+            border-radius: 16px; 
+            border: 1px solid #1C2433;
+            position: relative;
+        }
+        #captureArea::after {
+            content: "RESETLIFE.BLOG | NARRATIVE ENGINE";
+            position: absolute; bottom: 10px; right: 15px; font-size: 9px; color: #24314a;
+        }
+        #resultText { font-size: 16px; color: var(--text); white-space: pre-wrap; line-height: 2; }
+        .cursor { display: inline-block; width: 2px; height: 18px; background: var(--accent); margin-left: 4px; vertical-align: middle; animation: blink 0.8s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        #downloadBtn {
+            margin-top: 15px;
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-<main>
-  <h1>RE:LIFE｜回环</h1>
-  <div class="subtitle">理性人生模拟 · 非算命 · 非保证</div>
+    <div class="container">
+        <div class="card">
+            <div class="header">RE:LIFE | 回环</div>
+            <div class="tagline">World Model → Policy Engine → Simulation</div>
+            
+            <textarea id="expInput" placeholder="输入你想要重塑的人生节点经历..."></textarea>
+            <button id="mainBtn" onclick="generatePlot()">执行模拟回路</button>
 
-  <div class="card">
-    <h3>你的信息</h3>
-
-    <label>个人背景</label>
-    <input id="persona" placeholder="例如：28岁，普通本科，二线城市">
-
-    <label>人生经历时间线</label>
-    <textarea id="timeline" rows="4" placeholder="例如：22岁毕业 → 第一份工作3年 → 转行失败 → 当前迷茫"></textarea>
-
-    <label>想回到的时间点</label>
-    <input id="rewind" placeholder="例如：24岁，是否换城市">
-
-    <label>能力 / 资源（可选）</label>
-    <input id="traits" placeholder="例如：执行力中等，家庭支持有限">
-
-    <button id="runBtn">开始模拟</button>
-
-    <div id="status" class="status"><b>状态：</b>等待输入</div>
-    <div id="debug" class="small"></div>
-  </div>
-
-  <div id="result"></div>
-
-  <footer>
-    RE:LIFE 提供的是基于用户输入的情景推演与理性分析，不构成现实建议、预测或保证。<br/>
-    用户需对自身人生决策负责。
-  </footer>
-</main>
-
-<script>
-  const $ = (id)=>document.getElementById(id);
-  const personaEl = $("persona");
-  const timelineEl = $("timeline");
-  const rewindEl  = $("rewind");
-  const traitsEl  = $("traits");
-  const runBtn    = $("runBtn");
-  const statusEl  = $("status");
-  const debugEl   = $("debug");
-  const resultEl  = $("result");
-
-  let history = [];
-
-  function setStatus(text, cls){
-    statusEl.className = "status " + (cls || "");
-    statusEl.innerHTML = "<b>状态：</b>" + text;
-  }
-  function setDebug(text){
-    debugEl.textContent = text || "";
-  }
-  function safe(v){ return (v ?? "").toString(); }
-
-  runBtn.addEventListener("click", runSim);
-
-  async function runSim(){
-    setDebug("");
-    resultEl.innerHTML = "";
-
-    const persona = safe(personaEl.value).trim();
-    const timeline = safe(timelineEl.value).trim();
-    const rewind = safe(rewindEl.value).trim();
-    const traits = safe(traitsEl.value).trim();
-
-    if(!persona || !timeline || !rewind){
-      setStatus("请至少填写：个人背景 / 经历时间线 / 回到时间点", "error");
-      return;
-    }
-
-    runBtn.disabled = true;
-    runBtn.textContent = "推演中…";
-    setStatus("POST /api/generate 已发送…", "");
-
-    try{
-      const payload = {
-        persona,
-        timeline,
-        rewind_point: rewind,
-        traits,
-        history
-      };
-
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify(payload),
-      });
-
-      const raw = await res.text();           // 先拿原文，方便诊断
-      let data = null;
-      try { data = JSON.parse(raw); } catch {}
-
-      if(!res.ok){
-        setStatus(`HTTP ${res.status}：请求失败`, "error");
-        setDebug(raw.slice(0, 800));
-        return;
-      }
-
-      if(!data || data.success !== true){
-        setStatus("后端返回格式不符合预期（请看 debug）", "error");
-        setDebug(raw.slice(0, 800));
-        return;
-      }
-
-      setStatus("推演成功 ✅", "ok");
-      history.push({ role:"assistant", content: JSON.stringify(data.data) });
-      render(data.data);
-
-    }catch(e){
-      console.error(e);
-      setStatus("前端异常：" + (e?.message || e), "error");
-    }finally{
-      runBtn.disabled = false;
-      runBtn.textContent = "开始模拟";
-    }
-  }
-
-  function render(d){
-    const branches = Array.isArray(d?.branches) ? d.branches : [];
-    if(branches.length === 0){
-      resultEl.innerHTML = `<div class="card"><b>没有分支数据</b><div class="small">后端未返回 branches[]</div></div>`;
-      return;
-    }
-
-    resultEl.innerHTML = branches.map((b,i)=>{
-      const risks = Array.isArray(b?.risks) ? b.risks.join("、") : safe(b?.risks);
-      return `
-        <div class="card branch">
-          <h3>分支 ${i+1}：${safe(b?.title)}</h3>
-          <div class="kv"><b>关键选择：</b>${safe(b?.key_choice)}</div>
-          <div class="kv"><b>中期结果：</b>${safe(b?.mid_result)}</div>
-          <div class="kv"><b>长期走向：</b>${safe(b?.long_term)}</div>
-          <div class="kv"><b>概率区间：</b>${safe(b?.probability)}</div>
-          <div class="kv"><b>主要风险：</b>${risks}</div>
-          <div class="small">因果解释：${safe(b?.why)}</div>
+            <div id="resultWrapper">
+                <div id="captureArea">
+                    <div id="resultText"></div>
+                </div>
+                <button id="downloadBtn" onclick="downloadCard()">导出命运报告 (.PNG)</button>
+            </div>
         </div>
-      `;
-    }).join("");
+    </div>
 
-    const overall = Array.isArray(d?.overall_risks) ? d.overall_risks.join("、") : safe(d?.overall_risks);
-    resultEl.innerHTML += `
-      <div class="card">
-        <b>整体风险提示：</b> ${overall || "（未提供）"}
-        <p class="small">${safe(d?.summary)}</p>
-      </div>
-    `;
-  }
-</script>
+    <script>
+        // 打字机渲染
+        function typeWriter(text, i, fnCallback) {
+            const ele = document.getElementById("resultText");
+            if (i < text.length) {
+                ele.innerHTML = text.substring(0, i+1) + '<span class="cursor"></span>';
+                setTimeout(() => typeWriter(text, i + 1, fnCallback), 40);
+            } else if (typeof fnCallback == 'function') {
+                ele.innerHTML = text; 
+                fnCallback();
+            }
+        }
+
+        async function generatePlot() {
+            const input = document.getElementById('expInput').value;
+            const btn = document.getElementById('mainBtn');
+            const wrapper = document.getElementById('resultWrapper');
+            const textDiv = document.getElementById('resultText');
+
+            if (!input.trim()) return alert("请输入经历");
+
+            btn.disabled = true;
+            btn.innerText = '计算概率分布中...';
+            wrapper.style.display = 'block';
+            textDiv.innerHTML = '<span style="color:var(--muted)">命运引擎初始化...</span>';
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ experience: input })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    typeWriter(data.story, 0, () => {
+                        btn.disabled = false;
+                        btn.innerText = '再次模拟人生';
+                    });
+                } else {
+                    textDiv.innerHTML = "推演中断: " + (data.error || "未知波动");
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                textDiv.innerHTML = "时空节点丢失，请重试";
+                btn.disabled = false;
+            }
+        }
+
+        function downloadCard() {
+            const area = document.getElementById('captureArea');
+            html2canvas(area, {
+                backgroundColor: "#0E1628",
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'RE_LIFE_REPORT.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+    </script>
 </body>
 </html>
