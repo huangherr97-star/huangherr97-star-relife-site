@@ -1,774 +1,219 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RE:LIFE | 回环</title>
-  <style>
-    :root{
-      --bg:#0B1220;
-      --panel:#0f1a2c;
-      --panel2:#0c1526;
-      --text:#EAF0FF;
-      --muted:#9FB1D1;
-      --line:rgba(255,255,255,.08);
-      --primary:#4C6FFF;
-      --primary2:#2D4DFF;
-      --warn:#F59E0B;
-      --ok:#22C55E;
-      --danger:#EF4444;
-      --shadow:0 10px 40px rgba(0,0,0,.35);
-      --radius:18px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
-      background: radial-gradient(1200px 600px at 50% -10%, rgba(76,111,255,.25), transparent 60%),
-                  radial-gradient(900px 500px at 15% 20%, rgba(34,211,238,.12), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-    }
-    .wrap{max-width:1040px;margin:0 auto;padding:34px 18px 60px}
-    header{margin-bottom:18px}
-    h1{margin:0;font-size:42px;letter-spacing:.5px}
-    .subtitle{margin-top:8px;color:var(--muted)}
-    .grid{display:grid;grid-template-columns: 1.15fr .85fr;gap:18px;align-items:start}
-    @media (max-width: 980px){.grid{grid-template-columns:1fr}}
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border:1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .card-hd{
-      padding:18px 18px 10px;
-      border-bottom:1px solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-    .card-hd h2{margin:0;font-size:18px}
-    .card-bd{padding:16px 18px 18px}
-    label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
-    input, textarea, select{
-      width:100%;
-      background: rgba(0,0,0,.18);
-      border:1px solid rgba(255,255,255,.10);
-      color:var(--text);
-      border-radius: 12px;
-      padding:12px 12px;
-      outline:none;
-    }
-    textarea{min-height:120px;resize:vertical;line-height:1.45}
-    input:focus, textarea:focus, select:focus{border-color: rgba(76,111,255,.65);box-shadow:0 0 0 3px rgba(76,111,255,.18)}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    @media (max-width: 720px){.row{grid-template-columns:1fr}}
-    .btn{
-      background: linear-gradient(180deg, var(--primary), var(--primary2));
-      border:none;color:white;
-      padding:12px 14px;border-radius: 12px;
-      cursor:pointer;font-weight:700;
-      width:100%;
-      transition: transform .06s ease;
-    }
-    .btn:active{transform: translateY(1px)}
-    .btn.secondary{
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.12);
-      font-weight:600;
-    }
-    .btn.small{width:auto;padding:9px 12px;font-size:13px}
-    .btn.danger{
-      background: rgba(239,68,68,.12);
-      border:1px solid rgba(239,68,68,.28);
-      color:#ffd7d7;
-      font-weight:700;
-    }
-    .muted{color:var(--muted);font-size:13px}
-    .hint{
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:12px;
-      background: rgba(245,158,11,.08);
-      border:1px solid rgba(245,158,11,.22);
-      color:#ffe8b7;
-      font-size:13px;
-    }
-    .status{
-      margin-top:12px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.16);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size:12px;
-      white-space:pre-wrap;
-      word-break:break-word;
+export default async function handler(req, res) {
+  // ---- CORS ----
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Max-Age", "86400");
+
+  if (req.method === "OPTIONS") return res.status(200).end();
+
+  // ---- GET: health check ----
+  if (req.method === "GET") {
+    return res.status(200).json({
+      ok: true,
+      msg: "RE:LIFE generate endpoint is alive",
+      ts: new Date().toISOString(),
+    });
+  }
+
+  // ---- Only POST below ----
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method Not Allowed", allow: ["GET", "POST", "OPTIONS"] });
+  }
+
+  try {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "Missing OPENAI_API_KEY in Vercel Environment Variables",
+        detail: "请到 Vercel 项目 Settings -> Environment Variables 添加 OPENAI_API_KEY",
+      });
     }
 
-    /* result */
-    .result-shell{padding:0}
-    .result-top{
-      padding:14px 18px;
-      display:flex;gap:10px;align-items:center;justify-content:space-between;
-      border-bottom:1px solid var(--line);
-      background: rgba(0,0,0,.12);
+    // 兼容：body 可能是对象、也可能是字符串（某些场景）
+    const body = typeof req.body === "string" ? safeParse(req.body) : (req.body || {});
+    const normalized = normalizeBody(body);
+
+    const missing = [];
+    if (!normalized.background) missing.push("background");
+    if (!normalized.timeline) missing.push("timeline");
+    if (!normalized.target) missing.push("target");
+
+    if (missing.length) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        need: missing,
+        hint: "请确保提交 background/timeline/target（或 inputs.background/inputs.timeline/inputs.backTo）",
+        gotKeys: Object.keys(body || {}),
+      });
     }
-    .pill{
-      display:inline-flex;align-items:center;gap:6px;
-      padding:6px 10px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.05);
-      color: var(--muted);
-      font-size:12px;
-    }
-    .pill .dot{width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,.25)}
-    .pill.ok .dot{background: rgba(34,197,94,.9)}
-    .pill.bad .dot{background: rgba(239,68,68,.9)}
-    .result-body{padding:16px 18px 18px}
-    .cards{display:flex;flex-direction:column;gap:12px}
-    details{
-      border:1px solid rgba(255,255,255,.10);
-      border-radius: 14px;
-      overflow:hidden;
-      background: rgba(0,0,0,.14);
-    }
-    summary{
-      cursor:pointer;
-      list-style:none;
-      padding:12px 12px;
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      user-select:none;
-    }
-    summary::-webkit-details-marker{display:none}
-    .sum-title{font-weight:800}
-    .sum-meta{color:var(--muted);font-size:12px}
-    .panel{
-      border-top:1px solid rgba(255,255,255,.08);
-      padding:12px 12px 12px;
-      line-height:1.65;
-      color:#e8f0ff;
-      white-space:pre-wrap;
-      word-break:break-word;
-    }
-    .kv{display:grid;grid-template-columns:120px 1fr;gap:8px 12px;margin:0}
-    .kv div{padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.08)}
-    .kv div:nth-last-child(-n+2){border-bottom:none}
-    .kv .k{color:var(--muted);font-size:12px}
-    .kv .v{color:var(--text)}
-    .follow{
-      margin-top:14px;
-      border-top:1px solid var(--line);
-      padding-top:14px;
-    }
-    .follow-actions{display:flex;gap:10px;margin-top:10px}
-    @media (max-width:720px){.follow-actions{flex-direction:column}}
-    .history{
-      display:flex;flex-direction:column;gap:10px;
-    }
-    .history-item{
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.14);
-      cursor:pointer;
-    }
-    .history-item:hover{border-color:rgba(76,111,255,.45)}
-    .history-title{font-weight:800}
-    .history-sub{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.35}
-    footer{margin-top:20px;color:var(--muted);font-size:12px;line-height:1.6}
-    .split{height:1px;background:rgba(255,255,255,.08);margin:18px 0}
-  </style>
-</head>
 
-<body>
-  <div class="wrap">
-    <header>
-      <h1>RE:LIFE | 回环</h1>
-      <div class="subtitle">理性人生模拟 · 非算命 · 非保证</div>
-    </header>
+    const model = process.env.OPENAI_MODEL || "gpt-4o-mini"; // 你也可以在 Vercel env 里改
+    const temperature = clamp(Number(process.env.OPENAI_TEMPERATURE ?? 0.7), 0, 2);
 
-    <div class="grid">
-      <!-- left: input -->
-      <section class="card">
-        <div class="card-hd">
-          <h2>你的信息</h2>
-          <span class="pill" id="pill">
-            <span class="dot"></span>
-            <span id="pillText">待输入</span>
-          </span>
-        </div>
-        <div class="card-bd">
-          <div class="row">
-            <div>
-              <label>个人背景（简短）</label>
-              <input id="bg" placeholder="例如：28岁，工作3年，想转行…" />
-            </div>
-            <div>
-              <label>想回到的时间点</label>
-              <input id="backTo" placeholder="例如：18岁高考 / 2020年毕业前…" />
-            </div>
-          </div>
+    const system = buildSystemPrompt(normalized.mode);
+    const user = buildUserPrompt(normalized);
 
-          <label>人生经历时间线（越具体越好）</label>
-          <textarea id="timeline" placeholder="按时间写：2015… 2019… 2022…（关键事件、选择、结果、遗憾）"></textarea>
+    const out = await callOpenAIResponses({
+      apiKey,
+      model,
+      temperature,
+      system,
+      user,
+    });
 
-          <label>能力 / 资源（可选）</label>
-          <input id="resources" placeholder="例如：家人支持、存款、学历、技能、人脉、城市…" />
+    return res.status(200).json({
+      ok: true,
+      text: out,
+    });
+  } catch (err) {
+    const msg = err?.message || String(err);
+    return res.status(500).json({
+      error: "Server error",
+      message: msg,
+    });
+  }
+}
 
-          <div class="hint">
-            提示：如果一直失败，请先打开 <b>/api/ping</b> 看是否返回 PING OK。
-          </div>
+// ---------------- helpers ----------------
 
-          <div style="margin-top:12px;">
-            <button class="btn" id="btnRun">开始模拟</button>
-          </div>
+function safeParse(s) {
+  try { return JSON.parse(s); } catch { return {}; }
+}
 
-          <div class="status" id="status" style="display:none;"></div>
-        </div>
-      </section>
+function clamp(n, a, b) {
+  if (Number.isNaN(n)) return a;
+  return Math.max(a, Math.min(b, n));
+}
 
-      <!-- right: history -->
-      <aside class="card">
-        <div class="card-hd">
-          <h2>本地历史</h2>
-          <div style="display:flex;gap:10px;align-items:center;">
-            <button class="btn small secondary" id="btnExport">导出</button>
-            <button class="btn small danger" id="btnClear">清空</button>
-          </div>
-        </div>
-        <div class="card-bd">
-          <div class="muted" style="margin-bottom:10px;">自动保存在你的浏览器（localStorage）。</div>
-          <div class="history" id="history"></div>
-        </div>
-      </aside>
-    </div>
+/**
+ * 兼容输入：
+ * A) { background, timeline, target, resources, mode, followup, history }
+ * B) { inputs: { background, timeline, backTo, resources }, mode, followup, history }
+ */
+function normalizeBody(body) {
+  const inputs = body?.inputs && typeof body.inputs === "object" ? body.inputs : null;
 
-    <div class="split"></div>
+  const background = body.background ?? inputs?.background ?? "";
+  const timeline   = body.timeline   ?? inputs?.timeline   ?? "";
+  const target     = body.target     ?? inputs?.target     ?? inputs?.backTo ?? body.backTo ?? "";
 
-    <!-- result -->
-    <section class="card result-shell">
-      <div class="result-top">
-        <div style="display:flex;gap:10px;align-items:center;">
-          <div style="font-weight:900;">生成结果</div>
-          <span class="pill" id="apiPill">
-            <span class="dot"></span>
-            <span id="apiPillText">未运行</span>
-          </span>
-        </div>
-        <div style="display:flex;gap:10px;">
-          <button class="btn small secondary" id="btnCopy">复制全文</button>
-          <button class="btn small secondary" id="btnNew">新会话</button>
-        </div>
-      </div>
+  const resources  = body.resources  ?? inputs?.resources  ?? "";
+  const mode       = body.mode       ?? "normal";
+  const followup   = body.followup   ?? "";
+  const history    = Array.isArray(body.history) ? body.history : [];
 
-      <div class="result-body">
-        <div id="empty" class="muted">点击“开始模拟”，结果会以「卡片+可折叠」方式展示。你也可以继续追问来推演不同分支。</div>
-
-        <div id="result" style="display:none;">
-          <div class="cards" id="cards"></div>
-
-          <div class="follow">
-            <div style="font-weight:900;margin-bottom:8px;">继续追问（在同一会话推演）</div>
-            <input id="followup" placeholder="例如：如果我在上海、预算2万、家里不支持，会怎样？给出可执行方案" />
-            <div class="follow-actions">
-              <button class="btn secondary" id="btnFollow">继续推演</button>
-              <button class="btn secondary" id="btnSummarize">只要更短总结</button>
-            </div>
-            <div class="muted" style="margin-top:8px;">追问会携带本次会话上下文（不需要你重复输入）。</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      RE:LIFE 提供的是基于用户输入的情景推演与理性分析，不构成现实建议、预测或保证。<br/>
-      用户需对自身人生决策负责。
-    </footer>
-  </div>
-
-<script>
-(() => {
-  // -------------------------
-  // Config
-  // -------------------------
-  const API_URL = "/api/generate";
-  const HISTORY_KEY = "relife_history_v1";
-  const SESSION_KEY = "relife_session_v1";
-
-  // -------------------------
-  // DOM
-  // -------------------------
-  const $ = (id) => document.getElementById(id);
-
-  const el = {
-    bg: $("bg"),
-    backTo: $("backTo"),
-    timeline: $("timeline"),
-    resources: $("resources"),
-    btnRun: $("btnRun"),
-    status: $("status"),
-
-    pill: $("pill"),
-    pillText: $("pillText"),
-    apiPill: $("apiPill"),
-    apiPillText: $("apiPillText"),
-
-    empty: $("empty"),
-    result: $("result"),
-    cards: $("cards"),
-
-    followup: $("followup"),
-    btnFollow: $("btnFollow"),
-    btnSummarize: $("btnSummarize"),
-
-    history: $("history"),
-    btnClear: $("btnClear"),
-    btnExport: $("btnExport"),
-
-    btnCopy: $("btnCopy"),
-    btnNew: $("btnNew"),
+  return {
+    background: String(background || "").trim(),
+    timeline: String(timeline || "").trim(),
+    target: String(target || "").trim(),
+    resources: String(resources || "").trim(),
+    mode: String(mode || "normal").trim(),
+    followup: String(followup || "").trim(),
+    history,
   };
+}
 
-  // -------------------------
-  // State
-  // -------------------------
-  let session = loadJSON(SESSION_KEY, null); // { id, createdAt, inputs, turns: [{q,a,ts}] }
-  if (!session) session = newSession();
+function buildSystemPrompt(mode) {
+  // mode: normal / dry / warm / plan
+  const base = [
+    "你是一个产品化的“人生推演助手”，名字叫 RE:LIFE（回环）。",
+    "你只做基于用户输入的理性推演：给出可行路径、关键变量、风险点、可行动步骤。",
+    "你必须明确：这不是算命，不保证结果，不替用户做决定。",
+    "输出要中文，结构清晰，避免玄学词。",
+  ].join("\n");
 
-  renderHistory();
-  renderSessionToInputs(session);
+  const style = {
+    normal: "语气：冷静中带点共情，短句为主，易读。",
+    dry: "语气：更理性更简洁，少情绪，更多要点。",
+    warm: "语气：更温和更共情，但仍以理性建议为主。",
+    plan: "语气：更产品化。强制用 1/2/3/4/5 分段结构输出，步骤明确。",
+  }[mode] || "语气：冷静中带点共情，短句为主，易读。";
 
-  // -------------------------
-  // UI helpers
-  // -------------------------
-  function setTopPill(state, text){
-    el.pill.classList.remove("ok","bad");
-    el.pillText.textContent = text || "";
-    const dot = el.pill.querySelector(".dot");
-    if (state === "ok") { el.pill.classList.add("ok"); dot.style.background="rgba(34,197,94,.9)"; }
-    else if (state === "bad") { el.pill.classList.add("bad"); dot.style.background="rgba(239,68,68,.9)"; }
-    else { dot.style.background="rgba(255,255,255,.25)"; }
-  }
-  function setApiPill(state, text){
-    el.apiPill.classList.remove("ok","bad");
-    el.apiPillText.textContent = text || "";
-    const dot = el.apiPill.querySelector(".dot");
-    if (state === "ok") { el.apiPill.classList.add("ok"); dot.style.background="rgba(34,197,94,.9)"; }
-    else if (state === "bad") { el.apiPill.classList.add("bad"); dot.style.background="rgba(239,68,68,.9)"; }
-    else { dot.style.background="rgba(255,255,255,.25)"; }
-  }
+  return `${base}\n${style}`;
+}
 
-  function showStatus(msg){
-    el.status.style.display = "block";
-    el.status.textContent = msg;
-  }
-  function hideStatus(){
-    el.status.style.display = "none";
-    el.status.textContent = "";
+function buildUserPrompt(d) {
+  const parts = [
+    `【个人背景】\n${d.background}`,
+    `【人生经历时间线】\n${d.timeline}`,
+    `【目标时间点（想回到）】\n${d.target}`,
+  ];
+  if (d.resources) parts.push(`【能力/资源（可选）】\n${d.resources}`);
+
+  if (d.followup) {
+    parts.push(`【追问】\n${d.followup}`);
   }
 
-  function showResultCards(cards){
-    el.empty.style.display = "none";
-    el.result.style.display = "block";
-    el.cards.innerHTML = "";
-    cards.forEach((c, idx) => {
-      const d = document.createElement("details");
-      d.open = idx === 0; // 默认展开第一张
-      const s = document.createElement("summary");
-      const left = document.createElement("div");
-      left.className = "sum-title";
-      left.textContent = c.title || `内容 ${idx+1}`;
-      const right = document.createElement("div");
-      right.className = "sum-meta";
-      right.textContent = c.meta || "";
-      s.appendChild(left);
-      s.appendChild(right);
-      const p = document.createElement("div");
-      p.className = "panel";
-      p.textContent = c.body || "";
-      d.appendChild(s);
-      d.appendChild(p);
-      el.cards.appendChild(d);
-    });
+  // 历史（可选）
+  if (d.history?.length) {
+    const hist = d.history
+      .slice(-6)
+      .map((t, i) => `#${i + 1}(${t.type || "turn"} @ ${t.t || ""})\n${t.text || ""}`)
+      .join("\n\n");
+    parts.push(`【最近对话摘要（供参考）】\n${hist}`);
   }
 
-  function getInputs(){
-    return {
-      background: el.bg.value.trim(),
-      timeline: el.timeline.value.trim(),
-      backTo: el.backTo.value.trim(),
-      resources: el.resources.value.trim(),
-    };
-  }
+  // 要求输出（兼容 plan 模式）
+  const outputRule = [
+    "请给出：",
+    "1) 关键信息提炼（关键变量/约束）",
+    "2) 3 条最可能路径（每条：短期/中期/长期）",
+    "3) 每条路径的关键风险 & 规避策略",
+    "4) 可执行清单（7天/30天）",
+    "5) 需要补充的信息（最多5条问题）",
+  ].join("\n");
 
-  function validateInputs(inputs){
-    if (!inputs.background) return "请填写：个人背景";
-    if (!inputs.timeline) return "请填写：人生经历时间线";
-    if (!inputs.backTo) return "请填写：想回到的时间点";
-    return null;
-  }
+  return parts.join("\n\n") + "\n\n" + outputRule;
+}
 
-  // -------------------------
-  // History
-  // -------------------------
-  function loadHistory(){
-    return loadJSON(HISTORY_KEY, []);
-  }
-  function saveHistory(list){
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
-  }
-  function pushHistory(sess){
-    const list = loadHistory();
-    const slim = {
-      id: sess.id,
-      createdAt: sess.createdAt,
-      inputs: sess.inputs,
-      lastAt: Date.now(),
-      preview: previewText(sess),
-      turns: sess.turns || [],
-    };
-    // upsert
-    const idx = list.findIndex(x => x.id === slim.id);
-    if (idx >= 0) list[idx] = slim;
-    else list.unshift(slim);
-
-    // limit
-    while(list.length > 30) list.pop();
-    saveHistory(list);
-  }
-
-  function renderHistory(){
-    const list = loadHistory();
-    el.history.innerHTML = "";
-    if (!list.length){
-      el.history.innerHTML = `<div class="muted">暂无历史。完成一次模拟后会自动保存。</div>`;
-      return;
-    }
-    list.forEach(item => {
-      const div = document.createElement("div");
-      div.className = "history-item";
-      div.innerHTML = `
-        <div class="history-title">${new Date(item.createdAt).toLocaleString()}</div>
-        <div class="history-sub">${escapeHtml(item.preview || "（无预览）")}</div>
-      `;
-      div.addEventListener("click", () => {
-        // load to current session
-        session = {
-          id: item.id,
-          createdAt: item.createdAt,
-          inputs: item.inputs,
-          turns: item.turns || [],
-        };
-        saveSession(session);
-        renderSessionToInputs(session);
-        renderTurns(session);
-        setTopPill("ok", "已载入历史");
-      });
-      el.history.appendChild(div);
-    });
-  }
-
-  function previewText(sess){
-    const i = sess.inputs || {};
-    const bg = (i.background || "").slice(0, 38);
-    const bt = (i.backTo || "").slice(0, 22);
-    return `${bg}${bg.length>=38?"…":""} ｜ 回到：${bt}${bt.length>=22?"…":""}`;
-  }
-
-  // -------------------------
-  // Session
-  // -------------------------
-  function newSession(){
-    return {
-      id: "s_" + Math.random().toString(36).slice(2) + Date.now().toString(36),
-      createdAt: Date.now(),
-      inputs: { background:"", timeline:"", backTo:"", resources:"" },
-      turns: [],
-    };
-  }
-  function saveSession(sess){
-    localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
-  }
-  function renderSessionToInputs(sess){
-    const i = sess.inputs || {};
-    el.bg.value = i.background || "";
-    el.timeline.value = i.timeline || "";
-    el.backTo.value = i.backTo || "";
-    el.resources.value = i.resources || "";
-    renderTurns(sess);
-  }
-
-  function renderTurns(sess){
-    // 把最后一次回答展示为卡片
-    if (!sess.turns || !sess.turns.length){
-      el.empty.style.display = "block";
-      el.result.style.display = "none";
-      setApiPill(null, "未运行");
-      return;
-    }
-    const last = sess.turns[sess.turns.length - 1];
-    const text = last.a || "";
-    const cards = toCards(text, sess.turns.length);
-    showResultCards(cards);
-    setApiPill("ok", `已生成 · 第 ${sess.turns.length} 次`);
-  }
-
-  // -------------------------
-  // API
-  // -------------------------
-  async function callGenerate(payload){
-    const r = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    // 兼容：后端可能返回 HTML（比如 405 / 502）
-    const ct = (r.headers.get("content-type") || "").toLowerCase();
-    if (!ct.includes("application/json")){
-      const t = await r.text();
-      const short = t.slice(0, 1200);
-      throw new Error(`HTTP ${r.status}：\n${short}`);
-    }
-
-    const data = await r.json();
-
-    // 兼容各种字段
-    const text =
-      data.text ||
-      data.result ||
-      data.content ||
-      data.message ||
-      (data.choices && data.choices[0] && (data.choices[0].message?.content || data.choices[0].text)) ||
-      "";
-
-    if (!r.ok){
-      throw new Error(`HTTP ${r.status}：${text || JSON.stringify(data).slice(0,800)}`);
-    }
-    if (!text) {
-      throw new Error("后端未返回可显示的文本（text/result/content 为空）");
-    }
-    return { raw: data, text };
-  }
-
-  async function runInitial(){
-    hideStatus();
-    setTopPill(null, "请求中…");
-    setApiPill(null, "生成中…");
-    el.btnRun.disabled = true;
-
-    try{
-      const inputs = getInputs();
-      const err = validateInputs(inputs);
-      if (err) throw new Error(err);
-
-      // persist inputs into session
-      session.inputs = inputs;
-      saveSession(session);
-
-      const payload = {
-        type: "initial",
-        inputs,
-        // 你后端如果支持 mode/tone，可加上
-        // tone: "rational_empathy",
-      };
-
-      const { text } = await callGenerate(payload);
-
-      // store turn
-      session.turns.push({ q: "开始模拟", a: text, ts: Date.now() });
-      saveSession(session);
-      pushHistory(session);
-      renderHistory();
-      renderTurns(session);
-
-      setTopPill("ok", "完成");
-      hideStatus();
-    }catch(e){
-      setTopPill("bad", "失败");
-      setApiPill("bad", "失败");
-      showStatus(String(e.message || e));
-    }finally{
-      el.btnRun.disabled = false;
-    }
-  }
-
-  async function runFollowup(mode){
-    hideStatus();
-    setTopPill(null, "请求中…");
-    setApiPill(null, "推演中…");
-    el.btnFollow.disabled = true;
-    el.btnSummarize.disabled = true;
-
-    try{
-      const q = el.followup.value.trim();
-      if (!q) throw new Error("请输入追问内容");
-      // ensure session has base inputs
-      const err = validateInputs(session.inputs || {});
-      if (err) throw new Error("请先完成一次“开始模拟”，再追问。");
-
-      const payload = {
-        type: "followup",
-        inputs: session.inputs,
-        history: session.turns.slice(-6), // 带最近几轮上下文（防止太长）
-        followup: q,
-        mode: mode || "normal", // normal | summarize
-      };
-
-      const { text } = await callGenerate(payload);
-
-      session.turns.push({ q, a: text, ts: Date.now() });
-      saveSession(session);
-      pushHistory(session);
-      renderHistory();
-      renderTurns(session);
-
-      setTopPill("ok", "完成");
-      hideStatus();
-      el.followup.value = "";
-    }catch(e){
-      setTopPill("bad", "失败");
-      setApiPill("bad", "失败");
-      showStatus(String(e.message || e));
-    }finally{
-      el.btnFollow.disabled = false;
-      el.btnSummarize.disabled = false;
-    }
-  }
-
-  // -------------------------
-  // Text -> Cards
-  // -------------------------
-  function toCards(text, turnNo){
-    // 尝试按 markdown 标题拆分：### / #### / ## / 1) 2) 3)
-    const clean = (text || "").replace(/\r\n/g, "\n").trim();
-
-    // 如果有明显标题，就按标题拆
-    const lines = clean.split("\n");
-    const blocks = [];
-    let cur = { title: `第 ${turnNo} 次结果`, body: "" };
-
-    const pushCur = () => {
-      if (cur && (cur.body.trim() || cur.title)) blocks.push({
-        title: cur.title || "内容",
-        body: cur.body.trim(),
-        meta: cur.meta || ""
-      });
-    };
-
-    const titleFromLine = (ln) => {
-      // markdown
-      const m1 = ln.match(/^\s*#{2,4}\s+(.+?)\s*$/);
-      if (m1) return m1[1].trim();
-      // numbered section like "1) xxx" / "1. xxx" / "### 1) xxx"
-      const m2 = ln.match(/^\s*(?:\d+)[\)\.\、]\s*(.+?)\s*$/);
-      if (m2) return m2[1].trim();
-      // Chinese-style "一、xxx"
-      const m3 = ln.match(/^\s*[一二三四五六七八九十]+[、\.]\s*(.+?)\s*$/);
-      if (m3) return m3[1].trim();
-      return null;
-    };
-
-    for (let i=0;i<lines.length;i++){
-      const ln = lines[i];
-      const t = titleFromLine(ln);
-      if (t){
-        // new card
-        pushCur();
-        cur = { title: t, body: "" };
-      } else {
-        cur.body += (cur.body ? "\n" : "") + ln;
-      }
-    }
-    pushCur();
-
-    // 如果拆出来太少，补一个“原文”
-    if (blocks.length <= 1){
-      return [{
-        title: `第 ${turnNo} 次结果`,
-        meta: "可折叠查看",
-        body: clean
-      }];
-    }
-
-    // 给第一张卡加 meta
-    blocks[0].meta = "建议先看这一张";
-    return blocks;
-  }
-
-  // -------------------------
-  // Utils
-  // -------------------------
-  function loadJSON(key, fallback){
-    try{
-      const raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      return JSON.parse(raw);
-    }catch{
-      return fallback;
-    }
-  }
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, (c) => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[c]));
-  }
-
-  // -------------------------
-  // Events
-  // -------------------------
-  el.btnRun.addEventListener("click", runInitial);
-
-  el.btnFollow.addEventListener("click", () => runFollowup("normal"));
-  el.btnSummarize.addEventListener("click", () => runFollowup("summarize"));
-
-  el.btnClear.addEventListener("click", () => {
-    localStorage.removeItem(HISTORY_KEY);
-    renderHistory();
-    setTopPill(null, "已清空历史");
+// 使用 OpenAI Responses API（推荐）
+async function callOpenAIResponses({ apiKey, model, temperature, system, user }) {
+  const resp = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      temperature,
+      input: [
+        { role: "system", content: [{ type: "text", text: system }] },
+        { role: "user", content: [{ type: "text", text: user }] },
+      ],
+    }),
   });
 
-  el.btnExport.addEventListener("click", () => {
-    const list = loadHistory();
-    const blob = new Blob([JSON.stringify(list, null, 2)], { type:"application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "relife_history.json";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
+  const text = await resp.text();
+  let data = null;
+  try { data = JSON.parse(text); } catch {}
 
-  el.btnCopy.addEventListener("click", async () => {
-    if (!session.turns.length) return;
-    const t = session.turns[session.turns.length - 1].a || "";
-    await navigator.clipboard.writeText(t);
-    setApiPill("ok", "已复制到剪贴板");
-    setTimeout(()=>setApiPill("ok", `已生成 · 第 ${session.turns.length} 次`), 900);
-  });
+  if (!resp.ok) {
+    const msg = data?.error?.message || data?.message || text || `HTTP ${resp.status}`;
+    throw new Error(msg);
+  }
 
-  el.btnNew.addEventListener("click", () => {
-    session = newSession();
-    saveSession(session);
-    renderSessionToInputs(session);
-    el.followup.value = "";
-    hideStatus();
-    setTopPill(null, "新会话");
-  });
+  // responses api：常见取法
+  const out =
+    data?.output_text ||
+    extractFromOutput(data?.output) ||
+    JSON.stringify(data, null, 2);
 
-  // auto-update pill when typing
-  ["input","change"].forEach(evt=>{
-    [el.bg, el.timeline, el.backTo, el.resources].forEach(x=>{
-      x.addEventListener(evt, () => setTopPill(null, "已编辑"));
-    });
-  });
+  return String(out).trim();
+}
 
-  // initial pills
-  setTopPill(null, "已载入");
-})();
-</script>
-</body>
-</html>
+function extractFromOutput(output) {
+  if (!Array.isArray(output)) return "";
+  // 尝试把所有 text 拼起来
+  const chunks = [];
+  for (const item of output) {
+    const content = item?.content;
+    if (!Array.isArray(content)) continue;
+    for (const c of content) {
+      if (c?.type === "output_text" && c?.text) chunks.push(c.text);
+      if (c?.type === "text" && c?.text) chunks.push(c.text);
+    }
+  }
+  return chunks.join("\n").trim();
+}
