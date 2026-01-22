@@ -5,26 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RE:LIFE | Loading</title>
 
-    <!-- 全局样式 -->
     <link rel="stylesheet" href="style.css" />
-
-    <!-- 前端逻辑 -->
-    <script src="app.js"></script>
 </head>
 
-<body onload="runSimulation()">
+<body>
 
 <div class="loading-page">
-
-    <!-- 动画圆环 -->
     <div class="loading-spinner"></div>
-
-    <!-- 文案（由 app.js 根据语言自动替换） -->
-    <div id="loading-text" class="loading-text">
-        Loading…
-    </div>
-
+    <div id="loading-text" class="loading-text">Loading…</div>
 </div>
+
+<script>
+const LANG = {
+    zh: { loading: "正在回环你的时间线，请稍候…" },
+    en: { loading: "Rewinding your timeline…" }
+};
+
+function getLang() {
+    return localStorage.getItem("lang") || "zh";
+}
+
+async function runSimulation() {
+    const lang = getLang();
+    document.getElementById("loading-text").innerText = LANG[lang].loading;
+
+    const payload = JSON.parse(localStorage.getItem("pendingPayload") || "{}");
+
+    try {
+        const res = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const raw = await res.text();
+        let data;
+
+        try {
+            data = JSON.parse(raw);
+        } catch (err) {
+            alert(
+                lang === "zh"
+                    ? "服务器返回了非 JSON 内容：\n" + raw
+                    : "Server returned non‑JSON response:\n" + raw
+            );
+            return;
+        }
+
+        const id = "run_" + Date.now();
+        localStorage.setItem(id, JSON.stringify(data));
+
+        window.location.href = "result.html?id=" + id;
+
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
+}
+
+runSimulation();
+</script>
 
 </body>
 </html>
