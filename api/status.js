@@ -6,6 +6,6 @@ export default function handler(req, res) {
     ok: true,
     msg: "RE:LIFE API is running",
     time: new Date().toISOString(),
-    endpoints: ["/api/ping", "/api/generate"],
+    endpoints: ["/api/ping", "/api/generate", "/api/status"],
   });
 }
