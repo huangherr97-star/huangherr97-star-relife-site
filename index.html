@@ -1,219 +1,481 @@
-export default async function handler(req, res) {
-  // ---- CORS ----
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Max-Age", "86400");
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>RE:LIFE | 回环</title>
+<style>
+:root{
+  --bg:#0B1220; --card:#0f1a2b; --border:rgba(255,255,255,.08);
+  --text:rgba(255,255,255,.92); --muted:rgba(255,255,255,.55);
+  --accent:#4C6FFF; --ok:#4ade80; --err:#ff6b6b;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"PingFang SC","Microsoft YaHei";
+  background:radial-gradient(900px 500px at 20% 10%,rgba(76,111,255,.2),transparent 60%),var(--bg);
+  color:var(--text);min-height:100vh;
+}
+.wrap{max-width:1100px;margin:auto;padding:38px 18px}
+h1{text-align:center;margin:0 0 8px;font-size:42px}
+.sub{text-align:center;color:var(--muted);margin-bottom:20px}
 
-  if (req.method === "OPTIONS") return res.status(200).end();
+.panel{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
 
-  // ---- GET: health check ----
-  if (req.method === "GET") {
-    return res.status(200).json({
-      ok: true,
-      msg: "RE:LIFE generate endpoint is alive",
-      ts: new Date().toISOString(),
-    });
-  }
+label{font-size:13px;color:var(--muted)}
+input,textarea,select{
+  width:100%;border-radius:12px;border:1px solid var(--border);
+  background:rgba(0,0,0,.25);color:var(--text);padding:12px;
+}
+textarea{min-height:120px}
 
-  // ---- Only POST below ----
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed", allow: ["GET", "POST", "OPTIONS"] });
-  }
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border-radius:12px;padding:12px 16px;border:0;font-weight:800;cursor:pointer}
+.primary{background:var(--accent);color:#fff}
+.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.small{font-size:12px;color:var(--muted)}
+.pill{border:1px solid var(--border);border-radius:999px;padding:6px 10px;background:rgba(0,0,0,.18);cursor:pointer}
 
-  try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({
-        error: "Missing OPENAI_API_KEY in Vercel Environment Variables",
-        detail: "请到 Vercel 项目 Settings -> Environment Variables 添加 OPENAI_API_KEY",
-      });
+.status{margin-top:10px;font-size:13px;color:var(--muted)}
+.ok{color:var(--ok)} .err{color:var(--err)}
+
+.toc{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.cards{display:grid;gap:12px}
+.card{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.card-header{padding:12px 14px;font-weight:900;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:14px;white-space:pre-wrap;line-height:1.6;display:none}
+.card.open .card-body{display:block}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+
+.chatbox{height:320px;overflow:auto;border:1px solid var(--border);border-radius:14px;background:rgba(0,0,0,.22);padding:12px}
+.msg{margin:8px 0;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.03)}
+.msg.you{border-color:rgba(76,111,255,.35)}
+.msg.ai{border-color:rgba(74,222,128,.25)}
+.msg .role{font-size:12px;color:var(--muted);margin-bottom:6px}
+.msg .content{white-space:pre-wrap;line-height:1.55}
+.hr{height:1px;background:var(--border);margin:16px 0}
+.notice{font-size:13px;color:var(--muted);line-height:1.5}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <h1>RE:LIFE | 回环</h1>
+  <div class="sub">理性人生模拟 · 非算命 · 非保证</div>
+
+  <div class="panel">
+    <div class="grid">
+      <div>
+        <label>个人背景（必填）</label>
+        <input id="background" placeholder="28岁，工作3年，想转行"/>
+
+        <label style="margin-top:10px">人生经历时间线（必填，越具体越好）</label>
+        <textarea id="timeline" placeholder="18岁高考...22岁毕业..."></textarea>
+
+        <label style="margin-top:10px">能力 / 资源（可选）</label>
+        <input id="resources" placeholder="英语好，有存款5万"/>
+      </div>
+
+      <div>
+        <label>想回到的时间点（必填）</label>
+        <input id="target" placeholder="18岁高考"/>
+
+        <label style="margin-top:10px">生成模式</label>
+        <select id="mode">
+          <option value="compare">对比 A/B/C（推荐）</option>
+          <option value="normal">单一：默认</option>
+          <option value="dry">单一：更理性</option>
+          <option value="warm">单一：更共情</option>
+        </select>
+
+        <div class="row" style="margin-top:12px">
+          <button class="btn primary" id="run">开始模拟</button>
+          <button class="btn ghost" id="share">生成分享链接</button>
+          <button class="btn ghost" id="clear">清空</button>
+        </div>
+
+        <div class="status" id="status">状态：就绪</div>
+        <div class="notice" style="margin-top:10px">
+          提示：如果你看到 <b>HTTP 400 Missing required fields</b>，说明请求体缺 <code>background/timeline/target</code>。本页已自动修复并会提示缺哪些。
+        </div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="split">
+      <!-- 左：模拟结果 -->
+      <div>
+        <div class="row">
+          <span class="pill" id="btnExpand">全部展开</span>
+          <span class="pill" id="btnCollapse">全部折叠</span>
+          <span class="pill" id="btnCopyAll">复制全部</span>
+        </div>
+
+        <div id="followups" class="notice" style="margin-top:10px"></div>
+        <div class="toc" id="toc"></div>
+        <div class="cards" id="cards"></div>
+      </div>
+
+      <!-- 右：对话模式 -->
+      <div>
+        <div class="notice"><b>对话模式（5️⃣）</b>：基于你刚刚的输入 + 结果继续追问。不会自动“算命”，只做理性推演。</div>
+        <div class="chatbox" id="chatbox"></div>
+
+        <div class="row" style="margin-top:10px">
+          <input id="chatInput" placeholder="例如：我更适合路线B吗？最小风险方案是什么？" />
+          <button class="btn primary" id="chatSend">发送</button>
+          <button class="btn ghost" id="chatClear">清空对话</button>
+        </div>
+        <div class="small" style="margin-top:8px">对话上下文保存在浏览器本地（localStorage）。</div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="notice">
+      RE:LIFE 提供的是基于输入的推演与理性分析，不构成建议、预测或保证。你对自己的选择负责。
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id)=>document.getElementById(id);
+const el = {
+  bg:$("background"), tl:$("timeline"), tg:$("target"), rs:$("resources"), md:$("mode"),
+  run:$("run"), share:$("share"), clear:$("clear"), status:$("status"),
+  cards:$("cards"), toc:$("toc"), followups:$("followups"),
+  btnExpand:$("btnExpand"), btnCollapse:$("btnCollapse"), btnCopyAll:$("btnCopyAll"),
+  chatbox:$("chatbox"), chatInput:$("chatInput"), chatSend:$("chatSend"), chatClear:$("chatClear"),
+};
+
+const LS_KEY="relife_state_v1";
+const LS_CHAT="relife_chat_v1";
+
+function setStatus(t, cls=""){ el.status.innerHTML = `状态：<b class="${cls}">${t}</b>`; }
+
+function safeJsonParse(s){ try{return JSON.parse(s)}catch(e){return null} }
+
+function saveState(state){
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
+}
+function loadState(){
+  const s = localStorage.getItem(LS_KEY);
+  return s ? safeJsonParse(s) : null;
+}
+
+function saveChat(msgs){
+  localStorage.setItem(LS_CHAT, JSON.stringify(msgs));
+}
+function loadChat(){
+  const s = localStorage.getItem(LS_CHAT);
+  return s ? (safeJsonParse(s)||[]) : [];
+}
+
+function splitToSections(text){
+  const lines=text.split("\n");
+  const sections=[];
+  let current={title:"结果",body:""};
+  for(const l of lines){
+    const t=l.trim();
+    if(/^(\\d+\\)|^#+)/.test(t)){
+      if(current.body.trim()) sections.push(current);
+      current={title:t.replace(/^#+\\s*/,"").replace(/^\\d+\\)\\s*/,""),body:""};
+    }else{
+      current.body+=l+"\\n";
     }
-
-    // 兼容：body 可能是对象、也可能是字符串（某些场景）
-    const body = typeof req.body === "string" ? safeParse(req.body) : (req.body || {});
-    const normalized = normalizeBody(body);
-
-    const missing = [];
-    if (!normalized.background) missing.push("background");
-    if (!normalized.timeline) missing.push("timeline");
-    if (!normalized.target) missing.push("target");
-
-    if (missing.length) {
-      return res.status(400).json({
-        error: "Missing required fields",
-        need: missing,
-        hint: "请确保提交 background/timeline/target（或 inputs.background/inputs.timeline/inputs.backTo）",
-        gotKeys: Object.keys(body || {}),
-      });
-    }
-
-    const model = process.env.OPENAI_MODEL || "gpt-4o-mini"; // 你也可以在 Vercel env 里改
-    const temperature = clamp(Number(process.env.OPENAI_TEMPERATURE ?? 0.7), 0, 2);
-
-    const system = buildSystemPrompt(normalized.mode);
-    const user = buildUserPrompt(normalized);
-
-    const out = await callOpenAIResponses({
-      apiKey,
-      model,
-      temperature,
-      system,
-      user,
-    });
-
-    return res.status(200).json({
-      ok: true,
-      text: out,
-    });
-  } catch (err) {
-    const msg = err?.message || String(err);
-    return res.status(500).json({
-      error: "Server error",
-      message: msg,
-    });
   }
+  if(current.body.trim()) sections.push(current);
+  return sections;
 }
 
-// ---------------- helpers ----------------
+function renderCardsFromVariant(title, text, variantKey){
+  // 一个 variant 作为一个大卡片，内部再拆段
+  const wrap=document.createElement("div");
+  wrap.className="card open";
 
-function safeParse(s) {
-  try { return JSON.parse(s); } catch { return {}; }
+  const head=document.createElement("div");
+  head.className="card-header";
+  head.innerHTML=`<span>${title}</span>
+    <div class="row">
+      <button class="btn ghost small">复制该版本</button>
+    </div>`;
+  const body=document.createElement("div");
+  body.className="card-body";
+
+  const sections=splitToSections(text);
+  const inner=document.createElement("div");
+  inner.className="cards";
+  sections.forEach((s,i)=>{
+    const c=document.createElement("div");
+    c.className="card open";
+    c.id=`${variantKey}_sec_${i}`;
+
+    const h=document.createElement("div");
+    h.className="card-header";
+    h.innerHTML=`<span>${s.title}</span>
+      <div class="row"><button class="btn ghost small">复制</button></div>`;
+
+    const b=document.createElement("div");
+    b.className="card-body";
+    b.textContent=s.body.trim();
+
+    h.onclick=()=>c.classList.toggle("open");
+    h.querySelector("button").onclick=(e)=>{
+      e.stopPropagation();
+      navigator.clipboard.writeText(b.textContent);
+      setStatus("已复制片段","ok");
+    };
+
+    c.append(h,b);
+    inner.appendChild(c);
+  });
+
+  body.appendChild(inner);
+
+  head.onclick=()=>wrap.classList.toggle("open");
+  head.querySelector("button").onclick=(e)=>{
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setStatus("已复制该版本","ok");
+  };
+
+  wrap.append(head,body);
+  el.cards.appendChild(wrap);
+
+  // TOC：只列 A/B/C
+  const tocBtn=document.createElement("button");
+  tocBtn.className="btn ghost";
+  tocBtn.textContent=title;
+  tocBtn.onclick=()=>wrap.scrollIntoView({behavior:"smooth"});
+  el.toc.appendChild(tocBtn);
 }
 
-function clamp(n, a, b) {
-  if (Number.isNaN(n)) return a;
-  return Math.max(a, Math.min(b, n));
+function renderFollowups(list){
+  if(!list || !list.length){ el.followups.innerHTML=""; return; }
+  el.followups.innerHTML = `<b>建议你补充这些信息（3️⃣自动追问）：</b><br/>` +
+    list.map((q,i)=>`${i+1}. ${q}`).join("<br/>");
 }
 
-/**
- * 兼容输入：
- * A) { background, timeline, target, resources, mode, followup, history }
- * B) { inputs: { background, timeline, backTo, resources }, mode, followup, history }
- */
-function normalizeBody(body) {
-  const inputs = body?.inputs && typeof body.inputs === "object" ? body.inputs : null;
+function expandAll(open){
+  document.querySelectorAll(".card").forEach(c=>{
+    if(open) c.classList.add("open");
+    else c.classList.remove("open");
+  });
+}
 
-  const background = body.background ?? inputs?.background ?? "";
-  const timeline   = body.timeline   ?? inputs?.timeline   ?? "";
-  const target     = body.target     ?? inputs?.target     ?? inputs?.backTo ?? body.backTo ?? "";
-
-  const resources  = body.resources  ?? inputs?.resources  ?? "";
-  const mode       = body.mode       ?? "normal";
-  const followup   = body.followup   ?? "";
-  const history    = Array.isArray(body.history) ? body.history : [];
-
+function getPayload(){
   return {
-    background: String(background || "").trim(),
-    timeline: String(timeline || "").trim(),
-    target: String(target || "").trim(),
-    resources: String(resources || "").trim(),
-    mode: String(mode || "normal").trim(),
-    followup: String(followup || "").trim(),
-    history,
+    background: el.bg.value.trim(),
+    timeline: el.tl.value.trim(),
+    target: el.tg.value.trim(),
+    resources: el.rs.value.trim(),
   };
 }
 
-function buildSystemPrompt(mode) {
-  // mode: normal / dry / warm / plan
-  const base = [
-    "你是一个产品化的“人生推演助手”，名字叫 RE:LIFE（回环）。",
-    "你只做基于用户输入的理性推演：给出可行路径、关键变量、风险点、可行动步骤。",
-    "你必须明确：这不是算命，不保证结果，不替用户做决定。",
-    "输出要中文，结构清晰，避免玄学词。",
-  ].join("\n");
-
-  const style = {
-    normal: "语气：冷静中带点共情，短句为主，易读。",
-    dry: "语气：更理性更简洁，少情绪，更多要点。",
-    warm: "语气：更温和更共情，但仍以理性建议为主。",
-    plan: "语气：更产品化。强制用 1/2/3/4/5 分段结构输出，步骤明确。",
-  }[mode] || "语气：冷静中带点共情，短句为主，易读。";
-
-  return `${base}\n${style}`;
+// 4️⃣ 分享：把输入+输出塞进 URL（不需要数据库）
+function encodeShare(obj){
+  const json=JSON.stringify(obj);
+  const b64=btoa(unescape(encodeURIComponent(json)));
+  return b64;
+}
+function decodeShare(b64){
+  const json=decodeURIComponent(escape(atob(b64)));
+  return JSON.parse(json);
 }
 
-function buildUserPrompt(d) {
-  const parts = [
-    `【个人背景】\n${d.background}`,
-    `【人生经历时间线】\n${d.timeline}`,
-    `【目标时间点（想回到）】\n${d.target}`,
-  ];
-  if (d.resources) parts.push(`【能力/资源（可选）】\n${d.resources}`);
-
-  if (d.followup) {
-    parts.push(`【追问】\n${d.followup}`);
-  }
-
-  // 历史（可选）
-  if (d.history?.length) {
-    const hist = d.history
-      .slice(-6)
-      .map((t, i) => `#${i + 1}(${t.type || "turn"} @ ${t.t || ""})\n${t.text || ""}`)
-      .join("\n\n");
-    parts.push(`【最近对话摘要（供参考）】\n${hist}`);
-  }
-
-  // 要求输出（兼容 plan 模式）
-  const outputRule = [
-    "请给出：",
-    "1) 关键信息提炼（关键变量/约束）",
-    "2) 3 条最可能路径（每条：短期/中期/长期）",
-    "3) 每条路径的关键风险 & 规避策略",
-    "4) 可执行清单（7天/30天）",
-    "5) 需要补充的信息（最多5条问题）",
-  ].join("\n");
-
-  return parts.join("\n\n") + "\n\n" + outputRule;
+function pushMsg(role, content){
+  const msg=document.createElement("div");
+  msg.className="msg " + (role==="user"?"you":"ai");
+  msg.innerHTML=`<div class="role">${role==="user"?"你":"RE:LIFE"}</div><div class="content"></div>`;
+  msg.querySelector(".content").textContent=content;
+  el.chatbox.appendChild(msg);
+  el.chatbox.scrollTop = el.chatbox.scrollHeight;
 }
 
-// 使用 OpenAI Responses API（推荐）
-async function callOpenAIResponses({ apiKey, model, temperature, system, user }) {
-  const resp = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      temperature,
-      input: [
-        { role: "system", content: [{ type: "text", text: system }] },
-        { role: "user", content: [{ type: "text", text: user }] },
-      ],
-    }),
-  });
+// 5️⃣ 对话：组装 messages
+function buildChatSystemContext(){
+  const p=getPayload();
+  return `用户输入（用于上下文，不是事实保证）：
+- 背景：${p.background || "（空）"}
+- 时间线：${p.timeline || "（空）"}
+- 想回到：${p.target || "（空）"}
+- 资源：${p.resources || "（空）"}
 
-  const text = await resp.text();
-  let data = null;
-  try { data = JSON.parse(text); } catch {}
-
-  if (!resp.ok) {
-    const msg = data?.error?.message || data?.message || text || `HTTP ${resp.status}`;
-    throw new Error(msg);
-  }
-
-  // responses api：常见取法
-  const out =
-    data?.output_text ||
-    extractFromOutput(data?.output) ||
-    JSON.stringify(data, null, 2);
-
-  return String(out).trim();
+规则：不算命不保证；用因果推演；给可执行动作；少术语。`;
 }
 
-function extractFromOutput(output) {
-  if (!Array.isArray(output)) return "";
-  // 尝试把所有 text 拼起来
-  const chunks = [];
-  for (const item of output) {
-    const content = item?.content;
-    if (!Array.isArray(content)) continue;
-    for (const c of content) {
-      if (c?.type === "output_text" && c?.text) chunks.push(c.text);
-      if (c?.type === "text" && c?.text) chunks.push(c.text);
+async function runGenerate(){
+  const p=getPayload();
+  const mode=el.md.value;
+  const compare = (mode==="compare");
+  const realMode = compare ? "normal" : mode;
+
+  if(!p.background || !p.timeline || !p.target){
+    const need=[];
+    if(!p.background) need.push("background");
+    if(!p.timeline) need.push("timeline");
+    if(!p.target) need.push("target");
+    setStatus("缺少必填：" + need.join(", "), "err");
+    return;
+  }
+
+  setStatus("生成中…");
+  el.cards.innerHTML=""; el.toc.innerHTML=""; el.followups.innerHTML="";
+
+  try{
+    const r=await fetch("/api/generate",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ ...p, mode: realMode, compare })
+    });
+    const j=await r.json();
+
+    if(!r.ok){
+      setStatus(`HTTP ${r.status}：${j.error||"请求失败"}`, "err");
+      if(j.need) setStatus(`缺少必填：${j.need.join(", ")}`, "err");
+      return;
     }
+
+    renderFollowups(j.followups || []);
+
+    if(j.type==="compare" && Array.isArray(j.variants)){
+      j.variants.forEach(v=>renderCardsFromVariant(v.title, v.text, v.key));
+      setStatus("完成（A/B/C）", "ok");
+      // 保存状态，供分享/对话
+      saveState({ payload:p, last: j });
+      // 自动把“完成的结果”摘要加入对话上下文（可选：只提示用户自己问）
+    } else {
+      setStatus("完成", "ok");
+    }
+  }catch(e){
+    setStatus("失败："+String(e), "err");
   }
-  return chunks.join("\n").trim();
 }
+
+// --- events ---
+el.run.onclick=runGenerate;
+
+el.clear.onclick=()=>{
+  el.bg.value=el.tl.value=el.tg.value=el.rs.value="";
+  el.cards.innerHTML=""; el.toc.innerHTML=""; el.followups.innerHTML="";
+  setStatus("已清空","ok");
+  saveState({payload:getPayload(), last:null});
+};
+
+el.btnExpand.onclick=()=>expandAll(true);
+el.btnCollapse.onclick=()=>expandAll(false);
+el.btnCopyAll.onclick=()=>{
+  const txt = [...document.querySelectorAll(".card-body")].map(x=>x.textContent).join("\n\n");
+  navigator.clipboard.writeText(txt);
+  setStatus("已复制全部","ok");
+};
+
+el.share.onclick=()=>{
+  const state=loadState();
+  if(!state || !state.payload || !state.last){
+    setStatus("请先生成一次结果再分享","err"); return;
+  }
+  const shareObj = { payload: state.payload, last: state.last };
+  const code = encodeShare(shareObj);
+  const url = location.origin + location.pathname + "#share=" + code;
+  navigator.clipboard.writeText(url);
+  setStatus("分享链接已复制（打开可复现）","ok");
+};
+
+// --- chat ---
+function renderChatFromStorage(){
+  el.chatbox.innerHTML="";
+  const msgs=loadChat();
+  msgs.forEach(m=>pushMsg(m.role, m.content));
+}
+renderChatFromStorage();
+
+el.chatSend.onclick=async()=>{
+  const q=el.chatInput.value.trim();
+  if(!q) return;
+
+  // load chat messages (local)
+  const stored = loadChat();
+
+  // push user
+  pushMsg("user", q);
+  stored.push({ role:"user", content:q });
+  saveChat(stored);
+  el.chatInput.value="";
+  setStatus("对话中…");
+
+  // build messages for backend
+  const systemContext = buildChatSystemContext();
+  const messages = [{ role:"system", content: systemContext }, ...stored];
+
+  try{
+    const r=await fetch("/api/generate",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ messages })
+    });
+    const j=await r.json();
+    if(!r.ok){
+      setStatus(`Chat HTTP ${r.status}`,"err");
+      pushMsg("assistant", JSON.stringify(j,null,2));
+      return;
+    }
+    pushMsg("assistant", j.answer || "（空）");
+    stored.push({ role:"assistant", content: j.answer || "" });
+    saveChat(stored);
+    setStatus("对话完成","ok");
+  }catch(e){
+    setStatus("对话失败","err");
+  }
+};
+
+el.chatClear.onclick=()=>{
+  localStorage.removeItem(LS_CHAT);
+  el.chatbox.innerHTML="";
+  setStatus("对话已清空","ok");
+};
+
+// --- restore from share link ---
+(function restoreFromShare(){
+  if(!location.hash.startsWith("#share=")) return;
+  const code=location.hash.slice("#share=".length);
+  try{
+    const obj=decodeShare(code);
+    if(obj?.payload){
+      el.bg.value=obj.payload.background||"";
+      el.tl.value=obj.payload.timeline||"";
+      el.tg.value=obj.payload.target||"";
+      el.rs.value=obj.payload.resources||"";
+    }
+    // render last output
+    if(obj?.last?.variants){
+      el.cards.innerHTML=""; el.toc.innerHTML="";
+      renderFollowups(obj.last.followups||[]);
+      obj.last.variants.forEach(v=>renderCardsFromVariant(v.title, v.text, v.key));
+      saveState({payload: obj.payload, last: obj.last});
+      setStatus("已从分享链接恢复","ok");
+    }
+  }catch(e){
+    setStatus("分享链接解析失败","err");
+  }
+})();
+
+// restore last saved state (non-share)
+(function restoreLocal(){
+  if(location.hash.startsWith("#share=")) return;
+  const state=loadState();
+  if(!state?.payload) return;
+  el.bg.value=state.payload.background||"";
+  el.tl.value=state.payload.timeline||"";
+  el.tg.value=state.payload.target||"";
+  el.rs.value=state.payload.resources||"";
+})();
+</script>
+</body>
+</html>
