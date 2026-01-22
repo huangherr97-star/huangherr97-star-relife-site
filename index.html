@@ -1,894 +1,890 @@
-1  <!doctype html>
-2  <html lang="zh-CN" data-theme="dark">
-3  <head>
-4    <meta charset="utf-8" />
-5    <meta name="viewport" content="width=device-width,initial-scale=1" />
-6    <title>RE:LIFE | 回环</title>
-7
-8    <!-- jsPDF 用于导出 PDF -->
-9    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-10
-11   <style>
-12     :root{
-13       --bg:#0B1220;--card:#0f1a33cc;--line:#22304f;--text:#e8eefc;--muted:#9fb0d5;
-14       --primary:#4C6FFF;--primary2:#22D3EE;--warn:#F59E0B;
-15       --card-soft:rgba(255,255,255,.06);
-16     }
-17     :root[data-theme="light"]{
-18       --bg:#f3f4f6;--card:#ffffff;--line:#d1d5db;--text:#111827;--muted:#6b7280;
-19       --primary:#2563eb;--primary2:#0ea5e9;--warn:#d97706;
-20       --card-soft:rgba(15,23,42,.04);
-21     }
-22     *{box-sizing:border-box}
-23     body{
-24       margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
-25       background:var(--bg);
-26       color:var(--text);
-27     }
-28     .wrap{max-width:1100px;margin:40px auto;padding:0 18px}
-29     .title{display:flex;align-items:flex-end;gap:12px;margin-bottom:22px}
-30     .title h1{font-size:42px;letter-spacing:.5px;margin:0}
-31     .title .sub{color:var(--muted);font-size:14px;margin-bottom:6px}
-32     .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
-33     @media (max-width:980px){.grid{grid-template-columns:1fr}}
-34     .card{
-35       background:linear-gradient(180deg, var(--card-soft), var(--card-soft));
-36       border:1px solid rgba(255,255,255,.08);
-37       border-radius:18px;
-38       box-shadow:0 20px 60px rgba(0,0,0,.15);
-39       overflow:hidden;
-40     }
-41     :root[data-theme="light"] .card{
-42       border:1px solid #e5e7eb;
-43       box-shadow:0 10px 30px rgba(15,23,42,.08);
-44     }
-45     .card .hd{padding:18px 18px 10px;border-bottom:1px solid rgba(255,255,255,.07)}
-46     :root[data-theme="light"] .card .hd{border-bottom:1px solid #e5e7eb;}
-47     .card .hd h2{margin:0;font-size:18px}
-48     .card .bd{padding:18px}
-49     label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
-50     input, textarea, select{
-51       width:100%;
-52       background:rgba(10,16,28,.55);
-53       border:1px solid rgba(255,255,255,.10);
-54       color:var(--text);
-55       border-radius:12px;
-56       padding:12px 12px;
-57       outline:none;
-58     }
-59     :root[data-theme="light"] input,
-60     :root[data-theme="light"] textarea,
-61     :root[data-theme="light"] select{
-62       background:#f9fafb;
-63       border:1px solid #e5e7eb;
-64     }
-65     textarea{min-height:120px;resize:vertical}
-66     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-67     @media (max-width:980px){.row{grid-template-columns:1fr}}
-68     .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-69     button{
-70       border:0;cursor:pointer;border-radius:12px;
-71       padding:10px 14px;font-weight:600;color:#081022;
-72       background:linear-gradient(135deg,var(--primary), #5a7bff);
-73       font-size:14px;
-74     }
-75     button.secondary{
-76       color:var(--text);
-77       background:rgba(255,255,255,.08);
-78       border:1px solid rgba(255,255,255,.10);
-79     }
-80     :root[data-theme="light"] button.secondary{
-81       background:#f9fafb;
-82       border:1px solid #e5e7eb;
-83     }
-84     button.danger{
-85       color:#fff;background:rgba(245, 89, 11, .18);
-86       border:1px solid rgba(245, 89, 11, .35);
-87     }
-88     .pill{
-89       display:inline-flex;align-items:center;gap:8px;
-90       padding:8px 10px;border-radius:999px;
-91       border:1px solid rgba(255,255,255,.10);
-92       background:rgba(255,255,255,.06);
-93       color:var(--muted);font-size:12px
-94     }
-95     :root[data-theme="light"] .pill{
-96       background:#f9fafb;
-97       border:1px solid #e5e7eb;
-98     }
-99     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-100    .status{margin-top:12px;color:var(--muted);font-size:13px}
-101    .out{
-102      white-space:pre-wrap;
-103      background:rgba(10,16,28,.55);
-104      border:1px solid rgba(255,255,255,.10);
-105      border-radius:14px;
-106      padding:14px;
-107      min-height:220px;
-108      line-height:1.55;
-109    }
-110    :root[data-theme="light"] .out{
-111      background:#f9fafb;
-112      border:1px solid #e5e7eb;
-113    }
-114    .foot{margin-top:18px;color:var(--muted);font-size:12px}
-115
-116    .progress-wrap{
-117      margin-top:10px;
-118      height:6px;
-119      background:rgba(255,255,255,.06);
-120      border-radius:999px;
-121      overflow:hidden;
-122    }
-123    :root[data-theme="light"] .progress-wrap{
-124      background:#e5e7eb;
-125    }
-126    .progress-bar{
-127      height:100%;
-128      width:0%;
-129      background:linear-gradient(90deg,var(--primary),var(--primary2));
-130      transition:width .3s ease;
-131    }
-132
-133    .theme-toggle{
-134      margin-left:10px;
-135      font-size:12px;
-136      padding:6px 10px;
-137    }
-138
-139    .hint-short{
-140      margin-top:8px;
-141      font-size:12px;
-142      color:var(--warn);
-143    }
-144
-145    /* 语言选择遮罩 */
-146    #langMask{
-147      position:fixed;
-148      inset:0;
-149      background:rgba(0,0,0,.75);
-150      display:flex;
-151      align-items:center;
-152      justify-content:center;
-153      z-index:9999;
-154    }
-155    #langBox{
-156      background:#fff;
-157      color:#111;
-158      padding:30px;
-159      border-radius:16px;
-160      width:300px;
-161      text-align:center;
-162      box-shadow:0 10px 40px rgba(0,0,0,.3);
-163    }
-164    #langBox h2{margin:0 0 20px;font-size:20px;}
-165    #langBox button{
-166      width:100%;
-167      margin:8px 0;
-168      padding:12px;
-169      border-radius:10px;
-170      border:0;
-171      cursor:pointer;
-172      font-size:16px;
-173      font-weight:600;
-174      background:#4C6FFF;
-175      color:#fff;
-176    }
-177   </style>
-178 </head>
-179 <body>
-180
-181 <!-- 语言选择遮罩 -->
-182 <div id="langMask">
-183   <div id="langBox">
-184     <h2>选择语言 / Choose Language</h2>
-185     <button onclick="selectLang('zh')">中文</button>
-186     <button onclick="selectLang('en')">English</button>
-187   </div>
-188 </div>
-189
-190 <div class="wrap" id="app" style="display:none;">
-191   <div class="title">
-192     <h1 id="t_app_title">RE:LIFE | 回环</h1>
-193     <div class="sub" id="t_app_sub">理性人生模拟 · 非算命 · 非保证</div>
-194
-195     <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-196       <div class="pill">
-197         API: <span id="apiLabel" class="mono"></span>
-198       </div>
-199       <button class="secondary theme-toggle" id="btnTheme">🌗</button>
-200     </div>
-201   </div>
-202
-203   <div class="grid">
-204     <!-- 左侧输入卡片 -->
-205     <div class="card">
-206       <div class="hd"><h2 id="t_your_info">你的信息</h2></div>
-207       <div class="bd">
-208
-209         <label id="t_background_label">个人背景（必填）</label>
-210         <input id="background" placeholder="例：28岁，工作3年，想转行/想创业…" />
-211
-212         <label id="t_timeline_label">人生经历时间线（必填）</label>
-213         <textarea id="timeline" placeholder="用要点写：学校/工作/关键事件/决策/资源/人脉…"></textarea>
-214
-215         <div class="row">
-216           <div>
-217             <label id="t_target_label">想回到的时间点（必填）</label>
-218             <input id="target" placeholder="例：18岁高考 / 22岁毕业 / 2020年某次决定" />
-219           </div>
-220           <div>
-221             <label id="t_mode_label">生成模式</label>
-222             <select id="mode">
-223               <option value="abc">对比 A/B/C（推荐）</option>
-224               <option value="single">单一路线（更快）</option>
-225               <option value="chat">追问模式（对话）</option>
-226             </select>
-227           </div>
-228         </div>
-229
-230         <label id="t_resources_label">能力 / 资源（可选）</label>
-231         <input id="resources" placeholder="例：英语一般/有存款2万/家人支持/擅长写作…" />
-232
-233         <label id="t_language_label">语言 / Language</label>
-234         <select id="language">
-235           <option value="zh">中文</option>
-236           <option value="en">English</option>
-237         </select>
-238
-239         <div class="btns">
-240           <button id="btnRun">开始模拟</button>
-241           <button class="secondary" id="btnPing">测试 API</button>
-242           <button class="secondary" id="btnCopy">复制结果</button>
-243           <button class="secondary" id="btnPDF">导出 PDF</button>
-244           <button class="secondary" id="btnShare">分享链接</button>
-245           <button class="danger" id="btnClear">清空输出</button>
-246         </div>
-247
-248         <div class="progress-wrap">
-249           <div class="progress-bar" id="progressBar"></div>
-250         </div>
-251
-252         <div class="status" id="status">状态：就绪</div>
-253
-254         <div class="hint-short" id="hintShort" style="display:none;">
-255           建议补充信息（追问）：可以多写一些关键节点、转折点、你在意的东西。
-256         </div>
-257
-258       </div>
-259     </div>
-260
-261     <!-- 右侧结果卡片 -->
-262     <div class="card">
-263       <div class="hd"><h2 id="t_result_title">结果</h2></div>
-264       <div class="bd">
-265         <div id="out" class="out">点击“开始模拟”生成内容。</div>
-266         <div class="foot" id="t_result_hint">
-267           如果长时间无响应，可以先点“测试 API”确认 /api/ping 是否正常，再检查 OpenAI 配额。
-268         </div>
-269       </div>
-270     </div>
-271   </div>
-272 </div>
-273
-274 <script>
-275 /* ---------------------------
-276    语言选择（进入页面第一步）
-277 ---------------------------- */
-278 function selectLang(lang){
-279   localStorage.setItem("relife-lang", lang);
-280   document.getElementById("langMask").style.display = "none";
-281   document.getElementById("app").style.display = "block";
-282   applyLang(lang);
-283 }
-284
-285 (function initLang(){
-286   const saved = localStorage.getItem("relife-lang");
-287   if(saved){
-288     document.getElementById("langMask").style.display = "none";
-289     document.getElementById("app").style.display = "block";
-290     applyLang(saved);
-291   }
-292 })();
-293
-294 /* ---------------------------
-295    UI 文本（中英文）
-296 ---------------------------- */
-297 const LANG = {
-298   zh:{
-299     app_title:"RE:LIFE | 回环",
-300     app_sub:"理性人生模拟 · 非算命 · 非保证",
-301     your_info:"你的信息",
-302     background:"个人背景（必填）",
-303     timeline:"人生经历时间线（必填）",
-304     target:"想回到的时间点（必填）",
-305     mode:"生成模式",
-306     resources:"能力 / 资源（可选）",
-307     language:"语言 / Language",
-308     run:"开始模拟",
-309     ping:"测试 API",
-310     copy:"复制结果",
-311     pdf:"导出 PDF",
-312     share:"分享链接",
-313     clear:"清空输出",
-314     result:"结果",
-315     result_hint:"如果长时间无响应，可以先点“测试 API”确认 /api/ping 是否正常，再检查 OpenAI 配额。",
-316     short_hint:"建议补充信息（追问）：可以多写一些关键节点、转折点、你在意的东西。",
-317     placeholder_bg:"例：28岁，工作3年，想转行/想创业…",
-318     placeholder_tl:"用要点写：学校/工作/关键事件/决策/资源/人脉…",
-319     placeholder_target:"例：18岁高考 / 22岁毕业 / 2020年某次决定"
-320   },
-321   en:{
-322     app_title:"RE:LIFE | Loop",
-323     app_sub:"Rational life simulation · No fortune telling · No guarantees",
-324     your_info:"Your Information",
-325     background:"Background (required)",
-326     timeline:"Life Timeline (required)",
-327     target:"Target Point (required)",
-328     mode:"Mode",
-329     resources:"Skills / Resources (optional)",
-330     language:"Language",
-331     run:"Run Simulation",
-332     ping:"Test API",
-333     copy:"Copy Result",
-334     pdf:"Export PDF",
-335     share:"Share Link",
-336     clear:"Clear Output",
-337     result:"Result",
-338     result_hint:"If it takes too long, test /api/ping first, then check OpenAI billing.",
-339     short_hint:"Suggested: add more details (key events, turning points, motivations).",
-340     placeholder_bg:"e.g. 28 years old, 3 years working, want to switch career…",
-341     placeholder_tl:"List key events: school, jobs, decisions, resources, network…",
-342     placeholder_target:"e.g. age 18 exam / age 22 graduation / 2020 decision"
-343   }
-344 };
-345 };
-346
-347 /* ---------------------------
-348    应用语言到 UI
-349 ---------------------------- */
-350 function applyLang(lang){
-351   const t = LANG[lang];
-352
-353   document.getElementById("t_app_title").textContent = t.app_title;
-354   document.getElementById("t_app_sub").textContent = t.app_sub;
-355
-356   document.getElementById("t_your_info").textContent = t.your_info;
-357   document.getElementById("t_background_label").textContent = t.background;
-358   document.getElementById("background").placeholder = t.placeholder_bg;
-359
-360   document.getElementById("t_timeline_label").textContent = t.timeline;
-361   document.getElementById("timeline").placeholder = t.placeholder_tl;
-362
-363   document.getElementById("t_target_label").textContent = t.target;
-364   document.getElementById("target").placeholder = t.placeholder_target;
-365
-366   document.getElementById("t_mode_label").textContent = t.mode;
-367   document.getElementById("t_resources_label").textContent = t.resources;
-368   document.getElementById("t_language_label").textContent = t.language;
-369
-370   document.getElementById("btnRun").textContent = t.run;
-371   document.getElementById("btnPing").textContent = t.ping;
-372   document.getElementById("btnCopy").textContent = t.copy;
-373   document.getElementById("btnPDF").textContent = t.pdf;
-374   document.getElementById("btnShare").textContent = t.share;
-375   document.getElementById("btnClear").textContent = t.clear;
-376
-377   document.getElementById("t_result_title").textContent = t.result;
-378   document.getElementById("t_result_hint").textContent = t.result_hint;
-379
-380   document.getElementById("hintShort").textContent = t.short_hint;
-381 }
-382
-383 /* ---------------------------
-384    API BASE 自动判断
-385 ---------------------------- */
-386 const API_BASE = (location.hostname === "resetlife.blog")
-387   ? "https://www.resetlife.blog"
-388   : "";
-389
-390 /* ---------------------------
-391    DOM 快捷
-392 ---------------------------- */
-393 const $ = id => document.getElementById(id);
-394 const outEl = $("out");
-395 const statusEl = $("status");
-396 const progressBar = $("progressBar");
-397 const hintShortEl = $("hintShort");
-398
-399 $("apiLabel").textContent = API_BASE ? API_BASE + "/api" : "/api";
-400
-401 /* ---------------------------
-402    状态 & 进度条
-403 ---------------------------- */
-404 function setStatus(s){ statusEl.textContent = s; }
-405 function setProgress(p){ progressBar.style.width = p + "%"; }
-406
-407 /* ---------------------------
-408    通用 POST JSON
-409 ---------------------------- */
-410 async function postJSON(url, body){
-411   const ctrl = new AbortController();
-412   const t = setTimeout(()=>ctrl.abort(), 90000);
-413
-414   try{
-415     const res = await fetch(url, {
-416       method:"POST",
-417       headers:{ "Content-Type":"application/json" },
-418       body: JSON.stringify(body),
-419       signal: ctrl.signal
-420     });
-421
-422     const text = await res.text();
-423     const ct = res.headers.get("content-type") || "";
-424
-425     if(!ct.includes("application/json")){
-426       throw new Error("Non-JSON response:\n" + text);
-427     }
-428
-429     const data = JSON.parse(text);
-430     if(!res.ok) throw new Error(JSON.stringify(data));
-431
-432     return data;
-433   } finally {
-434     clearTimeout(t);
-435   }
-436 }
-437
-438 /* ---------------------------
-439    测试 API
-440 ---------------------------- */
-441 $("btnPing").onclick = async ()=>{
-442   setStatus("Testing...");
-443   setProgress(30);
-444   try{
-445     const r = await fetch(API_BASE + "/api/ping");
-446     const t = await r.text();
-447     outEl.textContent = t;
-448     setStatus("OK");
-449     setProgress(100);
-450     setTimeout(()=>setProgress(0),800);
-451   }catch(e){
-452     outEl.textContent = "Ping failed:\n" + e;
-453     setStatus("Failed");
-454     setProgress(0);
-455   }
-456 };
-457
-458 /* ---------------------------
-459    复制结果
-460 ---------------------------- */
-461 $("btnCopy").onclick = async ()=>{
-462   const text = outEl.textContent.trim();
-463   if(!text){ alert("无内容"); return; }
-464   await navigator.clipboard.writeText(text);
-465   setStatus("已复制");
-466 };
-467
-468 /* ---------------------------
-469    分享链接
-470 ---------------------------- */
-471 $("btnShare").onclick = ()=>{
-472   const params = new URLSearchParams({
-473     background:$("background").value,
-474     timeline:$("timeline").value,
-475     target:$("target").value,
-476     resources:$("resources").value,
-477     mode:$("mode").value,
-478     language:$("language").value
-479   });
-480   const url = location.origin + location.pathname + "?" + params.toString();
-481   navigator.clipboard.writeText(url);
-482   alert("已复制分享链接：\n" + url);
-483 };
-484
-485 /* ---------------------------
-486    PDF 导出
-487 ---------------------------- */
-488 $("btnPDF").onclick = ()=>{
-489   const text = outEl.textContent.trim();
-490   if(!text){ alert("无内容"); return; }
-491
-492   const { jsPDF } = window.jspdf;
-493   const doc = new jsPDF({ unit:"pt", format:"a4" });
-494
-493   doc.text("RE:LIFE Result", 40, 40);
-494   const lines = doc.splitTextToSize(text, 520);
-495   doc.text(lines, 40, 80);
-496
-497   doc.save("RE_LIFE.pdf");
-498 };
-499
-500 /* ---------------------------
-501    清空
-502 ---------------------------- */
-503 $("btnClear").onclick = ()=>{
-504   outEl.textContent = "";
-505   setStatus("已清空");
-506   setProgress(0);
-507   hintShortEl.style.display = "none";
-508 };
-509
-510 /* ----------------------------------------------------
-511    新窗口：展示 A/B/C 路线 + 评分表 + 30 天计划 + 对话
-512 ----------------------------------------------------- */
-513 function openResultWindow({ text, routes, followups, plan30d, context }) {
-514   const w = window.open("", "_blank");
-515   if (!w) {
-516     alert("浏览器拦截了新窗口，请允许弹窗");
-517     return;
-518   }
-519
-520   const lang = context.language === "en" ? "en" : "zh";
-521
-522   const T = {
-523     zh:{
-524       title:"RE:LIFE 模拟结果",
-525       routes:"路线 A/B/C",
-526       scores:"评分维度",
-527       plan:"30 天行动计划",
-528       chat:"追问对话",
-529       ask:"提问",
-530       placeholder:"例如：我更适合 B 吗？最小风险路线是什么？",
-531       followups:"建议追问",
-532       ctx:"上下文摘要"
-533     },
-534     en:{
-535       title:"RE:LIFE Result",
-536       routes:"Routes A/B/C",
-537       scores:"Scores",
-538       plan:"30-Day Plan",
-539       chat:"Follow-up Chat",
-540       ask:"Ask",
-541       placeholder:"e.g. Am I more suitable for route B?",
-542       followups:"Suggested follow-ups",
-543       ctx:"Context Summary"
-544     }
-545   }[lang];
-546
-547   const html = `
-548 <!doctype html>
-549 <html lang="${lang}">
-550 <head>
-551 <meta charset="utf-8" />
-552 <title>${T.title}</title>
-553 <style>
-554   body{
-555     margin:0;
-556     font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
-557     background:#0b1120;
-558     color:#e5e7eb;
-559   }
-560   .wrap{max-width:1100px;margin:24px auto;padding:0 16px;}
-561   h1{font-size:28px;margin:0 0 16px;}
-562   h2{font-size:18px;margin:18px 0 8px;}
-563
-564   .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;}
-565   @media (max-width:900px){.grid{grid-template-columns:1fr;}}
-566
-567   .card{
-568     background:rgba(15,23,42,.9);
-569     border-radius:16px;
-570     border:1px solid rgba(148,163,184,.4);
-571     padding:16px;
-572   }
-573
-574   .routes{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
-575   .route-pill{
-576     flex:1 1 0;
-577     min-width:120px;
-578     padding:10px;
-579     border-radius:12px;
-580     border:1px solid rgba(148,163,184,.6);
-581     cursor:pointer;
-582     background:rgba(15,23,42,.8);
-583   }
-584   .route-pill.active{
-585     border-color:#4f46e5;
-586     box-shadow:0 0 0 1px rgba(79,70,229,.6);
-587   }
-588   .route-pill h3{margin:0 0 4px;font-size:14px;}
-589   .route-pill p{margin:0;font-size:12px;color:#9ca3af;}
-590
-591   .scores-table{
-592     width:100%;
-593     border-collapse:collapse;
-594     margin-top:8px;
-595     font-size:12px;
-596   }
-597   .scores-table th,.scores-table td{
-598     border:1px solid rgba(148,163,184,.5);
-599     padding:4px 6px;
-600     text-align:center;
-601   }
-602
-603   .plan-list{font-size:13px;margin-top:6px;}
-604   .plan-list li{margin-bottom:4px;}
-605
-606   .chat-box{display:flex;flex-direction:column;gap:8px;}
-607   .chat-log{
-608     height:260px;
-609     overflow:auto;
-610     background:rgba(15,23,42,.8);
-611     border-radius:10px;
-612     padding:10px;
-613     border:1px solid rgba(148,163,184,.4);
-614     font-size:13px;
-615   }
-616   .chat-msg-user{color:#e5e7eb;margin-bottom:6px;}
-617   .chat-msg-ai{color:#a5b4fc;margin-bottom:10px;}
-618
-619   .chat-input-row{display:flex;gap:8px;margin-top:4px;}
-620   .chat-input-row input{
-621     flex:1;
-622     padding:8px 10px;
-623     border-radius:999px;
-624     border:1px solid rgba(148,163,184,.6);
-625     background:rgba(15,23,42,.9);
-626     color:#e5e7eb;
-627     outline:none;
-628   }
-629   .chat-input-row button{
-630     padding:8px 14px;
-631     border-radius:999px;
-632     border:0;
-633     background:linear-gradient(135deg,#4f46e5,#6366f1);
-634     color:#0b1120;
-635     font-weight:600;
-636     cursor:pointer;
-637   }
-638
-639   .followups{font-size:12px;color:#9ca3af;margin-top:6px;}
-640   .followups span{
-641     display:inline-block;
-642     padding:4px 8px;
-643     border-radius:999px;
-644     border:1px solid rgba(148,163,184,.6);
-645     margin:2px;
-646     cursor:pointer;
-647   }
-648
-649   .ctx{font-size:11px;color:#9ca3af;margin-top:6px;}
-650 </style>
-651 </head>
-652 <body>
-653 <div class="wrap">
-654   <h1>${T.title}</h1>
-655
-656   <div class="grid">
-657     <!-- 左侧：路线 + 评分 + 计划 -->
-658     <div class="card">
-659       <h2>${T.routes}</h2>
-660       <div class="routes" id="routes"></div>
-661
-662       <h2>${T.scores}</h2>
-663       <table class="scores-table">
-664         <thead>
-665           <tr>
-666             <th>Route</th>
-667             <th>Risk</th>
-668             <th>Reward</th>
-669             <th>Time</th>
-670             <th>Mental</th>
-671           </tr>
-672         </thead>
-673         <tbody id="scoresBody"></tbody>
-674       </table>
-675
-676       <h2>${T.plan}</h2>
-677       <ul class="plan-list" id="planList"></ul>
-678
-679       <div class="ctx">
-680         <strong>${T.ctx}:</strong><br/>
-681         ${context.background}<br/>
-682         ${context.timeline}<br/>
-683         ${context.target}
-684       </div>
-685     </div>
-686
-687     <!-- 右侧：对话 -->
-688     <div class="card">
-689       <h2>${T.chat}</h2>
-690       <div class="chat-box">
-691         <div class="chat-log" id="chatLog"></div>
-692         <div class="followups" id="followupsBox"></div>
-693
-694         <div class="chat-input-row">
-695           <input id="chatInput" placeholder="${T.placeholder}" />
-696           <button id="chatSend">${T.ask}</button>
-697         </div>
-698       </div>
-699     </div>
-700   </div>
-701 </div>
-702
-703 <script>
-704   const routes = ${JSON.stringify([])};
-705   const followups = ${JSON.stringify([])};
-706   const plan30d = ${JSON.stringify([])};
-707   const baseText = ${JSON.stringify("")};
-708   const ctx = ${JSON.stringify({})};
-709
-710   const routesEl = document.getElementById("routes");
-711   const scoresBody = document.getElementById("scoresBody");
-712   const planList = document.getElementById("planList");
-713   const chatLog = document.getElementById("chatLog");
-714   const followupsBox = document.getElementById("followupsBox");
-715   const chatInput = document.getElementById("chatInput");
-716   const chatSend = document.getElementById("chatSend");
-717
-718   function appendAI(msg){
-719     const div = document.createElement("div");
-720     div.className = "chat-msg-ai";
-721     div.textContent = msg;
-722     chatLog.appendChild(div);
-723     chatLog.scrollTop = chatLog.scrollHeight;
-724   }
-725   function appendUser(msg){
-726     const div = document.createElement("div");
-727     div.className = "chat-msg-user";
-728     div.textContent = "You: " + msg;
-729     chatLog.appendChild(div);
-730     chatLog.scrollTop = chatLog.scrollHeight;
-731   }
-732
-733   appendAI(baseText);
-734
-735   function renderRoutes(){
-736     routesEl.innerHTML = "";
-737     scoresBody.innerHTML = "";
-738
-739     routes.forEach((r, idx)=>{
-740       const div = document.createElement("div");
-741       div.className = "route-pill" + (idx===0 ? " active" : "");
-742       div.innerHTML = `
-743         <h3>${r.id} · ${r.title}</h3>
-744         <p>${r.summary}</p>
-745       `;
-746       div.onclick = ()=>{
-747         document.querySelectorAll(".route-pill").forEach(x=>x.classList.remove("active"));
-748         div.classList.add("active");
-749         appendAI("[" + r.id + "] " + r.summary);
-750       };
-751       routesEl.appendChild(div);
-752
-753       const s = r.score || {};
-754       const tr = document.createElement("tr");
-755       tr.innerHTML = `
-756         <td>${r.id}</td>
-757         <td>${s.risk ?? "-"}</td>
-758         <td>${s.reward ?? "-"}</td>
-759         <td>${s.timeCost ?? "-"}</td>
-760         <td>${s.mentalCost ?? "-"}</td>
-761       `;
-762       scoresBody.appendChild(tr);
-763     });
-764   }
-765
-766   function renderPlan(){
-767     planList.innerHTML = "";
-768     plan30d.forEach(p=>{
-769       const li = document.createElement("li");
-770       li.textContent = p;
-771       planList.appendChild(li);
-772     });
-773   }
-774
-775   function renderFollowups(){
-776     followupsBox.innerHTML = "";
-777     if(!followups.length) return;
-778
-779     followups.forEach(q=>{
-780       const span = document.createElement("span");
-781       span.textContent = q;
-782       span.onclick = ()=>{
-783         chatInput.value = q;
-784         chatInput.focus();
-785       };
-786       followupsBox.appendChild(span);
-787     });
-788   }
-789
-790   renderRoutes();
-791   renderPlan();
-792   renderFollowups();
-793
-794   async function sendChat(){
-795     const q = chatInput.value.trim();
-796     if(!q) return;
-797
-798     appendUser(q);
-799     chatInput.value = "";
-800     appendAI("Thinking...");
-801   }
-802
-803   chatSend.onclick = sendChat;
-804   chatInput.addEventListener("keydown", e=>{
-805     if(e.key==="Enter"){
-806       e.preventDefault();
-807       sendChat();
-808     }
-809   });
-810 </script>
-811
-812 </body>
-813 </html>
-814 `;
-815
-816   w.document.open();
-817   w.document.write(html);
-818   w.document.close();
-819 }
-820
-821 /* ----------------------------------------------------
-822    开始模拟（主窗口）
-823 ----------------------------------------------------- */
-824 $("btnRun").onclick = async ()=>{
-825   const background = $("background").value.trim();
-826   const timeline = $("timeline").value.trim();
-827   const target = $("target").value.trim();
-828   const resources = $("resources").value.trim();
-829   const mode = $("mode").value;
-830   const language = $("language").value;
-831
-832   if(background.length + timeline.length < 60){
-833     hintShortEl.style.display = "block";
-834   } else {
-835     hintShortEl.style.display = "none";
-836   }
-837
-838   if(!background || !timeline || !target){
-839     outEl.textContent = "请填写完整信息";
-840     return;
-841   }
-842
-843   setStatus("生成中...");
-844   setProgress(10);
-845   outEl.textContent = "⏳ 正在生成，请稍候…";
-846
-847   try{
-848     let fake = 10;
-849     const timer = setInterval(()=>{
-850       fake = Math.min(fake+5, 85);
-851       setProgress(fake);
-852     }, 800);
-853
-854     const data = await postJSON(API_BASE + "/api/generate", {
-855       background, timeline, target, resources, mode, language
-856     });
-857
-858     clearInterval(timer);
-859     setProgress(100);
-860
-861     if(!data.ok){
-862       outEl.textContent = JSON.stringify(data, null, 2);
-863       return;
-864     }
-865
-866     outEl.textContent = data.text;
-867     setStatus("完成");
-868     setTimeout(()=>setProgress(0),1000);
-869
-870     openResultWindow({
-871       text: data.text,
-872       routes: data.routes,
-873       followups: data.followups,
-874       plan30d: data.plan30d,
-875       context:{ background, timeline, target, resources, language }
-876     });
-877
-878   }catch(e){
-879     outEl.textContent = "错误：\n" + e;
-880     setStatus("失败");
-881     setProgress(0);
-882   }
-883 };
-884
-885 </script>
-886
-887 </body>
-888 </html>
-889 </script>
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>RE:LIFE | 回环</title>
 
-890 </body>
-891 </html>
+<!-- jsPDF 用于导出 PDF -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<style>
+:root{
+--bg:#0B1220;--card:#0f1a33cc;--line:#22304f;--text:#e8eefc;--muted:#9fb0d5;
+--primary:#4C6FFF;--primary2:#22D3EE;--warn:#F59E0B;
+--card-soft:rgba(255,255,255,.06);
+}
+:root[data-theme="light"]{
+--bg:#f3f4f6;--card:#ffffff;--line:#d1d5db;--text:#111827;--muted:#6b7280;
+--primary:#2563eb;--primary2:#0ea5e9;--warn:#d97706;
+--card-soft:rgba(15,23,42,.04);
+}
+*{box-sizing:border-box}
+body{
+margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+background:var(--bg);
+color:var(--text);
+}
+.wrap{max-width:1100px;margin:40px auto;padding:0 18px}
+.title{display:flex;align-items:flex-end;gap:12px;margin-bottom:22px}
+.title h1{font-size:42px;letter-spacing:.5px;margin:0}
+.title .sub{color:var(--muted);font-size:14px;margin-bottom:6px}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.card{
+background:linear-gradient(180deg, var(--card-soft), var(--card-soft));
+border:1px solid rgba(255,255,255,.08);
+border-radius:18px;
+box-shadow:0 20px 60px rgba(0,0,0,.15);
+overflow:hidden;
+}
+:root[data-theme="light"] .card{
+border:1px solid #e5e7eb;
+box-shadow:0 10px 30px rgba(15,23,42,.08);
+}
+.card .hd{padding:18px 18px 10px;border-bottom:1px solid rgba(255,255,255,.07)}
+:root[data-theme="light"] .card .hd{border-bottom:1px solid #e5e7eb;}
+.card .hd h2{margin:0;font-size:18px}
+.card .bd{padding:18px}
+label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
+input, textarea, select{
+width:100%;
+background:rgba(10,16,28,.55);
+border:1px solid rgba(255,255,255,.10);
+color:var(--text);
+border-radius:12px;
+padding:12px 12px;
+outline:none;
+}
+:root[data-theme="light"] input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] select{
+background:#f9fafb;
+border:1px solid #e5e7eb;
+}
+textarea{min-height:120px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:980px){.row{grid-template-columns:1fr}}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+button{
+border:0;cursor:pointer;border-radius:12px;
+padding:10px 14px;font-weight:600;color:#081022;
+background:linear-gradient(135deg,var(--primary), #5a7bff);
+font-size:14px;
+}
+button.secondary{
+color:var(--text);
+background:rgba(255,255,255,.08);
+border:1px solid rgba(255,255,255,.10);
+}
+:root[data-theme="light"] button.secondary{
+background:#f9fafb;
+border:1px solid #e5e7eb;
+}
+button.danger{
+color:#fff;background:rgba(245, 89, 11, .18);
+border:1px solid rgba(245, 89, 11, .35);
+}
+.pill{
+display:inline-flex;align-items:center;gap:8px;
+padding:8px 10px;border-radius:999px;
+border:1px solid rgba(255,255,255,.10);
+background:rgba(255,255,255,.06);
+color:var(--muted);font-size:12px
+}
+:root[data-theme="light"] .pill{
+background:#f9fafb;
+border:1px solid #e5e7eb;
+}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.status{margin-top:12px;color:var(--muted);font-size:13px}
+.out{
+white-space:pre-wrap;
+background:rgba(10,16,28,.55);
+border:1px solid rgba(255,255,255,.10);
+border-radius:14px;
+padding:14px;
+min-height:220px;
+line-height:1.55;
+}
+:root[data-theme="light"] .out{
+background:#f9fafb;
+border:1px solid #e5e7eb;
+}
+.foot{margin-top:18px;color:var(--muted);font-size:12px}
+
+.progress-wrap{
+margin-top:10px;
+height:6px;
+background:rgba(255,255,255,.06);
+border-radius:999px;
+overflow:hidden;
+}
+:root[data-theme="light"] .progress-wrap{
+background:#e5e7eb;
+}
+.progress-bar{
+height:100%;
+width:0%;
+background:linear-gradient(90deg,var(--primary),var(--primary2));
+transition:width .3s ease;
+}
+
+.theme-toggle{
+margin-left:10px;
+font-size:12px;
+padding:6px 10px;
+}
+
+.hint-short{
+margin-top:8px;
+font-size:12px;
+color:var(--warn);
+}
+
+/* 语言选择遮罩 */
+#langMask{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.75);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
+}
+#langBox{
+background:#fff;
+color:#111;
+padding:30px;
+border-radius:16px;
+width:300px;
+text-align:center;
+box-shadow:0 10px 40px rgba(0,0,0,.3);
+}
+#langBox h2{margin:0 0 20px;font-size:20px;}
+#langBox button{
+width:100%;
+margin:8px 0;
+padding:12px;
+border-radius:10px;
+border:0;
+cursor:pointer;
+font-size:16px;
+font-weight:600;
+background:#4C6FFF;
+color:#fff;
+}
+</style>
+</head>
+<body>
+
+<!-- 语言选择遮罩 -->
+<div id="langMask">
+<div id="langBox">
+<h2>选择语言 / Choose Language</h2>
+<button onclick="selectLang('zh')">中文</button>
+<button onclick="selectLang('en')">English</button>
+</div>
+</div>
+
+<div class="wrap" id="app" style="display:none;">
+<div class="title">
+<h1 id="t_app_title">RE:LIFE | 回环</h1>
+<div class="sub" id="t_app_sub">理性人生模拟 · 非算命 · 非保证</div>
+
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<div class="pill">
+API: <span id="apiLabel" class="mono"></span>
+</div>
+<button class="secondary theme-toggle" id="btnTheme">🌗</button>
+</div>
+</div>
+
+<div class="grid">
+<!-- 左侧输入卡片 -->
+<div class="card">
+<div class="hd"><h2 id="t_your_info">你的信息</h2></div>
+<div class="bd">
+
+<label id="t_background_label">个人背景（必填）</label>
+<input id="background" placeholder="例：28岁，工作3年，想转行/想创业…" />
+
+<label id="t_timeline_label">人生经历时间线（必填）</label>
+<textarea id="timeline" placeholder="用要点写：学校/工作/关键事件/决策/资源/人脉…"></textarea>
+
+<div class="row">
+<div>
+<label id="t_target_label">想回到的时间点（必填）</label>
+<input id="target" placeholder="例：18岁高考 / 22岁毕业 / 2020年某次决定" />
+</div>
+<div>
+<label id="t_mode_label">生成模式</label>
+<select id="mode">
+<option value="abc">对比 A/B/C（推荐）</option>
+<option value="single">单一路线（更快）</option>
+<option value="chat">追问模式（对话）</option>
+</select>
+</div>
+</div>
+
+<label id="t_resources_label">能力 / 资源（可选）</label>
+<input id="resources" placeholder="例：英语一般/有存款2万/家人支持/擅长写作…" />
+
+<label id="t_language_label">语言 / Language</label>
+<select id="language">
+<option value="zh">中文</option>
+<option value="en">English</option>
+</select>
+
+<div class="btns">
+<button id="btnRun">开始模拟</button>
+<button class="secondary" id="btnPing">测试 API</button>
+<button class="secondary" id="btnCopy">复制结果</button>
+<button class="secondary" id="btnPDF">导出 PDF</button>
+<button class="secondary" id="btnShare">分享链接</button>
+<button class="danger" id="btnClear">清空输出</button>
+</div>
+
+<div class="progress-wrap">
+<div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div class="status" id="status">状态：就绪</div>
+
+<div class="hint-short" id="hintShort" style="display:none;">
+建议补充信息（追问）：可以多写一些关键节点、转折点、你在意的东西。
+</div>
+
+</div>
+</div>
+
+<!-- 右侧结果卡片 -->
+<div class="card">
+<div class="hd"><h2 id="t_result_title">结果</h2></div>
+<div class="bd">
+<div id="out" class="out">点击“开始模拟”生成内容。</div>
+<div class="foot" id="t_result_hint">
+如果长时间无响应，可以先点“测试 API”确认 /api/ping 是否正常，再检查 OpenAI 配额。
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+/* ---------------------------
+语言选择（进入页面第一步）
+---------------------------- */
+function selectLang(lang){
+localStorage.setItem("relife-lang", lang);
+document.getElementById("langMask").style.display = "none";
+document.getElementById("app").style.display = "block";
+applyLang(lang);
+}
+
+(function initLang(){
+const saved = localStorage.getItem("relife-lang");
+if(saved){
+document.getElementById("langMask").style.display = "none";
+document.getElementById("app").style.display = "block";
+applyLang(saved);
+}
+})();
+
+/* ---------------------------
+UI 文本（中英文）
+---------------------------- */
+const LANG = {
+zh:{
+app_title:"RE:LIFE | 回环",
+app_sub:"理性人生模拟 · 非算命 · 非保证",
+your_info:"你的信息",
+background:"个人背景（必填）",
+timeline:"人生经历时间线（必填）",
+target:"想回到的时间点（必填）",
+mode:"生成模式",
+resources:"能力 / 资源（可选）",
+language:"语言 / Language",
+run:"开始模拟",
+ping:"测试 API",
+copy:"复制结果",
+pdf:"导出 PDF",
+share:"分享链接",
+clear:"清空输出",
+result:"结果",
+result_hint:"如果长时间无响应，可以先点“测试 API”确认 /api/ping 是否正常，再检查 OpenAI 配额。",
+short_hint:"建议补充信息（追问）：可以多写一些关键节点、转折点、你在意的东西。",
+placeholder_bg:"例：28岁，工作3年，想转行/想创业…",
+placeholder_tl:"用要点写：学校/工作/关键事件/决策/资源/人脉…",
+placeholder_target:"例：18岁高考 / 22岁毕业 / 2020年某次决定"
+},
+en:{
+app_title:"RE:LIFE | Loop",
+app_sub:"Rational life simulation · No fortune telling · No guarantees",
+your_info:"Your Information",
+background:"Background (required)",
+timeline:"Life Timeline (required)",
+target:"Target Point (required)",
+mode:"Mode",
+resources:"Skills / Resources (optional)",
+language:"Language",
+run:"Run Simulation",
+ping:"Test API",
+copy:"Copy Result",
+pdf:"Export PDF",
+share:"Share Link",
+clear:"Clear Output",
+result:"Result",
+result_hint:"If it takes too long, test /api/ping first, then check OpenAI billing.",
+short_hint:"Suggested: add more details (key events, turning points, motivations).",
+placeholder_bg:"e.g. 28 years old, 3 years working, want to switch career…",
+placeholder_tl:"List key events: school, jobs, decisions, resources, network…",
+placeholder_target:"e.g. age 18 exam / age 22 graduation / 2020 decision"
+}
+};
+
+
+/* ---------------------------
+应用语言到 UI
+---------------------------- */
+function applyLang(lang){
+const t = LANG[lang];
+
+document.getElementById("t_app_title").textContent = t.app_title;
+document.getElementById("t_app_sub").textContent = t.app_sub;
+
+document.getElementById("t_your_info").textContent = t.your_info;
+document.getElementById("t_background_label").textContent = t.background;
+document.getElementById("background").placeholder = t.placeholder_bg;
+
+document.getElementById("t_timeline_label").textContent = t.timeline;
+document.getElementById("timeline").placeholder = t.placeholder_tl;
+
+document.getElementById("t_target_label").textContent = t.target;
+document.getElementById("target").placeholder = t.placeholder_target;
+
+document.getElementById("t_mode_label").textContent = t.mode;
+document.getElementById("t_resources_label").textContent = t.resources;
+document.getElementById("t_language_label").textContent = t.language;
+
+document.getElementById("btnRun").textContent = t.run;
+document.getElementById("btnPing").textContent = t.ping;
+document.getElementById("btnCopy").textContent = t.copy;
+document.getElementById("btnPDF").textContent = t.pdf;
+document.getElementById("btnShare").textContent = t.share;
+document.getElementById("btnClear").textContent = t.clear;
+
+document.getElementById("t_result_title").textContent = t.result;
+document.getElementById("t_result_hint").textContent = t.result_hint;
+
+document.getElementById("hintShort").textContent = t.short_hint;
+}
+
+/* ---------------------------
+   API BASE
+   - 统一走同源 /api，避免 www / apex 不一致
+---------------------------- */
+const API_BASE = "";
+
+/* ---------------------------
+DOM 快捷
+---------------------------- */
+const $ = id => document.getElementById(id);
+const outEl = $("out");
+const statusEl = $("status");
+const progressBar = $("progressBar");
+const hintShortEl = $("hintShort");
+
+$("apiLabel").textContent = location.origin + "/api";
+
+/* ---------------------------
+状态 & 进度条
+---------------------------- */
+function setStatus(s){ statusEl.textContent = s; }
+function setProgress(p){ progressBar.style.width = p + "%"; }
+
+/* ---------------------------
+通用 POST JSON
+---------------------------- */
+async function postJSON(url, body){
+const ctrl = new AbortController();
+const t = setTimeout(()=>ctrl.abort(), 90000);
+
+try{
+const res = await fetch(url, {
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body: JSON.stringify(body),
+signal: ctrl.signal
+});
+
+const text = await res.text();
+const ct = res.headers.get("content-type") || "";
+
+if(!ct.includes("application/json")){
+throw new Error("Non-JSON response:\n" + text);
+}
+
+const data = JSON.parse(text);
+if(!res.ok) throw new Error(JSON.stringify(data));
+
+return data;
+} finally {
+clearTimeout(t);
+}
+}
+
+/* ---------------------------
+测试 API
+---------------------------- */
+$("btnPing").onclick = async ()=>{
+setStatus("Testing...");
+setProgress(30);
+try{
+const r = await fetch(API_BASE + "/api/ping");
+const t = await r.text();
+outEl.textContent = t;
+setStatus("OK");
+setProgress(100);
+setTimeout(()=>setProgress(0),800);
+}catch(e){
+outEl.textContent = "Ping failed:\n" + e;
+setStatus("Failed");
+setProgress(0);
+}
+};
+
+/* ---------------------------
+复制结果
+---------------------------- */
+$("btnCopy").onclick = async ()=>{
+const text = outEl.textContent.trim();
+if(!text){ alert("无内容"); return; }
+await navigator.clipboard.writeText(text);
+setStatus("已复制");
+};
+
+/* ---------------------------
+分享链接
+---------------------------- */
+$("btnShare").onclick = ()=>{
+const params = new URLSearchParams({
+background:$("background").value,
+timeline:$("timeline").value,
+target:$("target").value,
+resources:$("resources").value,
+mode:$("mode").value,
+language:$("language").value
+});
+const url = location.origin + location.pathname + "?" + params.toString();
+navigator.clipboard.writeText(url);
+alert("已复制分享链接：\n" + url);
+};
+
+/* ---------------------------
+PDF 导出
+---------------------------- */
+$("btnPDF").onclick = ()=>{
+const text = outEl.textContent.trim();
+if(!text){ alert("无内容"); return; }
+
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF({ unit:"pt", format:"a4" });
+
+doc.text("RE:LIFE Result", 40, 40);
+const lines = doc.splitTextToSize(text, 520);
+doc.text(lines, 40, 80);
+
+doc.save("RE_LIFE.pdf");
+};
+
+/* ---------------------------
+清空
+---------------------------- */
+$("btnClear").onclick = ()=>{
+outEl.textContent = "";
+setStatus("已清空");
+setProgress(0);
+hintShortEl.style.display = "none";
+};
+
+/* ----------------------------------------------------
+新窗口：展示 A/B/C 路线 + 评分表 + 30 天计划 + 对话
+----------------------------------------------------- */
+function openResultWindow({ text, routes, followups, plan30d, context }) {
+  const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const w = window.open("", "_blank");
+if (!w) {
+alert("浏览器拦截了新窗口，请允许弹窗");
+return;
+}
+
+const lang = context.language === "en" ? "en" : "zh";
+
+const T = {
+zh:{
+title:"RE:LIFE 模拟结果",
+routes:"路线 A/B/C",
+scores:"评分维度",
+plan:"30 天行动计划",
+chat:"追问对话",
+ask:"提问",
+placeholder:"例如：我更适合 B 吗？最小风险路线是什么？",
+followups:"建议追问",
+ctx:"上下文摘要"
+},
+en:{
+title:"RE:LIFE Result",
+routes:"Routes A/B/C",
+scores:"Scores",
+plan:"30-Day Plan",
+chat:"Follow-up Chat",
+ask:"Ask",
+placeholder:"e.g. Am I more suitable for route B?",
+followups:"Suggested follow-ups",
+ctx:"Context Summary"
+}
+}[lang];
+
+const html = `
+<!doctype html>
+<html lang="${lang}">
+<head>
+<meta charset="utf-8" />
+<title>${T.title}</title>
+<style>
+body{
+margin:0;
+font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+background:#0b1120;
+color:#e5e7eb;
+}
+.wrap{max-width:1100px;margin:24px auto;padding:0 16px;}
+h1{font-size:28px;margin:0 0 16px;}
+h2{font-size:18px;margin:18px 0 8px;}
+
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;}
+@media (max-width:900px){.grid{grid-template-columns:1fr;}}
+
+.card{
+background:rgba(15,23,42,.9);
+border-radius:16px;
+border:1px solid rgba(148,163,184,.4);
+padding:16px;
+}
+
+.routes{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.route-pill{
+flex:1 1 0;
+min-width:120px;
+padding:10px;
+border-radius:12px;
+border:1px solid rgba(148,163,184,.6);
+cursor:pointer;
+background:rgba(15,23,42,.8);
+}
+.route-pill.active{
+border-color:#4f46e5;
+box-shadow:0 0 0 1px rgba(79,70,229,.6);
+}
+.route-pill h3{margin:0 0 4px;font-size:14px;}
+.route-pill p{margin:0;font-size:12px;color:#9ca3af;}
+
+.scores-table{
+width:100%;
+border-collapse:collapse;
+margin-top:8px;
+font-size:12px;
+}
+.scores-table th,.scores-table td{
+border:1px solid rgba(148,163,184,.5);
+padding:4px 6px;
+text-align:center;
+}
+
+.plan-list{font-size:13px;margin-top:6px;}
+.plan-list li{margin-bottom:4px;}
+
+.chat-box{display:flex;flex-direction:column;gap:8px;}
+.chat-log{
+height:260px;
+overflow:auto;
+background:rgba(15,23,42,.8);
+border-radius:10px;
+padding:10px;
+border:1px solid rgba(148,163,184,.4);
+font-size:13px;
+}
+.chat-msg-user{color:#e5e7eb;margin-bottom:6px;}
+.chat-msg-ai{color:#a5b4fc;margin-bottom:10px;}
+
+.chat-input-row{display:flex;gap:8px;margin-top:4px;}
+.chat-input-row input{
+flex:1;
+padding:8px 10px;
+border-radius:999px;
+border:1px solid rgba(148,163,184,.6);
+background:rgba(15,23,42,.9);
+color:#e5e7eb;
+outline:none;
+}
+.chat-input-row button{
+padding:8px 14px;
+border-radius:999px;
+border:0;
+background:linear-gradient(135deg,#4f46e5,#6366f1);
+color:#0b1120;
+font-weight:600;
+cursor:pointer;
+}
+
+.followups{font-size:12px;color:#9ca3af;margin-top:6px;}
+.followups span{
+display:inline-block;
+padding:4px 8px;
+border-radius:999px;
+border:1px solid rgba(148,163,184,.6);
+margin:2px;
+cursor:pointer;
+}
+
+.ctx{font-size:11px;color:#9ca3af;margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>${T.title}</h1>
+
+<div class="grid">
+<!-- 左侧：路线 + 评分 + 计划 -->
+<div class="card">
+<h2>${T.routes}</h2>
+<div class="routes" id="routes"></div>
+
+<h2>${T.scores}</h2>
+<table class="scores-table">
+<thead>
+<tr>
+<th>Route</th>
+<th>Risk</th>
+<th>Reward</th>
+<th>Time</th>
+<th>Mental</th>
+</tr>
+</thead>
+<tbody id="scoresBody"></tbody>
+</table>
+
+<h2>${T.plan}</h2>
+<ul class="plan-list" id="planList"></ul>
+
+<div class="ctx">
+<strong>${T.ctx}:</strong><br/>
+${escapeHtml(context.background)}<br/>
+${escapeHtml(context.timeline)}<br/>
+${escapeHtml(context.target)}
+</div>
+</div>
+
+<!-- 右侧：对话 -->
+<div class="card">
+<h2>${T.chat}</h2>
+<div class="chat-box">
+<div class="chat-log" id="chatLog"></div>
+<div class="followups" id="followupsBox"></div>
+
+<div class="chat-input-row">
+<input id="chatInput" placeholder="${T.placeholder}" />
+<button id="chatSend">${T.ask}</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+const routes = ${JSON.stringify(routes || [])};
+const followups = ${JSON.stringify(followups || [])};
+const plan30d = ${JSON.stringify(plan30d || [])};
+const baseText = ${JSON.stringify(text || "")};
+const ctx = ${JSON.stringify(context || {})};
+
+const routesEl = document.getElementById("routes");
+const scoresBody = document.getElementById("scoresBody");
+const planList = document.getElementById("planList");
+const chatLog = document.getElementById("chatLog");
+const followupsBox = document.getElementById("followupsBox");
+const chatInput = document.getElementById("chatInput");
+const chatSend = document.getElementById("chatSend");
+
+function appendAI(msg){
+const div = document.createElement("div");
+div.className = "chat-msg-ai";
+div.textContent = msg;
+chatLog.appendChild(div);
+chatLog.scrollTop = chatLog.scrollHeight;
+}
+function appendUser(msg){
+const div = document.createElement("div");
+div.className = "chat-msg-user";
+div.textContent = "You: " + msg;
+chatLog.appendChild(div);
+chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+appendAI(baseText);
+
+function renderRoutes(){
+routesEl.innerHTML = "";
+scoresBody.innerHTML = "";
+
+routes.forEach((r, idx)=>{
+const div = document.createElement("div");
+div.className = "route-pill" + (idx===0 ? " active" : "");
+div.innerHTML = `
+<h3>${r.id} · ${r.title}</h3>
+<p>${r.summary}</p>
+`;
+div.onclick = ()=>{
+document.querySelectorAll(".route-pill").forEach(x=>x.classList.remove("active"));
+div.classList.add("active");
+appendAI("[" + r.id + "] " + r.summary);
+};
+routesEl.appendChild(div);
+
+const s = r.score || {};
+const tr = document.createElement("tr");
+tr.innerHTML = `
+<td>${r.id}</td>
+<td>${s.risk ?? "-"}</td>
+<td>${s.reward ?? "-"}</td>
+<td>${s.timeCost ?? "-"}</td>
+<td>${s.mentalCost ?? "-"}</td>
+`;
+scoresBody.appendChild(tr);
+});
+}
+
+function renderPlan(){
+planList.innerHTML = "";
+plan30d.forEach(p=>{
+const li = document.createElement("li");
+li.textContent = p;
+planList.appendChild(li);
+});
+}
+
+function renderFollowups(){
+followupsBox.innerHTML = "";
+if(!followups.length) return;
+
+followups.forEach(q=>{
+const span = document.createElement("span");
+span.textContent = q;
+span.onclick = ()=>{
+chatInput.value = q;
+chatInput.focus();
+};
+followupsBox.appendChild(span);
+});
+}
+
+renderRoutes();
+renderPlan();
+renderFollowups();
+
+async function sendChat(){
+const q = chatInput.value.trim();
+if(!q) return;
+
+appendUser(q);
+chatInput.value = "";
+appendAI("Thinking...");
+}
+
+chatSend.onclick = sendChat;
+chatInput.addEventListener("keydown", e=>{
+if(e.key==="Enter"){
+e.preventDefault();
+sendChat();
+}
+});
+</script>
+
+</body>
+</html>
+`;
+
+w.document.open();
+w.document.write(html);
+w.document.close();
+}
+
+/* ----------------------------------------------------
+开始模拟（主窗口）
+----------------------------------------------------- */
+$("btnRun").onclick = async ()=>{
+const background = $("background").value.trim();
+const timeline = $("timeline").value.trim();
+const target = $("target").value.trim();
+const resources = $("resources").value.trim();
+const mode = $("mode").value;
+const language = $("language").value;
+
+if(background.length + timeline.length < 60){
+hintShortEl.style.display = "block";
+} else {
+hintShortEl.style.display = "none";
+}
+
+if(!background || !timeline || !target){
+outEl.textContent = "请填写完整信息";
+return;
+}
+
+setStatus("生成中...");
+setProgress(10);
+outEl.textContent = "⏳ 正在生成，请稍候…";
+
+try{
+let fake = 10;
+const timer = setInterval(()=>{
+fake = Math.min(fake+5, 85);
+setProgress(fake);
+}, 800);
+
+const data = await postJSON(API_BASE + "/api/generate", {
+background, timeline, target, resources, mode, language
+});
+
+clearInterval(timer);
+setProgress(100);
+
+if(!data.ok){
+outEl.textContent = JSON.stringify(data, null, 2);
+return;
+}
+
+outEl.textContent = data.text;
+setStatus("完成");
+setTimeout(()=>setProgress(0),1000);
+
+openResultWindow({
+text: data.text,
+routes: data.routes,
+followups: data.followups,
+plan30d: data.plan30d,
+context:{ background, timeline, target, resources, language }
+});
+
+}catch(e){
+outEl.textContent = "错误：\n" + e;
+setStatus("失败");
+setProgress(0);
+}
+};
+
+</script>
+
+</body>
+</html>
