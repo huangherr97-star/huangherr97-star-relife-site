@@ -1,193 +1,185 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RE:LIFE | 回环 · 命运模拟器</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        /* 采用附件档案定义的品牌规范 */
-        :root {
-            --bg: #0B1220;
-            --card: #0E1628;
-            --text: #E6EAF2;
-            --muted: #A7B0C0;
-            --primary: #4C6FFF;
-            --accent: #22D3EE;
-        }
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Inter', -apple-system, system-ui, sans-serif;
-            display: flex;
-            justify-content: center;
-            padding: 40px 20px;
-            margin: 0;
-            line-height: 1.6;
-        }
-        .container {
-            width: 100%;
-            max-width: 550px;
-        }
-        .card {
-            background: var(--card);
-            padding: 35px;
-            border-radius: 20px;
-            border: 1px solid #1C2433;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        }
-        .header {
-            text-align: center;
-            font-weight: 800;
-            font-size: 24px;
-            letter-spacing: 6px;
-            color: var(--primary);
-            margin-bottom: 10px;
-            text-shadow: 0 0 15px rgba(76, 111, 255, 0.3);
-        }
-        .tagline {
-            text-align: center;
-            color: var(--muted);
-            font-size: 12px;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        textarea {
-            width: 100%;
-            height: 140px;
-            padding: 18px;
-            background: #0a0f1d;
-            border: 1px solid #1C2433;
-            border-radius: 12px;
-            color: var(--text);
-            font-size: 16px;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-            outline: none;
-            transition: all 0.3s;
-        }
-        textarea:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(34, 211, 238, 0.1); }
-        
-        button {
-            width: 100%;
-            padding: 18px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        button:hover { background: #3b5bdb; transform: translateY(-1px); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        #resultWrapper { margin-top: 35px; display: none; }
-        #captureArea { 
-            background: var(--card); 
-            padding: 30px; 
-            border-radius: 16px; 
-            border: 1px solid #1C2433;
-            position: relative;
-        }
-        #captureArea::after {
-            content: "RESETLIFE.BLOG | NARRATIVE ENGINE";
-            position: absolute; bottom: 10px; right: 15px; font-size: 9px; color: #24314a;
-        }
-        #resultText { font-size: 16px; color: var(--text); white-space: pre-wrap; line-height: 2; }
-        .cursor { display: inline-block; width: 2px; height: 18px; background: var(--accent); margin-left: 4px; vertical-align: middle; animation: blink 0.8s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
-        
-        #downloadBtn {
-            margin-top: 15px;
-            background: transparent;
-            border: 1px solid var(--accent);
-            color: var(--accent);
-            font-size: 14px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RE:LIFE | 回环</title>
+  <style>
+    :root{
+      --bg:#0B1220;
+      --card:#0f1a2e;
+      --card2:#0c162a;
+      --text:#e6edf7;
+      --muted:#9fb0c8;
+      --line:rgba(255,255,255,.08);
+      --primary:#4C6FFF;
+      --primary2:#22D3EE;
+      --warn:#F59E0B;
+      --danger:#ff5c7a;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans CJK SC","Noto Sans SC","PingFang SC","Microsoft YaHei", sans-serif;
+      color:var(--text);
+      background: radial-gradient(1000px 700px at 50% -10%, rgba(76,111,255,.35), transparent 55%),
+                  radial-gradient(900px 650px at 10% 15%, rgba(34,211,238,.18), transparent 60%),
+                  var(--bg);
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:42px 18px 60px}
+    .title{font-size:44px;font-weight:800;letter-spacing:.5px}
+    .sub{margin-top:8px;color:var(--muted)}
+    .card{
+      margin-top:22px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border-radius:18px;
+      padding:22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .card h2{margin:0 0 16px 0;font-size:22px}
+    label{display:block;color:var(--muted);font-size:14px;margin:14px 0 8px}
+    input, textarea{
+      width:100%;
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px 14px;
+      outline:none;
+    }
+    textarea{min-height:120px;resize:vertical}
+    .btn{
+      margin-top:16px;
+      width:100%;
+      border:0;
+      border-radius:14px;
+      padding:14px 16px;
+      font-size:16px;
+      font-weight:700;
+      color:white;
+      background: linear-gradient(90deg, var(--primary), #5a7bff);
+      cursor:pointer;
+      transition: transform .08s ease, opacity .2s ease;
+    }
+    .btn:active{transform: scale(.99)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .meta{margin-top:12px;color:var(--muted);font-size:13px}
+    .status{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.16);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      white-space:pre-wrap;
+      word-break:break-word;
+      line-height:1.45;
+    }
+    .status.ok{border-color:rgba(34,211,238,.28)}
+    .status.err{border-color:rgba(255,92,122,.35)}
+    .footer{
+      margin-top:22px;
+      color:var(--muted);
+      font-size:12px;
+      opacity:.95;
+      border-top:1px solid var(--line);
+      padding-top:16px;
+    }
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:900px){.row{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="header">RE:LIFE | 回环</div>
-            <div class="tagline">World Model → Policy Engine → Simulation</div>
-            
-            <textarea id="expInput" placeholder="输入你想要重塑的人生节点经历..."></textarea>
-            <button id="mainBtn" onclick="generatePlot()">执行模拟回路</button>
+  <div class="wrap">
+    <div class="title">RE:LIFE | 回环</div>
+    <div class="sub">理性人生模拟 · 非算命 · 非保证</div>
 
-            <div id="resultWrapper">
-                <div id="captureArea">
-                    <div id="resultText"></div>
-                </div>
-                <button id="downloadBtn" onclick="downloadCard()">导出命运报告 (.PNG)</button>
-            </div>
+    <div class="card">
+      <h2>你的信息</h2>
+
+      <div class="row">
+        <div>
+          <label>个人背景（简短）</label>
+          <input id="background" placeholder="例如：28岁，工作三年，想转行…" />
         </div>
+        <div>
+          <label>想回到的时间点</label>
+          <input id="target" placeholder="例如：18岁高考后 / 2020年入职前…" />
+        </div>
+      </div>
+
+      <label>人生经历时间线（越具体越好）</label>
+      <textarea id="timeline" placeholder="例如：2016-2019 读书… 2020 入职… 2022 遇到…"></textarea>
+
+      <label>能力 / 资源（可选）</label>
+      <input id="resources" placeholder="例如：英语不错 / 有存款 / 有人脉…" />
+
+      <button id="btn" class="btn">开始模拟</button>
+
+      <div class="meta">提示：如果一直失败，请先打开 <code>/api/ping</code> 检查后端是否部署成功。</div>
+
+      <div id="out" class="status" style="display:none"></div>
+
+      <div class="footer">
+        RE:LIFE 提供的是基于用户输入的信息推演与理性分析，不构成现实建议、预测或保证。用户需对自身人生决策负责。
+      </div>
     </div>
+  </div>
 
-    <script>
-        // 打字机渲染
-        function typeWriter(text, i, fnCallback) {
-            const ele = document.getElementById("resultText");
-            if (i < text.length) {
-                ele.innerHTML = text.substring(0, i+1) + '<span class="cursor"></span>';
-                setTimeout(() => typeWriter(text, i + 1, fnCallback), 40);
-            } else if (typeof fnCallback == 'function') {
-                ele.innerHTML = text; 
-                fnCallback();
-            }
-        }
+<script>
+  const $ = (id) => document.getElementById(id);
+  const out = $("out");
+  const btn = $("btn");
 
-        async function generatePlot() {
-            const input = document.getElementById('expInput').value;
-            const btn = document.getElementById('mainBtn');
-            const wrapper = document.getElementById('resultWrapper');
-            const textDiv = document.getElementById('resultText');
+  function show(text, type){
+    out.style.display = "block";
+    out.className = "status " + (type || "");
+    out.textContent = text;
+  }
 
-            if (!input.trim()) return alert("请输入经历");
+  async function postJSON(url, payload){
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    const ct = r.headers.get("content-type") || "";
+    let data = null;
+    if (ct.includes("application/json")) data = await r.json();
+    else data = { raw: await r.text() };
+    if (!r.ok) {
+      const msg = data?.error || data?.message || data?.raw || ("HTTP " + r.status);
+      throw new Error(msg);
+    }
+    return data;
+  }
 
-            btn.disabled = true;
-            btn.innerText = '计算概率分布中...';
-            wrapper.style.display = 'block';
-            textDiv.innerHTML = '<span style="color:var(--muted)">命运引擎初始化...</span>';
+  btn.addEventListener("click", async () => {
+    const background = $("background").value.trim();
+    const timeline   = $("timeline").value.trim();
+    const target     = $("target").value.trim();
+    const resources  = $("resources").value.trim();
 
-            try {
-                const response = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ experience: input })
-                });
+    if (!background || !timeline || !target){
+      show("请至少填写：个人背景 / 人生经历时间线 / 想回到的时间点", "err");
+      return;
+    }
 
-                const data = await response.json();
-                if (response.ok) {
-                    typeWriter(data.story, 0, () => {
-                        btn.disabled = false;
-                        btn.innerText = '再次模拟人生';
-                    });
-                } else {
-                    textDiv.innerHTML = "推演中断: " + (data.error || "未知波动");
-                    btn.disabled = false;
-                }
-            } catch (err) {
-                textDiv.innerHTML = "时空节点丢失，请重试";
-                btn.disabled = false;
-            }
-        }
+    btn.disabled = true;
+    btn.textContent = "模拟中…";
 
-        function downloadCard() {
-            const area = document.getElementById('captureArea');
-            html2canvas(area, {
-                backgroundColor: "#0E1628",
-                scale: 2
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'RE_LIFE_REPORT.png';
-                link.href = canvas.toDataURL();
-                link.click();
-            });
-        }
-    </script>
+    try{
+      show("正在请求后端…", "");
+      const data = await postJSON("/api/generate", { background, timeline, target, resources });
+      show(data.result || "(无内容)", "ok");
+    }catch(e){
+      show("请求失败：\n" + (e?.message || String(e)), "err");
+    }finally{
+      btn.disabled = false;
+      btn.textContent = "开始模拟";
+    }
+  });
+</script>
 </body>
 </html>
