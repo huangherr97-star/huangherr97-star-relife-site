@@ -1,72 +1,196 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RESET LIFE | 平行时空重塑</title>
-    <style>
-        :root { --main: #000000; --bg: #f2f2f7; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 40px 20px; margin: 0; }
-        .card { background: white; width: 100%; max-width: 500px; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
-        .header { text-align: center; font-weight: 800; font-size: 20px; letter-spacing: 2px; margin-bottom: 30px; }
-        h2 { margin: 0 0 10px 0; font-size: 22px; }
-        p { color: #666; font-size: 14px; line-height: 1.5; }
-        textarea { width: 100%; height: 150px; padding: 15px; border: 1px solid #e5e5ea; border-radius: 16px; font-size: 16px; box-sizing: border-box; margin: 20px 0; outline: none; transition: border 0.3s; }
-        textarea:focus { border-color: var(--main); }
-        button { width: 100%; padding: 18px; background: var(--main); color: white; border: none; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.1s; }
-        button:active { transform: scale(0.98); }
-        button:disabled { background: #aeaeb2; cursor: not-allowed; }
-        #result { margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 16px; display: none; line-height: 1.8; color: #1c1c1e; border: 1px solid #efeff4; }
-        .loading { color: #8e8e93; font-style: italic; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RE:LIFE | 回环</title>
+
+  <style>
+    :root{
+      --bg:#0B1220;
+      --card:#0E1628;
+      --border:#1C2433;
+      --text:#E6EAF2;
+      --muted:#A7B0C0;
+      --primary:#4C6FFF;
+      --warn:#F59E0B;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:system-ui,-apple-system,'Segoe UI','Noto Sans SC',sans-serif;
+      line-height:1.6;
+    }
+    main{
+      max-width:900px;
+      margin:0 auto;
+      padding:28px 16px 60px;
+    }
+    h1{margin:0 0 6px}
+    .subtitle{color:var(--muted);font-size:14px}
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      margin:16px 0;
+    }
+
+    label{
+      display:block;
+      margin-top:12px;
+      font-size:14px;
+      color:var(--muted);
+    }
+    input,textarea{
+      width:100%;
+      margin-top:6px;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#0B1220;
+      color:var(--text);
+      resize:vertical;
+    }
+
+    button{
+      margin-top:16px;
+      width:100%;
+      padding:12px;
+      border-radius:12px;
+      border:none;
+      background:var(--primary);
+      color:white;
+      font-size:15px;
+      font-weight:600;
+      cursor:pointer;
+    }
+    button:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+
+    .branch{
+      border-left:4px solid var(--primary);
+      padding-left:12px;
+      margin:14px 0;
+    }
+    .branch h3{margin:4px 0 8px}
+    .kv{margin:4px 0}
+    .kv b{color:#fff}
+    .small{color:var(--muted);font-size:13px}
+
+    footer{
+      margin-top:40px;
+      padding-top:16px;
+      border-top:1px solid var(--border);
+      color:var(--muted);
+      font-size:12px;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="card">
-        <div class="header">RESET LIFE</div>
-        <h2>重塑你的生命剧本</h2>
-        <p>描述一段经历，让时间在这一刻转折</p >
-        <textarea id="expInput" placeholder="输入你想要改变的那段经历..."></textarea>
-        <button id="mainBtn" onclick="generatePlot()">开始重塑人生</button>
-        <div id="result"></div>
-    </div>
+<main>
+  <h1>RE:LIFE｜回环</h1>
+  <div class="subtitle">
+    理性人生模拟 · 非算命 · 非保证
+  </div>
 
-    <script>
-        async function generatePlot() {
-            const input = document.getElementById('expInput').value;
-            const btn = document.getElementById('mainBtn');
-            const resultDiv = document.getElementById('result');
+  <!-- 输入区 -->
+  <div class="card">
+    <h3>你的信息</h3>
 
-            if (!input.trim()) return alert("请输入您的经历");
+    <label>个人背景</label>
+    <input id="persona" placeholder="例如：28岁，普通本科，二线城市">
 
-            // 进入加载状态
-            btn.disabled = true;
-            btn.innerText = '正在链接 Edge 节点...';
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<span class="loading">正在通过 Vercel Edge 协议解析时空节点...</span>';
+    <label>人生经历时间线</label>
+    <textarea id="timeline" rows="4"
+      placeholder="例如：22岁毕业 → 第一份工作3年 → 转行失败 → 当前迷茫"></textarea>
 
-            try {
-                const response = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ experience: input })
-                });
+    <label>想回到的时间点</label>
+    <input id="rewind" placeholder="例如：24岁，是否换城市">
 
-                const data = await response.json();
+    <label>能力 / 资源（可选）</label>
+    <input id="traits" placeholder="例如：执行力中等，家庭支持有限">
 
-                if (response.ok) {
-                    // 核心修复：这里必须对应后端返回的 data.story
-                    const storyContent = data.story || "时空重塑成功，但未返回具体剧情。";
-                    resultDiv.innerHTML = '<strong>平行时空结局：</strong><br><br>' + storyContent;
-                } else {
-                    resultDiv.innerHTML = '解析失败：' + (data.error || '连接超时');
-                }
-            } catch (err) {
-                resultDiv.innerHTML = '连接失败：请检查网络或域名解析状态。';
-            } finally {
-                btn.disabled = false;
-                btn.innerText = '再次重塑人生';
-            }
-        }
-    </script>
+    <button id="runBtn" onclick="runSim()">开始模拟</button>
+  </div>
+
+  <!-- 结果区 -->
+  <div id="result"></div>
+
+  <footer>
+    RE:LIFE 提供的是基于用户输入的情景推演与理性分析，不构成现实建议、预测或保证。<br/>
+    用户需对自身人生决策负责。
+  </footer>
+</main>
+
+<script>
+  let history = [];
+
+  async function runSim(){
+    const btn = document.getElementById('runBtn');
+    btn.disabled = true;
+    btn.innerText = '推演中…';
+
+    const res = await fetch('/api/generate', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        persona: persona.value,
+        timeline: timeline.value,
+        rewind_point: rewind.value,
+        traits: traits.value,
+        history
+      })
+    });
+
+    btn.disabled = false;
+    btn.innerText = '开始模拟';
+
+    const data = await res.json();
+    if(!data.success){
+      alert(data.error || '模拟失败');
+      return;
+    }
+
+    history.push({
+      role:'assistant',
+      content: JSON.stringify(data.data)
+    });
+
+    render(data.data);
+  }
+
+  function render(d){
+    const box = document.getElementById('result');
+    box.innerHTML = '';
+
+    d.branches.forEach((b,i)=>{
+      box.innerHTML += `
+        <div class="card branch">
+          <h3>分支 ${i+1}：${b.title}</h3>
+          <div class="kv"><b>关键选择：</b>${b.key_choice}</div>
+          <div class="kv"><b>中期结果：</b>${b.mid_result}</div>
+          <div class="kv"><b>长期走向：</b>${b.long_term}</div>
+          <div class="kv"><b>概率区间：</b>${b.probability}</div>
+          <div class="kv"><b>主要风险：</b>${b.risks.join('、')}</div>
+          <div class="small">因果解释：${b.why}</div>
+        </div>
+      `;
+    });
+
+    box.innerHTML += `
+      <div class="card">
+        <b>整体风险提示：</b> ${d.overall_risks.join('、')}
+        <p class="small">${d.summary}</p>
+      </div>
+    `;
+  }
+</script>
 </body>
 </html>
