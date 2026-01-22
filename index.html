@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>RE:LIFE | 回环</title>
 
-  <!-- jsPDF CDN，用于生成精美 PDF -->
+  <!-- jsPDF 用于导出 PDF -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
   <style>
@@ -113,7 +113,6 @@
     }
     .foot{margin-top:18px;color:var(--muted);font-size:12px}
 
-    /* 进度条 */
     .progress-wrap{
       margin-top:10px;
       height:6px;
@@ -131,11 +130,16 @@
       transition:width .3s ease;
     }
 
-    /* 主题切换小按钮 */
     .theme-toggle{
       margin-left:10px;
       font-size:12px;
       padding:6px 10px;
+    }
+
+    .hint-short{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--warn);
     }
   </style>
 </head>
@@ -156,19 +160,19 @@
       <div class="card">
         <div class="hd"><h2>你的信息</h2></div>
         <div class="bd">
-          <label>个人背景（必填）</label>
+          <label>个人背景（必填） / Background</label>
           <input id="background" placeholder="例：28岁，工作3年，想转行/想创业…" />
 
-          <label>人生经历时间线（必填，越具体越好）</label>
+          <label>人生经历时间线（必填） / Timeline</label>
           <textarea id="timeline" placeholder="用要点写：学校/工作/关键事件/决策/资源/人脉…"></textarea>
 
           <div class="row">
             <div>
-              <label>想回到的时间点（必填）</label>
+              <label>想回到的时间点（必填） / Target Point</label>
               <input id="target" placeholder="例：18岁高考 / 22岁毕业 / 2020年某次决定" />
             </div>
             <div>
-              <label>生成模式</label>
+              <label>生成模式 / Mode</label>
               <select id="mode">
                 <option value="abc" selected>对比 A/B/C（推荐）</option>
                 <option value="single">单一路线（更快）</option>
@@ -177,11 +181,17 @@
             </div>
           </div>
 
-          <label>能力 / 资源（可选）</label>
+          <label>能力 / 资源（可选） / Resources</label>
           <input id="resources" placeholder="例：英语一般/有存款2万/家人支持/擅长写作…" />
 
+          <label>语言 / Language</label>
+          <select id="language">
+            <option value="zh" selected>中文</option>
+            <option value="en">English</option>
+          </select>
+
           <div class="btns">
-            <button id="btnRun">开始模拟</button>
+            <button id="btnRun">开始模拟 / Run</button>
             <button class="secondary" id="btnPing">测试 API</button>
             <button class="secondary" id="btnCopy">复制结果</button>
             <button class="secondary" id="btnPDF">导出 PDF</button>
@@ -194,11 +204,14 @@
           </div>
 
           <div class="status" id="status">状态：就绪</div>
+          <div class="hint-short" id="hintShort" style="display:none;">
+            建议补充信息（追问）：可以多写一些关键节点、转折点、你在意的东西。
+          </div>
         </div>
       </div>
 
       <div class="card">
-        <div class="hd"><h2>结果</h2></div>
+        <div class="hd"><h2>结果 / Result</h2></div>
         <div class="bd">
           <div id="out" class="out">点击“开始模拟”生成内容。</div>
           <div class="foot">
@@ -222,6 +235,7 @@
   const outEl = $("out");
   const statusEl = $("status");
   const progressBar = $("progressBar");
+  const hintShortEl = $("hintShort");
 
   function setStatus(s){ statusEl.textContent = "状态：" + s; }
 
@@ -238,7 +252,7 @@
       "",
       "可能原因：",
       "- API 未命中 Vercel（先点“测试 API”）",
-      "- 输入字段缺失",
+      "- 输入字段缺失或过短",
       "- OpenAI 请求超时或限流",
       "- 网络问题",
       "",
@@ -309,7 +323,7 @@
   })();
 
   // 清空
-  $("btnClear").onclick = ()=>{ outEl.textContent = ""; setStatus("已清空"); setProgress(0); };
+  $("btnClear").onclick = ()=>{ outEl.textContent = ""; setStatus("已清空"); setProgress(0); hintShortEl.style.display = "none"; };
 
   // ping
   $("btnPing").onclick = async ()=>{
@@ -348,7 +362,7 @@
     }
   };
 
-  // 导出 PDF（精美排版）
+  // 导出 PDF
   $("btnPDF").onclick = ()=>{
     const content = outEl.textContent.trim();
     if (!content) {
@@ -356,11 +370,7 @@
       return;
     }
 
-    const doc = new jsPDF({
-      unit: "pt",
-      format: "a4",
-    });
-
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
     const margin = 40;
     let y = 60;
 
@@ -389,13 +399,13 @@
       "回到时间点：" + ($("target").value || "（未填写）"),
       "能力/资源：" + ($("resources").value || "（未填写）"),
       "模式：" + ($("mode").value || "（未选择）"),
+      "语言：" + ($("language").value || "zh"),
       "",
       "【模拟结果】",
       content
     ].join("\n");
 
     const lines = doc.splitTextToSize(inputBlock, 595 - margin * 2);
-
     const pageHeight = doc.internal.pageSize.getHeight();
     for (let i = 0; i < lines.length; i++) {
       if (y > pageHeight - 60) {
@@ -410,7 +420,7 @@
     setStatus("PDF 已导出");
   };
 
-  // 分享链接（URL 参数自动填充）
+  // 分享链接
   $("btnShare").onclick = ()=>{
     const params = new URLSearchParams({
       background: $("background").value,
@@ -418,6 +428,7 @@
       target: $("target").value,
       resources: $("resources").value,
       mode: $("mode").value,
+      language: $("language").value,
     });
     const url = location.origin + location.pathname + "?" + params.toString();
     navigator.clipboard.writeText(url).then(()=>{
@@ -428,7 +439,7 @@
     });
   };
 
-  // 页面加载时，根据 URL 参数自动填充
+  // URL 参数自动填充
   (function fillFromQuery(){
     const p = new URLSearchParams(location.search);
     if (p.get("background")) $("background").value = p.get("background");
@@ -436,15 +447,353 @@
     if (p.get("target")) $("target").value = p.get("target");
     if (p.get("resources")) $("resources").value = p.get("resources");
     if (p.get("mode")) $("mode").value = p.get("mode");
+    if (p.get("language")) $("language").value = p.get("language");
   })();
 
-  // 开始模拟（带进度条动画）
+  // 打开新窗口展示 A/B/C + 对话
+  function openResultWindow({ text, routes, followups, plan30d, context }) {
+    const w = window.open("", "_blank");
+    if (!w) {
+      alert("浏览器拦截了新窗口，请允许弹出窗口。");
+      return;
+    }
+
+    const lang = context.language === "en" ? "en" : "zh";
+
+    const title = lang === "en" ? "RE:LIFE Result" : "RE:LIFE 模拟结果";
+    const labelRoutes = lang === "en" ? "Routes" : "路线 A/B/C";
+    const labelChat = lang === "en" ? "Follow-up Chat" : "追问对话";
+    const labelScores = lang === "en" ? "Scores" : "评分维度";
+    const labelPlan = lang === "en" ? "30-Day Plan" : "30 天行动计划";
+    const labelAsk = lang === "en" ? "Ask" : "提问";
+    const labelPlaceholderQ = lang === "en"
+      ? "e.g. Am I more suitable for route B?"
+      : "例如：我更适合 B 吗？最小风险路线是什么？";
+    const labelFollowups = lang === "en" ? "Suggested follow-up questions" : "建议追问";
+    const labelContext = lang === "en" ? "Context" : "上下文摘要";
+
+    const html = `
+<!doctype html>
+<html lang="${lang}">
+<head>
+<meta charset="utf-8" />
+<title>${title}</title>
+<style>
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:#0b1120;
+    color:#e5e7eb;
+  }
+  .wrap{max-width:1000px;margin:24px auto;padding:0 16px;}
+  h1{font-size:28px;margin:0 0 12px;}
+  h2{font-size:18px;margin:18px 0 8px;}
+  .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;}
+  @media (max-width:900px){.grid{grid-template-columns:1fr;}}
+  .card{
+    background:rgba(15,23,42,.9);
+    border-radius:16px;
+    border:1px solid rgba(148,163,184,.4);
+    padding:16px;
+  }
+  .routes{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .route-pill{
+    flex:1 1 0;
+    min-width:120px;
+    padding:10px;
+    border-radius:12px;
+    border:1px solid rgba(148,163,184,.6);
+    cursor:pointer;
+    background:rgba(15,23,42,.8);
+  }
+  .route-pill.active{
+    border-color:#4f46e5;
+    box-shadow:0 0 0 1px rgba(79,70,229,.6);
+  }
+  .route-pill h3{margin:0 0 4px;font-size:14px;}
+  .route-pill p{margin:0;font-size:12px;color:#9ca3af;}
+  .scores-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8px;
+    font-size:12px;
+  }
+  .scores-table th,.scores-table td{
+    border:1px solid rgba(148,163,184,.5);
+    padding:4px 6px;
+    text-align:center;
+  }
+  .text-block{
+    white-space:pre-wrap;
+    font-size:13px;
+    line-height:1.6;
+    background:rgba(15,23,42,.8);
+    border-radius:10px;
+    padding:10px;
+    border:1px solid rgba(148,163,184,.4);
+  }
+  .chat-box{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .chat-log{
+    height:260px;
+    overflow:auto;
+    background:rgba(15,23,42,.8);
+    border-radius:10px;
+    padding:10px;
+    border:1px solid rgba(148,163,184,.4);
+    font-size:13px;
+  }
+  .chat-msg-user{color:#e5e7eb;margin-bottom:6px;}
+  .chat-msg-ai{color:#a5b4fc;margin-bottom:10px;}
+  .chat-input-row{
+    display:flex;
+    gap:8px;
+    margin-top:4px;
+  }
+  .chat-input-row input{
+    flex:1;
+    padding:8px 10px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.6);
+    background:rgba(15,23,42,.9);
+    color:#e5e7eb;
+    outline:none;
+  }
+  .chat-input-row button{
+    padding:8px 14px;
+    border-radius:999px;
+    border:0;
+    background:linear-gradient(135deg,#4f46e5,#6366f1);
+    color:#0b1120;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .followups{
+    font-size:12px;
+    color:#9ca3af;
+    margin-top:6px;
+  }
+  .followups span{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.6);
+    margin:2px;
+    cursor:pointer;
+  }
+  .plan-list{
+    font-size:13px;
+    margin-top:6px;
+  }
+  .plan-list li{margin-bottom:4px;}
+  .ctx{
+    font-size:11px;
+    color:#9ca3af;
+    margin-top:6px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>${title}</h1>
+  <div class="grid">
+    <div class="card">
+      <h2>${labelRoutes}</h2>
+      <div class="routes" id="routes"></div>
+      <h2>${labelScores}</h2>
+      <table class="scores-table" id="scoresTable">
+        <thead>
+          <tr>
+            <th>Route</th>
+            <th>Risk</th>
+            <th>Reward</th>
+            <th>Time</th>
+            <th>Mental</th>
+          </tr>
+        </thead>
+        <tbody id="scoresBody"></tbody>
+      </table>
+      <h2>${labelPlan}</h2>
+      <ul class="plan-list" id="planList"></ul>
+      <div class="ctx">
+        <strong>${labelContext}:</strong><br/>
+        ${context.background}<br/>
+        ${context.timeline}<br/>
+        ${context.target ? "Target: " + context.target : ""}
+      </div>
+    </div>
+    <div class="card">
+      <h2>${labelChat}</h2>
+      <div class="chat-box">
+        <div class="chat-log" id="chatLog"></div>
+        <div class="followups" id="followupsBox"></div>
+        <div class="chat-input-row">
+          <input id="chatInput" placeholder="${labelPlaceholderQ}" />
+          <button id="chatSend">${labelAsk}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const routes = ${JSON.stringify(routes || [])};
+  const followups = ${JSON.stringify(followups || [])};
+  const plan30d = ${JSON.stringify(plan30d || [])};
+  const baseText = ${JSON.stringify(text || "")};
+  const ctx = ${JSON.stringify(context)};
+
+  const routesEl = document.getElementById("routes");
+  const scoresBody = document.getElementById("scoresBody");
+  const planList = document.getElementById("planList");
+  const chatLog = document.getElementById("chatLog");
+  const followupsBox = document.getElementById("followupsBox");
+  const chatInput = document.getElementById("chatInput");
+  const chatSend = document.getElementById("chatSend");
+
+  function renderRoutes() {
+    routesEl.innerHTML = "";
+    scoresBody.innerHTML = "";
+    routes.forEach((r, idx)=>{
+      const div = document.createElement("div");
+      div.className = "route-pill" + (idx === 0 ? " active" : "");
+      div.dataset.id = r.id || ("R" + (idx+1));
+      div.innerHTML = "<h3>" + (r.id || ("R" + (idx+1))) + " · " + (r.title || "") + "</h3>" +
+                      "<p>" + (r.summary || "") + "</p>";
+      div.onclick = ()=>{
+        document.querySelectorAll(".route-pill").forEach(x=>x.classList.remove("active"));
+        div.classList.add("active");
+        appendAI("[" + (r.id || ("R" + (idx+1))) + "] " + (r.summary || ""));
+      };
+      routesEl.appendChild(div);
+
+      const s = r.score || {};
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" + (r.id || ("R" + (idx+1))) + "</td>" +
+        "<td>" + (s.risk ?? "-") + "</td>" +
+        "<td>" + (s.reward ?? "-") + "</td>" +
+        "<td>" + (s.timeCost ?? "-") + "</td>" +
+        "<td>" + (s.mentalCost ?? "-") + "</td>";
+      scoresBody.appendChild(tr);
+    });
+  }
+
+  function renderPlan() {
+    planList.innerHTML = "";
+    (plan30d || []).forEach((p)=>{
+      const li = document.createElement("li");
+      li.textContent = p;
+      planList.appendChild(li);
+    });
+  }
+
+  function renderFollowups() {
+    followupsBox.innerHTML = "";
+    if (!followups || !followups.length) return;
+    const label = document.createElement("div");
+    label.textContent = "${labelFollowups}：";
+    followupsBox.appendChild(label);
+    followups.forEach(q=>{
+      const span = document.createElement("span");
+      span.textContent = q;
+      span.onclick = ()=>{
+        chatInput.value = q;
+        chatInput.focus();
+      };
+      followupsBox.appendChild(span);
+    });
+  }
+
+  function appendUser(msg) {
+    const div = document.createElement("div");
+    div.className = "chat-msg-user";
+    div.textContent = "You: " + msg;
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function appendAI(msg) {
+    const div = document.createElement("div");
+    div.className = "chat-msg-ai";
+    div.textContent = msg;
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  appendAI(baseText || "No result text.");
+
+  renderRoutes();
+  renderPlan();
+  renderFollowups();
+
+  async function sendChat() {
+    const q = chatInput.value.trim();
+    if (!q) return;
+    chatInput.value = "";
+    appendUser(q);
+    appendAI("Thinking...");
+
+    try{
+      const res = await fetch("${API_BASE}/api/generate", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({
+          background: ctx.background,
+          timeline: ctx.timeline,
+          target: ctx.target,
+          resources: ctx.resources,
+          mode: "chat",
+          language: ctx.language,
+          question: q,
+          lastResult: baseText
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        appendAI("Error: " + (data.error || res.status));
+        return;
+      }
+      appendAI(data.text || "");
+    }catch(e){
+      appendAI("Error: " + e);
+    }
+  }
+
+  chatSend.onclick = sendChat;
+  chatInput.addEventListener("keydown", (e)=>{
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendChat();
+    }
+  });
+</script>
+</body>
+</html>
+`;
+
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
+
+  // 开始模拟
   $("btnRun").onclick = async ()=>{
     const background = $("background").value.trim();
     const timeline = $("timeline").value.trim();
     const target = $("target").value.trim();
     const resources = $("resources").value.trim();
     const mode = $("mode").value;
+    const language = $("language").value;
+
+    const totalLen = background.length + timeline.length;
+    if (totalLen < 60) {
+      hintShortEl.style.display = "block";
+    } else {
+      hintShortEl.style.display = "none";
+    }
 
     if(!background || !timeline || !target){
       outEl.textContent = "请把：个人背景 / 时间线 / 想回到的时间点 填完整（必填）。";
@@ -458,7 +807,6 @@
     outEl.textContent = "⏳ 正在生成…（通常 10~30 秒，如长时间无响应可先测试 API）";
 
     try{
-      // 进度条假装推进
       let fake = 10;
       const timer = setInterval(()=>{
         fake = Math.min(fake + 5, 85);
@@ -466,16 +814,32 @@
       }, 800);
 
       const data = await postJSON(API_BASE + "/api/generate", {
-        background, timeline, target, resources, mode
+        background, timeline, target, resources, mode, language
       }, 120000);
 
       clearInterval(timer);
       setProgress(100);
 
-      const text = data.text || data.content || JSON.stringify(data, null, 2);
+      if (!data.ok) {
+        outEl.textContent = JSON.stringify(data, null, 2);
+        setStatus("后端返回错误");
+        setTimeout(()=>setProgress(0), 1000);
+        return;
+      }
+
+      const text = data.text || JSON.stringify(data, null, 2);
       outEl.textContent = text;
       setStatus("完成");
       setTimeout(()=>setProgress(0), 1000);
+
+      // 打开新窗口展示 A/B/C + 对话
+      openResultWindow({
+        text: data.text,
+        routes: data.routes,
+        followups: data.followups,
+        plan30d: data.plan30d,
+        context: { background, timeline, target, resources, language }
+      });
     }catch(e){
       outEl.textContent = formatError(e);
       setStatus("失败（看输出细节）");
