@@ -16,14 +16,14 @@
     input,textarea{width:100%;margin-top:6px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0B1220;color:var(--text);resize:vertical}
     button{margin-top:16px;width:100%;padding:12px;border-radius:12px;border:none;background:var(--primary);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
     button:disabled{opacity:.6;cursor:not-allowed}
-    .status{font-size:13px;color:var(--muted)}
-    .status strong{color:var(--text)}
+    .status{font-size:13px;color:var(--muted);margin-top:10px}
+    .status b{color:var(--text)}
     .error{color:#ffb4b4}
     .ok{color:#b7f7d2}
     .branch{border-left:4px solid var(--primary);padding-left:12px;margin:14px 0}
     .branch h3{margin:4px 0 8px}
     .kv{margin:4px 0}
-    .small{color:var(--muted);font-size:13px}
+    .small{color:var(--muted);font-size:13px;white-space:pre-wrap}
     footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--border);color:var(--muted);font-size:12px}
   </style>
 </head>
@@ -49,9 +49,8 @@
 
     <button id="runBtn">开始模拟</button>
 
-    <div id="status" class="status" style="margin-top:10px">
-      <strong>状态：</strong>等待输入
-    </div>
+    <div id="status" class="status"><b>状态：</b>等待输入</div>
+    <div id="debug" class="small"></div>
   </div>
 
   <div id="result"></div>
@@ -63,69 +62,78 @@
 </main>
 
 <script>
-  const $ = (id) => document.getElementById(id);
-
+  const $ = (id)=>document.getElementById(id);
   const personaEl = $("persona");
   const timelineEl = $("timeline");
   const rewindEl  = $("rewind");
   const traitsEl  = $("traits");
   const runBtn    = $("runBtn");
   const statusEl  = $("status");
+  const debugEl   = $("debug");
   const resultEl  = $("result");
 
   let history = [];
 
   function setStatus(text, cls){
     statusEl.className = "status " + (cls || "");
-    statusEl.innerHTML = "<strong>状态：</strong>" + text;
+    statusEl.innerHTML = "<b>状态：</b>" + text;
   }
-
-  function safeText(v){ return (v ?? "").toString(); }
+  function setDebug(text){
+    debugEl.textContent = text || "";
+  }
+  function safe(v){ return (v ?? "").toString(); }
 
   runBtn.addEventListener("click", runSim);
 
   async function runSim(){
+    setDebug("");
+    resultEl.innerHTML = "";
+
+    const persona = safe(personaEl.value).trim();
+    const timeline = safe(timelineEl.value).trim();
+    const rewind = safe(rewindEl.value).trim();
+    const traits = safe(traitsEl.value).trim();
+
+    if(!persona || !timeline || !rewind){
+      setStatus("请至少填写：个人背景 / 经历时间线 / 回到时间点", "error");
+      return;
+    }
+
+    runBtn.disabled = true;
+    runBtn.textContent = "推演中…";
+    setStatus("POST /api/generate 已发送…", "");
+
     try{
-      // 基础校验（避免空提交让你误判“没反应”）
-      if(!safeText(personaEl.value).trim() || !safeText(timelineEl.value).trim() || !safeText(rewindEl.value).trim()){
-        setStatus("请至少填写：个人背景 / 经历时间线 / 回到时间点", "error");
-        return;
-      }
-
-      runBtn.disabled = true;
-      runBtn.textContent = "推演中…";
-      setStatus("请求已发出：POST /api/generate", "");
-
       const payload = {
-        persona: personaEl.value,
-        timeline: timelineEl.value,
-        rewind_point: rewindEl.value,
-        traits: traitsEl.value,
+        persona,
+        timeline,
+        rewind_point: rewind,
+        traits,
         history
       };
 
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify(payload)
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload),
       });
 
-      // 先读文本，再尝试 JSON（这样即使后端返回非 JSON 也能显示出来）
-      const raw = await res.text();
+      const raw = await res.text();           // 先拿原文，方便诊断
       let data = null;
       try { data = JSON.parse(raw); } catch {}
 
       if(!res.ok){
-        setStatus(`HTTP ${res.status}：${raw.slice(0,200)}`, "error");
+        setStatus(`HTTP ${res.status}：请求失败`, "error");
+        setDebug(raw.slice(0, 800));
         return;
       }
 
       if(!data || data.success !== true){
-        setStatus(`后端返回格式不符合预期：${raw.slice(0,200)}`, "error");
+        setStatus("后端返回格式不符合预期（请看 debug）", "error");
+        setDebug(raw.slice(0, 800));
         return;
       }
 
-      // 成功
       setStatus("推演成功 ✅", "ok");
       history.push({ role:"assistant", content: JSON.stringify(data.data) });
       render(data.data);
@@ -140,34 +148,32 @@
   }
 
   function render(d){
-    resultEl.innerHTML = "";
-
     const branches = Array.isArray(d?.branches) ? d.branches : [];
     if(branches.length === 0){
-      resultEl.innerHTML = `<div class="card"><b>没有分支数据</b><div class="small">请检查后端是否输出了 branches[]</div></div>`;
+      resultEl.innerHTML = `<div class="card"><b>没有分支数据</b><div class="small">后端未返回 branches[]</div></div>`;
       return;
     }
 
-    branches.forEach((b,i)=>{
-      const risks = Array.isArray(b?.risks) ? b.risks.join("、") : safeText(b?.risks);
-      resultEl.innerHTML += `
+    resultEl.innerHTML = branches.map((b,i)=>{
+      const risks = Array.isArray(b?.risks) ? b.risks.join("、") : safe(b?.risks);
+      return `
         <div class="card branch">
-          <h3>分支 ${i+1}：${safeText(b?.title)}</h3>
-          <div class="kv"><b>关键选择：</b>${safeText(b?.key_choice)}</div>
-          <div class="kv"><b>中期结果：</b>${safeText(b?.mid_result)}</div>
-          <div class="kv"><b>长期走向：</b>${safeText(b?.long_term)}</div>
-          <div class="kv"><b>概率区间：</b>${safeText(b?.probability)}</div>
+          <h3>分支 ${i+1}：${safe(b?.title)}</h3>
+          <div class="kv"><b>关键选择：</b>${safe(b?.key_choice)}</div>
+          <div class="kv"><b>中期结果：</b>${safe(b?.mid_result)}</div>
+          <div class="kv"><b>长期走向：</b>${safe(b?.long_term)}</div>
+          <div class="kv"><b>概率区间：</b>${safe(b?.probability)}</div>
           <div class="kv"><b>主要风险：</b>${risks}</div>
-          <div class="small">因果解释：${safeText(b?.why)}</div>
+          <div class="small">因果解释：${safe(b?.why)}</div>
         </div>
       `;
-    });
+    }).join("");
 
-    const overall = Array.isArray(d?.overall_risks) ? d.overall_risks.join("、") : safeText(d?.overall_risks);
+    const overall = Array.isArray(d?.overall_risks) ? d.overall_risks.join("、") : safe(d?.overall_risks);
     resultEl.innerHTML += `
       <div class="card">
         <b>整体风险提示：</b> ${overall || "（未提供）"}
-        <p class="small">${safeText(d?.summary)}</p>
+        <p class="small">${safe(d?.summary)}</p>
       </div>
     `;
   }
