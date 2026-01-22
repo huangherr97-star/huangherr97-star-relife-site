@@ -1,170 +1,141 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>RE:LIFE | 回环</title>
+
+  <!-- jsPDF CDN，用于生成精美 PDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
   <style>
     :root{
-      --bg:#0B1220; --card:#0F1A2E; --card2:#0D1628;
-      --text:#E6EDF7; --muted:#9FB0CC;
-      --primary:#4C6FFF; --accent:#22D3EE; --warn:#F59E0B; --danger:#FF5A5F;
-      --border: rgba(255,255,255,0.08);
-      --shadow: 0 12px 40px rgba(0,0,0,.35);
-      --radius: 18px;
+      --bg:#0B1220;--card:#0f1a33cc;--line:#22304f;--text:#e8eefc;--muted:#9fb0d5;
+      --primary:#4C6FFF;--primary2:#22D3EE;--warn:#F59E0B;
+      --card-soft:rgba(255,255,255,.06);
     }
-    *{ box-sizing:border-box; }
+    :root[data-theme="light"]{
+      --bg:#f3f4f6;--card:#ffffff;--line:#d1d5db;--text:#111827;--muted:#6b7280;
+      --primary:#2563eb;--primary2:#0ea5e9;--warn:#d97706;
+      --card-soft:rgba(15,23,42,.04);
+    }
+    *{box-sizing:border-box}
     body{
-      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Arial;
-      background: radial-gradient(1200px 700px at 50% -10%, rgba(76,111,255,.35), transparent 60%),
-                  radial-gradient(900px 500px at 85% 10%, rgba(34,211,238,.18), transparent 55%),
-                  var(--bg);
+      margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+      background:var(--bg);
       color:var(--text);
     }
-    .wrap{ max-width: 1200px; margin: 42px auto; padding: 0 18px; }
-    .title{
-      text-align:center; margin-bottom: 18px;
-    }
-    .title h1{ margin:0; font-size: 44px; letter-spacing:1px; }
-    .title p{ margin:10px 0 0; color:var(--muted); }
-    .grid{
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap: 18px;
-    }
-    @media (max-width: 980px){
-      .grid{ grid-template-columns:1fr; }
-    }
+    .wrap{max-width:1100px;margin:40px auto;padding:0 18px}
+    .title{display:flex;align-items:flex-end;gap:12px;margin-bottom:22px}
+    .title h1{font-size:42px;letter-spacing:.5px;margin:0}
+    .title .sub{color:var(--muted);font-size:14px;margin-bottom:6px}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border:1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      background:linear-gradient(180deg, var(--card-soft), var(--card-soft));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      box-shadow:0 20px 60px rgba(0,0,0,.15);
       overflow:hidden;
     }
-    .card .hd{
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between;
-      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    :root[data-theme="light"] .card{
+      border:1px solid #e5e7eb;
+      box-shadow:0 10px 30px rgba(15,23,42,.08);
     }
-    .hd .h{
-      font-size: 18px; font-weight: 700;
-    }
-    .pill{
-      font-size:12px; color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 6px 10px;
-      background: rgba(0,0,0,.15);
-      user-select:none;
-    }
-    .bd{ padding: 16px 18px; }
-    label{
-      display:block; font-size: 13px; color: var(--muted);
-      margin: 10px 0 6px;
-    }
+    .card .hd{padding:18px 18px 10px;border-bottom:1px solid rgba(255,255,255,.07)}
+    :root[data-theme="light"] .card .hd{border-bottom:1px solid #e5e7eb;}
+    .card .hd h2{margin:0;font-size:18px}
+    .card .bd{padding:18px}
+    label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
     input, textarea, select{
       width:100%;
-      padding: 12px 12px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(0,0,0,.18);
-      color: var(--text);
-      outline: none;
+      background:rgba(10,16,28,.55);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--text);
+      border-radius:12px;
+      padding:12px 12px;
+      outline:none;
     }
-    textarea{ min-height: 120px; resize: vertical; }
-    .row{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 560px){ .row{ grid-template-columns:1fr; } }
-
-    .btns{ display:flex; gap: 10px; margin-top: 12px; flex-wrap:wrap; }
+    :root[data-theme="light"] input,
+    :root[data-theme="light"] textarea,
+    :root[data-theme="light"] select{
+      background:#f9fafb;
+      border:1px solid #e5e7eb;
+    }
+    textarea{min-height:120px;resize:vertical}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:980px){.row{grid-template-columns:1fr}}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
     button{
-      border: 0;
-      border-radius: 12px;
-      padding: 11px 14px;
-      font-weight: 700;
-      cursor:pointer;
-      color: #0b1220;
-      background: rgba(255,255,255,.85);
+      border:0;cursor:pointer;border-radius:12px;
+      padding:10px 14px;font-weight:600;color:#081022;
+      background:linear-gradient(135deg,var(--primary), #5a7bff);
+      font-size:14px;
     }
-    button.primary{
-      background: linear-gradient(90deg, var(--primary), rgba(76,111,255,.75));
-      color:white;
+    button.secondary{
+      color:var(--text);
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
     }
-    button.ghost{
-      background: rgba(255,255,255,.08);
-      color: var(--text);
-      border: 1px solid var(--border);
+    :root[data-theme="light"] button.secondary{
+      background:#f9fafb;
+      border:1px solid #e5e7eb;
     }
-    button.warn{
-      background: rgba(245,158,11,.18);
-      color: #FFD7A6;
-      border: 1px solid rgba(245,158,11,.35);
+    button.danger{
+      color:#fff;background:rgba(245, 89, 11, .18);
+      border:1px solid rgba(245, 89, 11, .35);
     }
-    button:disabled{
-      opacity:.55; cursor:not-allowed;
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);font-size:12px
+    }
+    :root[data-theme="light"] .pill{
+      background:#f9fafb;
+      border:1px solid #e5e7eb;
+    }
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .status{margin-top:12px;color:var(--muted);font-size:13px}
+    .out{
+      white-space:pre-wrap;
+      background:rgba(10,16,28,.55);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:14px;
+      min-height:220px;
+      line-height:1.55;
+    }
+    :root[data-theme="light"] .out{
+      background:#f9fafb;
+      border:1px solid #e5e7eb;
+    }
+    .foot{margin-top:18px;color:var(--muted);font-size:12px}
+
+    /* 进度条 */
+    .progress-wrap{
+      margin-top:10px;
+      height:6px;
+      background:rgba(255,255,255,.06);
+      border-radius:999px;
+      overflow:hidden;
+    }
+    :root[data-theme="light"] .progress-wrap{
+      background:#e5e7eb;
+    }
+    .progress-bar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,var(--primary),var(--primary2));
+      transition:width .3s ease;
     }
 
-    .status{
-      margin-top: 12px;
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.5;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .status .err{ color: #FFB4B4; }
-    .status .ok{ color: #B7F7D0; }
-    .box{
-      background: rgba(0,0,0,.22);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-      min-height: 260px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.7;
-    }
-    .tools{ display:flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-    .foot{
-      margin-top: 18px;
-      color: var(--muted);
-      font-size: 12px;
-      text-align:center;
-      opacity:.9;
-    }
-    .tiny{ font-size:12px; color: var(--muted); }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .split{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-    }
-    .chat{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-    .chatlog{
-      min-height: 190px;
-      max-height: 300px;
-      overflow:auto;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: rgba(0,0,0,.18);
-      line-height: 1.65;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .chatbar{
-      display:flex;
-      gap: 8px;
-      align-items: stretch;
-    }
-    .chatbar input{
-      flex:1;
-      padding: 12px;
+    /* 主题切换小按钮 */
+    .theme-toggle{
+      margin-left:10px;
+      font-size:12px;
+      padding:6px 10px;
     }
   </style>
 </head>
@@ -172,353 +143,345 @@
   <div class="wrap">
     <div class="title">
       <h1>RE:LIFE | 回环</h1>
-      <p>理性人生模拟 · 非算命 · 非保证</p>
+      <div class="sub">理性人生模拟 · 非算命 · 非保证</div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <div class="pill">
+          API: <span id="apiLabel" class="mono"></span>
+        </div>
+        <button class="secondary theme-toggle" id="btnTheme">切换主题</button>
+      </div>
     </div>
 
     <div class="grid">
-      <!-- 左：输入 -->
       <div class="card">
-        <div class="hd">
-          <div class="h">你的信息</div>
-          <div class="pill mono" id="apiPill">API: /api/generate</div>
-        </div>
+        <div class="hd"><h2>你的信息</h2></div>
         <div class="bd">
           <label>个人背景（必填）</label>
-          <input id="background" placeholder="例如：28岁，工作3年，一事无成 / 或你自己的真实情况" />
+          <input id="background" placeholder="例：28岁，工作3年，想转行/想创业…" />
 
           <label>人生经历时间线（必填，越具体越好）</label>
-          <textarea id="timeline" placeholder="按时间写：\n- 18岁：...\n- 22岁：...\n- 26岁：...\n（越具体越好）"></textarea>
+          <textarea id="timeline" placeholder="用要点写：学校/工作/关键事件/决策/资源/人脉…"></textarea>
 
           <div class="row">
             <div>
               <label>想回到的时间点（必填）</label>
-              <input id="target" placeholder="例如：18岁高考 / 22岁毕业 / 某年某月" />
+              <input id="target" placeholder="例：18岁高考 / 22岁毕业 / 2020年某次决定" />
             </div>
             <div>
               <label>生成模式</label>
               <select id="mode">
                 <option value="abc" selected>对比 A/B/C（推荐）</option>
-                <option value="single">单一路线（更简洁）</option>
+                <option value="single">单一路线（更快）</option>
+                <option value="chat">追问模式（对话）</option>
               </select>
             </div>
           </div>
 
           <label>能力 / 资源（可选）</label>
-          <input id="resources" placeholder="例如：英语不错 / 家里支持 / 有一笔存款 / 记忆力强..." />
+          <input id="resources" placeholder="例：英语一般/有存款2万/家人支持/擅长写作…" />
 
           <div class="btns">
-            <button class="primary" id="btnRun">开始模拟</button>
-            <button class="ghost" id="btnShare">生成分享链接</button>
-            <button class="warn" id="btnClear">清空</button>
+            <button id="btnRun">开始模拟</button>
+            <button class="secondary" id="btnPing">测试 API</button>
+            <button class="secondary" id="btnCopy">复制结果</button>
+            <button class="secondary" id="btnPDF">导出 PDF</button>
+            <button class="secondary" id="btnShare">分享链接</button>
+            <button class="danger" id="btnClear">清空输出</button>
           </div>
 
-          <div class="status" id="status">
-            状态：就绪
-            <div class="tiny">提示：如果返回 <span class="mono">HTTP 400 Missing required fields</span>，说明请求体缺少 background / timeline / target，本页会自动校验并提示缺哪项。</div>
+          <div class="progress-wrap">
+            <div class="progress-bar" id="progressBar"></div>
           </div>
+
+          <div class="status" id="status">状态：就绪</div>
         </div>
       </div>
 
-      <!-- 右：结果 + 对话 -->
       <div class="card">
-        <div class="hd">
-          <div class="h">结果</div>
-          <div class="pill mono" id="pingPill">/api/ping</div>
-        </div>
-        <div class="bd split">
-          <div class="box" id="resultBox">（点击“开始模拟”后，这里会出现生成内容）</div>
-
-          <div class="tools">
-            <button class="ghost" id="btnExpand">全部展开</button>
-            <button class="ghost" id="btnCollapse">全部折叠</button>
-            <button class="ghost" id="btnCopy">复制全部</button>
-            <button class="ghost" id="btnPing">测试 API（/api/ping）</button>
+        <div class="hd"><h2>结果</h2></div>
+        <div class="bd">
+          <div id="out" class="out">点击“开始模拟”生成内容。</div>
+          <div class="foot">
+            如果长时间无响应，可以先点“测试 API”确认 /api/ping 是否正常，再检查 OpenAI 配额。
           </div>
-
-          <div class="chat">
-            <div class="tiny">对话模式（可选）：基于你刚刚的输入 + 结果继续追问。不会算命，只做理性推演。</div>
-            <div class="chatlog" id="chatLog">（对话记录保存在浏览器本地 localStorage）</div>
-            <div class="chatbar">
-              <input id="chatInput" placeholder="例如：我更适合继续读书吗？最小风险方案是什么？" />
-              <button class="primary" id="btnSend">发送</button>
-              <button class="ghost" id="btnChatClear">清空对话</button>
-            </div>
-          </div>
-
         </div>
       </div>
-    </div>
-
-    <div class="foot">
-      RE:LIFE 提供的是基于用户输入的情景推演与理性分析，不构成现实建议、预测或保证。你对自己的选择负责。
     </div>
   </div>
 
 <script>
-  // ========= 工具 =========
-  const $ = (id) => document.getElementById(id);
+  const { jsPDF } = window.jspdf;
 
-  function setStatus(text, type){
-    const el = $("status");
-    const tag = type === "err" ? "err" : type === "ok" ? "ok" : "";
-    el.innerHTML = "状态：<span class='"+tag+"'>" + escapeHtml(text) + "</span>";
+  const API_BASE = (location.hostname === "resetlife.blog")
+    ? "https://www.resetlife.blog"
+    : "";
+
+  document.getElementById("apiLabel").textContent = API_BASE ? (API_BASE + "/api") : "/api";
+
+  const $ = (id)=>document.getElementById(id);
+  const outEl = $("out");
+  const statusEl = $("status");
+  const progressBar = $("progressBar");
+
+  function setStatus(s){ statusEl.textContent = "状态：" + s; }
+
+  function setProgress(p){
+    progressBar.style.width = Math.max(0, Math.min(100, p)) + "%";
   }
 
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, (c)=>({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[c]));
+  function formatError(e){
+    return [
+      "❌ 请求失败",
+      "",
+      "错误信息：",
+      String(e),
+      "",
+      "可能原因：",
+      "- API 未命中 Vercel（先点“测试 API”）",
+      "- 输入字段缺失",
+      "- OpenAI 请求超时或限流",
+      "- 网络问题",
+      "",
+      "建议：",
+      "- 刷新页面重试",
+      "- 检查 /api/ping 是否正常",
+      "- 检查 OpenAI 账单与配额",
+    ].join("\n");
   }
 
-  function nowISO(){
-    const d = new Date();
-    return d.toISOString().replace("T"," ").slice(0,19);
-  }
-
-  function saveFormToUrl(){
-    const data = getForm();
-    const q = new URLSearchParams();
-    q.set("background", data.background);
-    q.set("timeline", data.timeline);
-    q.set("target", data.target);
-    q.set("resources", data.resources || "");
-    q.set("mode", data.mode || "abc");
-    const url = location.origin + location.pathname + "?" + q.toString();
-    navigator.clipboard?.writeText(url);
-    setStatus("已复制分享链接到剪贴板", "ok");
-  }
-
-  function loadFormFromUrl(){
-    const q = new URLSearchParams(location.search);
-    const bg = q.get("background");
-    const tl = q.get("timeline");
-    const tg = q.get("target");
-    if(bg) $("background").value = bg;
-    if(tl) $("timeline").value = tl;
-    if(tg) $("target").value = tg;
-    const rs = q.get("resources");
-    if(rs !== null) $("resources").value = rs;
-    const mode = q.get("mode");
-    if(mode) $("mode").value = mode;
-  }
-
-  function getForm(){
-    return {
-      background: $("background").value.trim(),
-      timeline: $("timeline").value.trim(),
-      target: $("target").value.trim(),
-      resources: $("resources").value.trim(),
-      mode: $("mode").value
-    };
-  }
-
-  function validateForm(data){
-    const miss = [];
-    if(!data.background) miss.push("background");
-    if(!data.timeline) miss.push("timeline");
-    if(!data.target) miss.push("target");
-    return miss;
-  }
-
-  function renderResult(text){
-    $("resultBox").textContent = text || "（空）";
-  }
-
-  function copyResult(){
-    const txt = $("resultBox").textContent || "";
-    navigator.clipboard?.writeText(txt);
-    setStatus("已复制结果到剪贴板", "ok");
-  }
-
-  // 简单“展开/折叠”演示：不再做危险正则解析（你之前的正则就是这里炸的）
-  function expandAll(){
-    $("resultBox").style.maxHeight = "none";
-    setStatus("已展开", "ok");
-  }
-  function collapseAll(){
-    $("resultBox").style.maxHeight = "260px";
-    $("resultBox").style.overflow = "auto";
-    setStatus("已折叠（滚动查看）", "ok");
-  }
-
-  // ========= API 调用 =========
-  async function postJSON(url, body, timeoutMs=90000){
+  async function postJSON(path, body, timeoutMs=90000){
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    const t = setTimeout(()=>ctrl.abort(), timeoutMs);
     try{
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(path, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
         body: JSON.stringify(body),
-        signal: ctrl.signal
+        signal: ctrl.signal,
       });
 
       const ct = res.headers.get("content-type") || "";
-      let dataText = "";
-      let dataJson = null;
+      const text = await res.text();
 
-      if(ct.includes("application/json")){
-        dataJson = await res.json().catch(()=>null);
-      }else{
-        dataText = await res.text().catch(()=> "");
+      if (!ct.includes("application/json")) {
+        const hint = [
+          `HTTP ${res.status} ${res.statusText}`,
+          `content-type: ${ct || "(none)"}`,
+          `server: ${res.headers.get("server") || "(none)"}`,
+          `x-vercel-id: ${res.headers.get("x-vercel-id") || "(none)"}`,
+          "",
+          text
+        ].join("\n");
+        throw new Error(hint);
       }
 
+      const data = JSON.parse(text);
       if(!res.ok){
-        const msg = dataJson ? JSON.stringify(dataJson) : dataText || (res.status + " " + res.statusText);
-        const err = new Error(msg);
-        err.status = res.status;
-        err.payload = dataJson || dataText;
-        throw err;
+        throw new Error(`HTTP ${res.status}: ${JSON.stringify(data)}`);
       }
-      return dataJson ?? { ok:true, text:dataText };
-    }finally{
+      return data;
+    } finally {
       clearTimeout(t);
     }
   }
 
-  async function getText(url, timeoutMs=15000){
+  async function getText(path, timeoutMs=15000){
     const ctrl = new AbortController();
     const t = setTimeout(()=>ctrl.abort(), timeoutMs);
     try{
-      const res = await fetch(url, { method:"GET", signal: ctrl.signal });
-      const txt = await res.text().catch(()=> "");
-      return { ok: res.ok, status: res.status, text: txt };
-    }finally{ clearTimeout(t); }
+      const res = await fetch(path, { signal: ctrl.signal });
+      const text = await res.text();
+      return { res, text };
+    } finally { clearTimeout(t); }
   }
 
-  // ========= 业务：生成 =========
-  async function runGenerate(){
-    const data = getForm();
-    const miss = validateForm(data);
-    if(miss.length){
-      setStatus("缺少必填字段：" + miss.join(", "), "err");
+  // 主题切换
+  $("btnTheme").onclick = ()=>{
+    const root = document.documentElement;
+    const cur = root.getAttribute("data-theme") || "dark";
+    const next = cur === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("relife-theme", next);
+  };
+  (function initTheme(){
+    const saved = localStorage.getItem("relife-theme");
+    if (saved) document.documentElement.setAttribute("data-theme", saved);
+  })();
+
+  // 清空
+  $("btnClear").onclick = ()=>{ outEl.textContent = ""; setStatus("已清空"); setProgress(0); };
+
+  // ping
+  $("btnPing").onclick = async ()=>{
+    setStatus("ping 中…");
+    setProgress(20);
+    try{
+      const { res, text } = await getText(API_BASE + "/api/ping");
+      outEl.textContent =
+        `GET ${API_BASE}/api/ping\n` +
+        `HTTP ${res.status}\n` +
+        `server: ${res.headers.get("server") || "(none)"}\n` +
+        `x-vercel-id: ${res.headers.get("x-vercel-id") || "(none)"}\n\n` +
+        text;
+      setStatus("ping 完成");
+      setProgress(100);
+      setTimeout(()=>setProgress(0), 800);
+    }catch(e){
+      outEl.textContent = formatError(e);
+      setStatus("ping 失败");
+      setProgress(0);
+    }
+  };
+
+  // 复制结果
+  $("btnCopy").onclick = async ()=>{
+    const text = outEl.textContent.trim();
+    if (!text) {
+      alert("没有可复制的内容，请先生成结果。");
+      return;
+    }
+    try{
+      await navigator.clipboard.writeText(text);
+      setStatus("结果已复制到剪贴板");
+    }catch(e){
+      alert("复制失败：" + e);
+    }
+  };
+
+  // 导出 PDF（精美排版）
+  $("btnPDF").onclick = ()=>{
+    const content = outEl.textContent.trim();
+    if (!content) {
+      alert("没有可导出的内容，请先生成结果。");
       return;
     }
 
-    renderResult("⏳ 正在生成...\n（如果 10-30 秒无返回，请看右上角 Vercel Function Logs）");
-    setStatus("请求中...", "");
+    const doc = new jsPDF({
+      unit: "pt",
+      format: "a4",
+    });
 
-    const body = {
-      background: data.background,
-      timeline: data.timeline,
-      target: data.target,
-      resources: data.resources,
-      mode: data.mode
-    };
+    const margin = 40;
+    let y = 60;
 
-    try{
-      const out = await postJSON("/api/generate", body, 90000);
-      if(out && out.text){
-        renderResult(out.text);
-      }else{
-        renderResult(JSON.stringify(out, null, 2));
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("RE:LIFE 模拟结果分享", margin, y);
+    y += 24;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    doc.text("生成时间：" + new Date().toLocaleString(), margin, y);
+    y += 20;
+
+    doc.setDrawColor(200);
+    doc.line(margin, y, 595 - margin, y);
+    y += 20;
+
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+
+    const inputBlock = [
+      "【用户输入】",
+      "背景：" + ($("background").value || "（未填写）"),
+      "时间线：" + ($("timeline").value || "（未填写）"),
+      "回到时间点：" + ($("target").value || "（未填写）"),
+      "能力/资源：" + ($("resources").value || "（未填写）"),
+      "模式：" + ($("mode").value || "（未选择）"),
+      "",
+      "【模拟结果】",
+      content
+    ].join("\n");
+
+    const lines = doc.splitTextToSize(inputBlock, 595 - margin * 2);
+
+    const pageHeight = doc.internal.pageSize.getHeight();
+    for (let i = 0; i < lines.length; i++) {
+      if (y > pageHeight - 60) {
+        doc.addPage();
+        y = 60;
       }
-      setStatus("生成完成 " + nowISO(), "ok");
-      // 把最后一次结果给对话用
-      localStorage.setItem("relife:lastResult", $("resultBox").textContent || "");
-    }catch(e){
-      const status = e.status ? ("HTTP " + e.status + "：") : "";
-      renderResult(status + (e.message || "请求失败"));
-      setStatus("生成失败（看结果框错误）", "err");
-      console.error(e);
+      doc.text(lines[i], margin, y);
+      y += 16;
     }
-  }
 
-  // ========= 对话：继续追问 =========
-  function loadChat(){
-    const raw = localStorage.getItem("relife:chat") || "";
-    $("chatLog").textContent = raw || "（对话记录保存在浏览器本地 localStorage）";
-  }
-  function appendChatLine(line){
-    const raw = localStorage.getItem("relife:chat") || "";
-    const next = (raw ? raw + "\n" : "") + line;
-    localStorage.setItem("relife:chat", next);
-    $("chatLog").textContent = next;
-    $("chatLog").scrollTop = $("chatLog").scrollHeight;
-  }
+    doc.save("RE_LIFE_模拟结果.pdf");
+    setStatus("PDF 已导出");
+  };
 
-  async function sendChat(){
-    const q = $("chatInput").value.trim();
-    if(!q) return;
+  // 分享链接（URL 参数自动填充）
+  $("btnShare").onclick = ()=>{
+    const params = new URLSearchParams({
+      background: $("background").value,
+      timeline: $("timeline").value,
+      target: $("target").value,
+      resources: $("resources").value,
+      mode: $("mode").value,
+    });
+    const url = location.origin + location.pathname + "?" + params.toString();
+    navigator.clipboard.writeText(url).then(()=>{
+      setStatus("分享链接已复制");
+      alert("分享链接已复制：\n" + url);
+    }).catch(e=>{
+      alert("复制失败：" + e);
+    });
+  };
 
-    const data = getForm();
-    const miss = validateForm(data);
-    if(miss.length){
-      setStatus("对话前先补齐必填字段：" + miss.join(", "), "err");
+  // 页面加载时，根据 URL 参数自动填充
+  (function fillFromQuery(){
+    const p = new URLSearchParams(location.search);
+    if (p.get("background")) $("background").value = p.get("background");
+    if (p.get("timeline")) $("timeline").value = p.get("timeline");
+    if (p.get("target")) $("target").value = p.get("target");
+    if (p.get("resources")) $("resources").value = p.get("resources");
+    if (p.get("mode")) $("mode").value = p.get("mode");
+  })();
+
+  // 开始模拟（带进度条动画）
+  $("btnRun").onclick = async ()=>{
+    const background = $("background").value.trim();
+    const timeline = $("timeline").value.trim();
+    const target = $("target").value.trim();
+    const resources = $("resources").value.trim();
+    const mode = $("mode").value;
+
+    if(!background || !timeline || !target){
+      outEl.textContent = "请把：个人背景 / 时间线 / 想回到的时间点 填完整（必填）。";
+      setStatus("缺少必填项");
+      setProgress(0);
       return;
     }
 
-    const lastResult = localStorage.getItem("relife:lastResult") || "";
-    appendChatLine("你：" + q);
-
-    setStatus("对话请求中...", "");
-    $("chatInput").value = "";
-
-    const body = {
-      background: data.background,
-      timeline: data.timeline,
-      target: data.target,
-      resources: data.resources,
-      mode: "chat",
-      question: q,
-      lastResult
-    };
+    setStatus("请求中…");
+    setProgress(10);
+    outEl.textContent = "⏳ 正在生成…（通常 10~30 秒，如长时间无响应可先测试 API）";
 
     try{
-      const out = await postJSON("/api/generate", body, 90000);
-      const ans = out && out.text ? out.text : JSON.stringify(out);
-      appendChatLine("RE:LIFE：" + ans);
-      setStatus("对话完成 " + nowISO(), "ok");
+      // 进度条假装推进
+      let fake = 10;
+      const timer = setInterval(()=>{
+        fake = Math.min(fake + 5, 85);
+        setProgress(fake);
+      }, 800);
+
+      const data = await postJSON(API_BASE + "/api/generate", {
+        background, timeline, target, resources, mode
+      }, 120000);
+
+      clearInterval(timer);
+      setProgress(100);
+
+      const text = data.text || data.content || JSON.stringify(data, null, 2);
+      outEl.textContent = text;
+      setStatus("完成");
+      setTimeout(()=>setProgress(0), 1000);
     }catch(e){
-      appendChatLine("（错误）" + (e.status ? "HTTP "+e.status+" " : "") + (e.message || "请求失败"));
-      setStatus("对话失败（看对话框错误）", "err");
-      console.error(e);
+      outEl.textContent = formatError(e);
+      setStatus("失败（看输出细节）");
+      setProgress(0);
     }
-  }
-
-  async function ping(){
-    setStatus("测试 /api/ping ...", "");
-    const r = await getText("/api/ping");
-    if(r.ok){
-      setStatus("Ping OK（" + r.status + "）", "ok");
-    }else{
-      setStatus("Ping 失败（" + r.status + "）", "err");
-    }
-    // 直接显示到结果框方便你看
-    renderResult("GET /api/ping -> " + r.status + "\n\n" + r.text);
-  }
-
-  // ========= 绑定 =========
-  $("btnRun").addEventListener("click", runGenerate);
-  $("btnShare").addEventListener("click", saveFormToUrl);
-  $("btnClear").addEventListener("click", ()=>{
-    $("background").value = "";
-    $("timeline").value = "";
-    $("target").value = "";
-    $("resources").value = "";
-    $("mode").value = "abc";
-    renderResult("（已清空）");
-    setStatus("已清空", "ok");
-  });
-
-  $("btnCopy").addEventListener("click", copyResult);
-  $("btnExpand").addEventListener("click", expandAll);
-  $("btnCollapse").addEventListener("click", collapseAll);
-  $("btnPing").addEventListener("click", ping);
-
-  $("btnSend").addEventListener("click", sendChat);
-  $("chatInput").addEventListener("keydown", (e)=>{
-    if(e.key === "Enter") sendChat();
-  });
-  $("btnChatClear").addEventListener("click", ()=>{
-    localStorage.removeItem("relife:chat");
-    loadChat();
-    setStatus("已清空对话", "ok");
-  });
-
-  // 初始化
-  loadFormFromUrl();
-  loadChat();
+  };
 </script>
 </body>
 </html>
