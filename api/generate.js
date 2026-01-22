@@ -1,201 +1,224 @@
-// api/generate.js
-export default async function handler(req, res) {
-  // --- CORS ---
+function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Max-Age", "86400");
+  res.setHeader("Cache-Control", "no-store");
+}
+
+function json(res, code, obj) {
+  res.status(code).setHeader("Content-Type", "application/json; charset=utf-8");
+  res.end(JSON.stringify(obj));
+}
+
+function safeText(x) {
+  return (x ?? "").toString().trim();
+}
+
+function extractOutputText(respJson) {
+  // 兼容不同返回结构：尽量把 output_text 拼出来
+  if (!respJson) return "";
+
+  if (typeof respJson.output_text === "string" && respJson.output_text.trim()) {
+    return respJson.output_text.trim();
+  }
+
+  const out = respJson.output;
+  if (!Array.isArray(out)) return "";
+
+  let chunks = [];
+  for (const item of out) {
+    const content = item && item.content;
+    if (!Array.isArray(content)) continue;
+    for (const c of content) {
+      if (!c) continue;
+      if (c.type === "output_text" && typeof c.text === "string") {
+        chunks.push(c.text);
+      }
+    }
+  }
+  return chunks.join("\n").trim();
+}
+
+async function callOpenAI({ apiKey, prompt, timeoutMs = 85000 }) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+
+  try {
+    const r = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: [
+          {
+            role: "user",
+            content: [{ type: "input_text", text: prompt }],
+          },
+        ],
+        max_output_tokens: 900,
+      }),
+      signal: ctrl.signal,
+    });
+
+    const data = await r.json().catch(() => null);
+
+    if (!r.ok) {
+      const errMsg = data ? JSON.stringify(data) : `${r.status} ${r.statusText}`;
+      const e = new Error(errMsg);
+      e.status = r.status;
+      e.data = data;
+      throw e;
+    }
+
+    const text = extractOutputText(data);
+    return { raw: data, text };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+function buildPrompt({ background, timeline, target, resources, mode, question, lastResult }) {
+  const commonRules = `
+你是“RE:LIFE | 回环”人生模拟器的理性分析引擎。
+原则：
+- 不算命、不预测确定结果、不保证。
+- 只基于用户输入做“可解释的因果推演 + 可执行的计划”。
+- 语言：中文，冷静中带点共情，少术语，结构清晰。
+- 输出尽量用小标题 + 项目符号，给出可落地步骤。
+`;
+
+  if (mode === "chat") {
+    return `
+${commonRules}
+
+【用户背景】
+${background}
+
+【经历时间线】
+${timeline}
+
+【想回到的时间点】
+${target}
+
+【能力/资源】
+${resources || "（未提供）"}
+
+【你上次给出的结果（供参考）】
+${lastResult || "（无）"}
+
+【用户追问】
+${question}
+
+请直接回答追问：
+- 先给“结论一句话”
+- 再给“理由（3-6条）”
+- 最后给“最小可行动作（今天/本周/本月）”
+`.trim();
+  }
+
+  const modeText = mode === "single"
+    ? "请给出一条最稳妥的单一路线（少而精）。"
+    : "请给出 3 条路线 A/B/C 并对比（推荐/次选/备选）。";
+
+  return `
+${commonRules}
+
+用户要“回到某个时间点重新选择”，请输出：
+
+1）关键信息提炼（5-8条）
+2）回到“${target}”后，${modeText}
+3）每条路线包含：
+- 短期（1-3个月）
+- 中期（1-2年）
+- 长期（3-5年）
+- 关键风险 & 规避策略
+- 最小行动清单（今天就能做的 3 件事）
+4）最后给一个“最小风险方案”（不赌运气版）
+
+【用户背景】
+${background}
+
+【经历时间线】
+${timeline}
+
+【能力/资源】
+${resources || "（未提供）"}
+`.trim();
+}
+
+export default async function handler(req, res) {
+  setCors(res);
 
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  // --- Health check ---
+  // 允许 GET 用来快速自检（不会调用 OpenAI）
   if (req.method === "GET") {
-    return res.status(200).json({ ok: true, msg: "RE:LIFE API alive", method: "GET" });
+    return json(res, 200, {
+      ok: true,
+      msg: "RE:LIFE generate endpoint is alive",
+      hint: "Use POST with JSON: {background,timeline,target,resources,mode}",
+      time: new Date().toISOString(),
+    });
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed", allow: ["POST"] });
+    return json(res, 405, { ok: false, error: "Method Not Allowed" });
   }
 
-  // --- Parse body safely ---
-  let body = {};
-  try {
-    body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
-  } catch (e) {
-    return res.status(400).json({ error: "Invalid JSON" });
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return json(res, 500, {
+      ok: false,
+      error: "Missing OPENAI_API_KEY in Vercel Environment Variables",
+    });
   }
 
-  const { background, timeline, target, resources = "", mode = "normal", compare = true } = body;
-  const messages = Array.isArray(body.messages) ? body.messages : null; // for chat mode
-
-  // If chat mode: require messages
-  if (messages && messages.length > 0) {
-    return await runChat({ req, res, messages });
+  let body = req.body || {};
+  // 兼容某些情况下 body 是字符串
+  if (typeof body === "string") {
+    try { body = JSON.parse(body); } catch { body = {}; }
   }
 
-  // Form mode: require background/timeline/target
+  const background = safeText(body.background);
+  const timeline = safeText(body.timeline);
+  const target = safeText(body.target);
+  const resources = safeText(body.resources);
+  const mode = safeText(body.mode) || "abc";
+  const question = safeText(body.question);
+  const lastResult = safeText(body.lastResult);
+
   const need = [];
   if (!background) need.push("background");
   if (!timeline) need.push("timeline");
   if (!target) need.push("target");
 
   if (need.length) {
-    return res.status(400).json({ error: "Missing required fields", need });
+    return json(res, 400, { ok: false, error: "Missing required fields", need });
   }
 
-  // If too short -> ask followups (auto-question mode)
-  const followups = buildFollowups({ background, timeline, target, resources });
-  // still generate even if short, but we’ll include followups to guide user
+  const prompt = buildPrompt({ background, timeline, target, resources, mode, question, lastResult });
 
-  const variants = compare
-    ? [
-        { key: "A", title: "A｜理性推演（克制）", style: "dry" },
-        { key: "B", title: "B｜平衡（默认）", style: "normal" },
-        { key: "C", title: "C｜共情+行动（温和）", style: "warm" },
-      ]
-    : [{ key: "ONE", title: "结果", style: mode || "normal" }];
+  try {
+    const { text } = await callOpenAI({ apiKey, prompt, timeoutMs: 85000 });
 
-  const out = [];
-  for (const v of variants) {
-    const text = await callOpenAI({
-      prompt: buildPrompt({
-        background,
-        timeline,
-        target,
-        resources,
-        mode: v.style,
-      }),
-    });
-    out.push({ key: v.key, title: v.title, text });
-  }
-
-  return res.status(200).json({
-    ok: true,
-    type: "compare",
-    variants: out,
-    followups,
-  });
-}
-
-// ---------------- helpers ----------------
-
-function buildFollowups({ background, timeline, target, resources }) {
-  const len = (s) => (s || "").trim().length;
-  const qs = [];
-
-  if (len(background) < 20) {
-    qs.push("你的当前状态：主要压力/困扰是什么？（经济/家庭/健康/职业/关系）");
-  }
-  if (len(timeline) < 60) {
-    qs.push("从目标时间点到现在，发生过 3 个关键转折事件分别是什么？");
-  }
-  if (len(target) < 6) {
-    qs.push("你想回到的具体节点是什么？那时你面临的“选择题”是什么？");
-  }
-  if (len(resources) < 10) {
-    qs.push("你现在手里能用的资源：时间、钱、人脉、技能、城市/户口等分别怎样？");
-  }
-  qs.push("你最在意的结果指标是什么？（收入/自由/稳定/成就/关系/健康）按优先级排序。");
-
-  // return 3~5
-  return qs.slice(0, 5);
-}
-
-function buildPrompt({ background, timeline, target, resources, mode }) {
-  const tone =
-    mode === "dry"
-      ? "语气极度理性、克制，不安慰不鸡汤，用概率/风险/成本思维。"
-      : mode === "warm"
-      ? "语气冷静但带共情，既承认情绪也给可执行路线，避免空话。"
-      : "语气理性、清晰、易懂，少术语。";
-
-  const structure = `
-请严格按以下结构输出（必须有标题）：
-1) 关键信息提炼（5-8条，短句）
-2) 回到【${target}】后，最可能的3条路线（每条：短期/中期/长期）
-3) 每条路线的关键风险与“可行动的规避策略”（具体到动作）
-4) 最小可行行动清单（7天、30天、90天）
-5) 免责声明（1-2句：非保证、非建议）
-`;
-
-  return `
-你是“人生模拟器 RE:LIFE”的推演引擎。${tone}
-要求：不算命、不保证、不编造事实；用“如果…那么…”的因果逻辑；尽量给出可执行动作。
-
-【用户背景】
-${background}
-
-【人生经历时间线】
-${timeline}
-
-【想回到的时间点】
-${target}
-
-【能力/资源（可选）】
-${resources || "（未提供）"}
-
-${structure}
-`.trim();
-}
-
-async function callOpenAI({ prompt }) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return "ERROR: Missing OPENAI_API_KEY in Vercel Environment Variables.";
-
-  // 兼容性：用 chat.completions 风格接口（更通用）
-  const payload = {
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: "You output Chinese unless user asks otherwise." },
-      { role: "user", content: prompt },
-    ],
-    temperature: 0.7,
-  };
-
-  const r = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const txt = await r.text();
-  if (!r.ok) return `OpenAI API Error (${r.status}): ${txt}`;
-
-  const json = JSON.parse(txt);
-  return (json.choices?.[0]?.message?.content || "").trim() || "（空响应）";
-}
-
-async function runChat({ req, res, messages }) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
-
-  // 这里的 messages 由前端传入（包含上下文）
-  // 你可以把前端保存的表单信息也塞进 messages 的 system 里（前端已做）
-  const payload = {
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content:
-          "你是 RE:LIFE 人生推演助手。冷静中带共情；不算命、不保证；用因果逻辑；输出尽量结构化，少术语。",
+    return json(res, 200, {
+      ok: true,
+      text: text || "（模型返回为空，请稍后重试或缩短输入）",
+      meta: {
+        mode,
+        time: new Date().toISOString(),
       },
-      ...messages,
-    ],
-    temperature: 0.7,
-  };
-
-  const r = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify(payload),
-  });
-
-  const txt = await r.text();
-  if (!r.ok) return res.status(r.status).json({ error: "OpenAI API error", detail: txt });
-
-  const json = JSON.parse(txt);
-  const answer = (json.choices?.[0]?.message?.content || "").trim();
-  return res.status(200).json({ ok: true, type: "chat", answer });
+    });
+  } catch (e) {
+    const status = e.status || 500;
+    return json(res, status, {
+      ok: false,
+      error: "OpenAI request failed",
+      detail: e.message || String(e),
+    });
+  }
 }
