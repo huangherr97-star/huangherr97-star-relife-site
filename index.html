@@ -3,99 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RESET LIFE | 重塑人生</title>
+    <title>RESET LIFE | 平行时空重塑</title>
     <style>
-        :root {
-            --accent: #000000;
-            --bg: #f5f5f7;
-            --card: #ffffff;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .navbar {
-            width: 100%;
-            padding: 20px;
-            text-align: center;
-            font-weight: bold;
-            letter-spacing: 2px;
-            border-bottom: 1px solid #ddd;
-            background: #fff;
-        }
-        .container {
-            max-width: 600px;
-            width: 90%;
-            margin-top: 50px;
-        }
-        .app-card {
-            background: var(--card);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        h2 { margin-top: 0; font-size: 24px; }
-        p { color: #666; line-height: 1.6; }
-        textarea {
-            width: 100%;
-            height: 120px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            resize: none;
-            font-size: 16px;
-            box-sizing: border-box;
-            margin: 20px 0;
-        }
-        button {
-            width: 100%;
-            padding: 15px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        #result {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 12px;
-            border-left: 4px solid var(--accent);
-            display: none;
-            line-height: 1.8;
-            white-space: pre-wrap;
-        }
-        .loading-dots:after {
-            content: '.';
-            animation: dots 1.5s steps(5, end) infinite;
-        }
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60% { content: '...'; }
-        }
+        :root { --main: #000000; --bg: #f2f2f7; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 40px 20px; margin: 0; }
+        .card { background: white; width: 100%; max-width: 500px; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
+        .header { text-align: center; font-weight: 800; font-size: 20px; letter-spacing: 2px; margin-bottom: 30px; }
+        h2 { margin: 0 0 10px 0; font-size: 22px; }
+        p { color: #666; font-size: 14px; line-height: 1.5; }
+        textarea { width: 100%; height: 150px; padding: 15px; border: 1px solid #e5e5ea; border-radius: 16px; font-size: 16px; box-sizing: border-box; margin: 20px 0; outline: none; transition: border 0.3s; }
+        textarea:focus { border-color: var(--main); }
+        button { width: 100%; padding: 18px; background: var(--main); color: white; border: none; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.1s; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #aeaeb2; cursor: not-allowed; }
+        #result { margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 16px; display: none; line-height: 1.8; color: #1c1c1e; border: 1px solid #efeff4; }
+        .loading { color: #8e8e93; font-style: italic; }
     </style>
 </head>
 <body>
-    <div class="navbar">RESET LIFE</div>
-    <div class="container">
-        <div class="app-card">
-            <h2>重塑你的生命剧本</h2>
-            <p>输入一段遗憾或经历，让 AI 在平行时空为你改写结局。</p >
-            <textarea id="expInput" placeholder="例如：2015年的那个雨天，我错过了一班公交车..."></textarea>
-            <button onclick="generatePlot()" id="mainBtn">开始生成剧情</button>
-            <div id="result"></div>
-        </div>
+    <div class="card">
+        <div class="header">RESET LIFE</div>
+        <h2>重塑你的生命剧本</h2>
+        <p>描述一段经历，让时间在这一刻转折</p >
+        <textarea id="expInput" placeholder="输入你想要改变的那段经历..."></textarea>
+        <button id="mainBtn" onclick="generatePlot()">开始重塑人生</button>
+        <div id="result"></div>
     </div>
 
     <script>
@@ -106,9 +38,11 @@
 
             if (!input.trim()) return alert("请输入您的经历");
 
+            // 进入加载状态
             btn.disabled = true;
+            btn.innerText = '正在链接 Edge 节点...';
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '正在链接 Edge 节点并解析时空<span class="loading-dots"></span>';
+            resultDiv.innerHTML = '<span class="loading">正在通过 Vercel Edge 协议解析时空节点...</span>';
 
             try {
                 const response = await fetch('/api/generate', {
@@ -118,18 +52,19 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (response.ok) {
-                    // 核心：读取后端返回的 story 字段
-                    resultDiv.innerHTML = '<strong>平行时空结局：</strong><br><br>' + data.story;
+                    // 核心修复：这里必须对应后端返回的 data.story
+                    const storyContent = data.story || "时空重塑成功，但未返回具体剧情。";
+                    resultDiv.innerHTML = '<strong>平行时空结局：</strong><br><br>' + storyContent;
                 } else {
-                    resultDiv.innerHTML = '连接失败：' + (data.error || '未知错误');
+                    resultDiv.innerHTML = '解析失败：' + (data.error || '连接超时');
                 }
             } catch (err) {
-                resultDiv.innerHTML = '连接失败，请确保域名已通过 Vercel 验证。';
+                resultDiv.innerHTML = '连接失败：请检查网络或域名解析状态。';
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '再次重塑人生';
+                btn.innerText = '再次重塑人生';
             }
         }
     </script>
