@@ -1,7 +1,7 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
+ push:
     branches: [ "main"  group:  "pages"   branches: [ "main" ]
  cancel-in-progress: true
 
