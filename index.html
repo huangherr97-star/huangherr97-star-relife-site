@@ -706,6 +706,7 @@ ${escapeHtml(context.target)}
 const routes = ${JSON.stringify(routes || [])};
 const followups = ${JSON.stringify(followups || [])};
 const plan30d = ${JSON.stringify(plan30d || [])};
+const esc = (s)=>String(s ?? "").replace(/[&<>"\']/g, (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","\'":"&#39;"}[c]));
 const baseText = ${JSON.stringify(text || "")};
 const ctx = ${JSON.stringify(context || {})};
 
@@ -741,10 +742,8 @@ scoresBody.innerHTML = "";
 routes.forEach((r, idx)=>{
 const div = document.createElement("div");
 div.className = "route-pill" + (idx===0 ? " active" : "");
-div.innerHTML = `
-<h3>${r.id} · ${r.title}</h3>
-<p>${r.summary}</p>
-`;
+div.innerHTML = "<h3>" + esc(r.id) + " · " + esc(r.title) + "</h3>" +
+              "<p>" + esc(r.summary) + "</p>";
 div.onclick = ()=>{
 document.querySelectorAll(".route-pill").forEach(x=>x.classList.remove("active"));
 div.classList.add("active");
@@ -754,13 +753,11 @@ routesEl.appendChild(div);
 
 const s = r.score || {};
 const tr = document.createElement("tr");
-tr.innerHTML = `
-<td>${r.id}</td>
-<td>${s.risk ?? "-"}</td>
-<td>${s.reward ?? "-"}</td>
-<td>${s.timeCost ?? "-"}</td>
-<td>${s.mentalCost ?? "-"}</td>
-`;
+tr.innerHTML = "<td>" + esc(r.id) + "</td>" +
+             "<td>" + esc(s.risk ?? "-") + "</td>" +
+             "<td>" + esc(s.reward ?? "-") + "</td>" +
+             "<td>" + esc(s.timeCost ?? "-") + "</td>" +
+             "<td>" + esc(s.mentalCost ?? "-") + "</td>";
 scoresBody.appendChild(tr);
 });
 }
