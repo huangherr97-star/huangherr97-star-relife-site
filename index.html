@@ -1,886 +1,313 @@
-<!doctype html>
-<html lang="zh-CN" data-theme="dark">
+<!DOCTYPE html>
+<html lang="zh">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RE:LIFE | 回环</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RE:LIFE | 回环</title>
 
-<!-- jsPDF 用于导出 PDF -->
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" />
 
-<style>
-:root{
---bg:#0B1220;--card:#0f1a33cc;--line:#22304f;--text:#e8eefc;--muted:#9fb0d5;
---primary:#4C6FFF;--primary2:#22D3EE;--warn:#F59E0B;
---card-soft:rgba(255,255,255,.06);
-}
-:root[data-theme="light"]{
---bg:#f3f4f6;--card:#ffffff;--line:#d1d5db;--text:#111827;--muted:#6b7280;
---primary:#2563eb;--primary2:#0ea5e9;--warn:#d97706;
---card-soft:rgba(15,23,42,.04);
-}
-*{box-sizing:border-box}
-body{
-margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
-background:var(--bg);
-color:var(--text);
-}
-.wrap{max-width:1100px;margin:40px auto;padding:0 18px}
-.title{display:flex;align-items:flex-end;gap:12px;margin-bottom:22px}
-.title h1{font-size:42px;letter-spacing:.5px;margin:0}
-.title .sub{color:var(--muted);font-size:14px;margin-bottom:6px}
-.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
-@media (max-width:980px){.grid{grid-template-columns:1fr}}
-.card{
-background:linear-gradient(180deg, var(--card-soft), var(--card-soft));
-border:1px solid rgba(255,255,255,.08);
-border-radius:18px;
-box-shadow:0 20px 60px rgba(0,0,0,.15);
-overflow:hidden;
-}
-:root[data-theme="light"] .card{
-border:1px solid #e5e7eb;
-box-shadow:0 10px 30px rgba(15,23,42,.08);
-}
-.card .hd{padding:18px 18px 10px;border-bottom:1px solid rgba(255,255,255,.07)}
-:root[data-theme="light"] .card .hd{border-bottom:1px solid #e5e7eb;}
-.card .hd h2{margin:0;font-size:18px}
-.card .bd{padding:18px}
-label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
-input, textarea, select{
-width:100%;
-background:rgba(10,16,28,.55);
-border:1px solid rgba(255,255,255,.10);
-color:var(--text);
-border-radius:12px;
-padding:12px 12px;
-outline:none;
-}
-:root[data-theme="light"] input,
-:root[data-theme="light"] textarea,
-:root[data-theme="light"] select{
-background:#f9fafb;
-border:1px solid #e5e7eb;
-}
-textarea{min-height:120px;resize:vertical}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media (max-width:980px){.row{grid-template-columns:1fr}}
-.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-button{
-border:0;cursor:pointer;border-radius:12px;
-padding:10px 14px;font-weight:600;color:#081022;
-background:linear-gradient(135deg,var(--primary), #5a7bff);
-font-size:14px;
-}
-button.secondary{
-color:var(--text);
-background:rgba(255,255,255,.08);
-border:1px solid rgba(255,255,255,.10);
-}
-:root[data-theme="light"] button.secondary{
-background:#f9fafb;
-border:1px solid #e5e7eb;
-}
-button.danger{
-color:#fff;background:rgba(245, 89, 11, .18);
-border:1px solid rgba(245, 89, 11, .35);
-}
-.pill{
-display:inline-flex;align-items:center;gap:8px;
-padding:8px 10px;border-radius:999px;
-border:1px solid rgba(255,255,255,.10);
-background:rgba(255,255,255,.06);
-color:var(--muted);font-size:12px
-}
-:root[data-theme="light"] .pill{
-background:#f9fafb;
-border:1px solid #e5e7eb;
-}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.status{margin-top:12px;color:var(--muted);font-size:13px}
-.out{
-white-space:pre-wrap;
-background:rgba(10,16,28,.55);
-border:1px solid rgba(255,255,255,.10);
-border-radius:14px;
-padding:14px;
-min-height:220px;
-line-height:1.55;
-}
-:root[data-theme="light"] .out{
-background:#f9fafb;
-border:1px solid #e5e7eb;
-}
-.foot{margin-top:18px;color:var(--muted);font-size:12px}
+    <!-- Styles -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+            color: #222;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark {
+            background: #1e1e1e;
+            color: #ddd;
+        }
+        header {
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+        }
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            margin-right: 10px;
+        }
+        button.primary {
+            background: #0078ff;
+            color: white;
+        }
+        button.secondary {
+            background: #ddd;
+        }
+        button.dark {
+            background: #444;
+            color: white;
+        }
+        .output-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        body.dark .output-card {
+            background: #2a2a2a;
+        }
+        .loading {
+            display: none;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .route-buttons {
+            margin-top: 10px;
+        }
+        .route-buttons button {
+            margin-right: 8px;
+        }
+    </style>
 
-.progress-wrap{
-margin-top:10px;
-height:6px;
-background:rgba(255,255,255,.06);
-border-radius:999px;
-overflow:hidden;
-}
-:root[data-theme="light"] .progress-wrap{
-background:#e5e7eb;
-}
-.progress-bar{
-height:100%;
-width:0%;
-background:linear-gradient(90deg,var(--primary),var(--primary2));
-transition:width .3s ease;
-}
-
-.theme-toggle{
-margin-left:10px;
-font-size:12px;
-padding:6px 10px;
-}
-
-.hint-short{
-margin-top:8px;
-font-size:12px;
-color:var(--warn);
-}
-
-/* 语言选择遮罩 */
-#langMask{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.75);
-display:flex;
-align-items:center;
-justify-content:center;
-z-index:9999;
-}
-#langBox{
-background:#fff;
-color:#111;
-padding:30px;
-border-radius:16px;
-width:300px;
-text-align:center;
-box-shadow:0 10px 40px rgba(0,0,0,.3);
-}
-#langBox h2{margin:0 0 20px;font-size:20px;}
-#langBox button{
-width:100%;
-margin:8px 0;
-padding:12px;
-border-radius:10px;
-border:0;
-cursor:pointer;
-font-size:16px;
-font-weight:600;
-background:#4C6FFF;
-color:#fff;
-}
-</style>
+    <!-- jsPDF -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
+
 <body>
+<header>RE:LIFE | 回环</header>
 
-<!-- 语言选择遮罩 -->
-<div id="langMask">
-<div id="langBox">
-<h2>选择语言 / Choose Language</h2>
-<button onclick="selectLang('zh')">中文</button>
-<button onclick="selectLang('en')">English</button>
-</div>
-</div>
+<div class="container">
 
-<div class="wrap" id="app" style="display:none;">
-<div class="title">
-<h1 id="t_app_title">RE:LIFE | 回环</h1>
-<div class="sub" id="t_app_sub">理性人生模拟 · 非算命 · 非保证</div>
+    <!-- Language Switch -->
+    <div class="section">
+        <label id="label-language">选择语言 / Choose Language</label>
+        <select id="language">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+        </select>
+    </div>
 
-<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-<div class="pill">
-API: <span id="apiLabel" class="mono"></span>
-</div>
-<button class="secondary theme-toggle" id="btnTheme">🌗</button>
-</div>
-</div>
+    <!-- User Inputs -->
+    <div class="section">
+        <label id="label-background">你的背景 / Your Background</label>
+        <textarea id="background" rows="3"></textarea>
 
-<div class="grid">
-<!-- 左侧输入卡片 -->
-<div class="card">
-<div class="hd"><h2 id="t_your_info">你的信息</h2></div>
-<div class="bd">
+        <label id="label-timeline">人生时间线 / Life Timeline</label>
+        <textarea id="timeline" rows="3"></textarea>
 
-<label id="t_background_label">个人背景（必填）</label>
-<input id="background" placeholder="例：28岁，工作3年，想转行/想创业…" />
+        <label id="label-target">目标点 / Target Point</label>
+        <textarea id="target" rows="3"></textarea>
 
-<label id="t_timeline_label">人生经历时间线（必填）</label>
-<textarea id="timeline" placeholder="用要点写：学校/工作/关键事件/决策/资源/人脉…"></textarea>
+        <label id="label-mode">模式 / Mode</label>
+        <select id="mode">
+            <option value="abc">A/B/C 路线对比</option>
+            <option value="single">单路线</option>
+            <option value="chat">连续对话模式</option>
+        </select>
 
-<div class="row">
-<div>
-<label id="t_target_label">想回到的时间点（必填）</label>
-<input id="target" placeholder="例：18岁高考 / 22岁毕业 / 2020年某次决定" />
-</div>
-<div>
-<label id="t_mode_label">生成模式</label>
-<select id="mode">
-<option value="abc">对比 A/B/C（推荐）</option>
-<option value="single">单一路线（更快）</option>
-<option value="chat">追问模式（对话）</option>
-</select>
-</div>
-</div>
+        <label id="label-skills">技能与资源 / Skills & Resources</label>
+        <textarea id="skills" rows="3"></textarea>
+    </div>
 
-<label id="t_resources_label">能力 / 资源（可选）</label>
-<input id="resources" placeholder="例：英语一般/有存款2万/家人支持/擅长写作…" />
+    <!-- Buttons -->
+    <div class="section">
+        <button class="primary" id="start">开始模拟 / Start</button>
+        <button class="secondary" id="clear">清空输出 / Clear</button>
+        <button class="secondary" id="theme">切换主题 / Theme</button>
+    </div>
 
-<label id="t_language_label">语言 / Language</label>
-<select id="language">
-<option value="zh">中文</option>
-<option value="en">English</option>
-</select>
+    <!-- Loading -->
+    <div id="loading" class="loading">生成中，请稍候...</div>
 
-<div class="btns">
-<button id="btnRun">开始模拟</button>
-<button class="secondary" id="btnPing">测试 API</button>
-<button class="secondary" id="btnCopy">复制结果</button>
-<button class="secondary" id="btnPDF">导出 PDF</button>
-<button class="secondary" id="btnShare">分享链接</button>
-<button class="danger" id="btnClear">清空输出</button>
-</div>
+    <!-- Output -->
+    <div id="output" class="output-card" style="display:none;"></div>
 
-<div class="progress-wrap">
-<div class="progress-bar" id="progressBar"></div>
-</div>
-
-<div class="status" id="status">状态：就绪</div>
-
-<div class="hint-short" id="hintShort" style="display:none;">
-建议补充信息（追问）：可以多写一些关键节点、转折点、你在意的东西。
-</div>
+    <!-- Route Buttons -->
+    <div id="routeButtons" class="route-buttons" style="display:none;">
+        <button id="openA">打开路线 A</button>
+        <button id="openB">打开路线 B</button>
+        <button id="openC">打开路线 C</button>
+        <button id="copyResult">复制结果</button>
+        <button id="exportPDF">导出 PDF</button>
+    </div>
 
 </div>
-</div>
 
-<!-- 右侧结果卡片 -->
-<div class="card">
-<div class="hd"><h2 id="t_result_title">结果</h2></div>
-<div class="bd">
-<div id="out" class="out">点击“开始模拟”生成内容。</div>
-<div class="foot" id="t_result_hint">
-如果长时间无响应，可以先点“测试 API”确认 /api/ping 是否正常，再检查 OpenAI 配额。
-</div>
-</div>
-</div>
-</div>
-</div>
-
+<!-- Main Script -->
 <script>
-/* ---------------------------
-语言选择（进入页面第一步）
----------------------------- */
-function selectLang(lang){
-localStorage.setItem("relife-lang", lang);
-document.getElementById("langMask").style.display = "none";
-document.getElementById("app").style.display = "block";
-applyLang(lang);
-}
-
-(function initLang(){
-const saved = localStorage.getItem("relife-lang");
-if(saved){
-document.getElementById("langMask").style.display = "none";
-document.getElementById("app").style.display = "block";
-applyLang(saved);
-}
-})();
-
-/* ---------------------------
-UI 文本（中英文）
----------------------------- */
-const LANG = {
-zh:{
-app_title:"RE:LIFE | 回环",
-app_sub:"理性人生模拟 · 非算命 · 非保证",
-your_info:"你的信息",
-background:"个人背景（必填）",
-timeline:"人生经历时间线（必填）",
-target:"想回到的时间点（必填）",
-mode:"生成模式",
-resources:"能力 / 资源（可选）",
-language:"语言 / Language",
-run:"开始模拟",
-ping:"测试 API",
-copy:"复制结果",
-pdf:"导出 PDF",
-share:"分享链接",
-clear:"清空输出",
-result:"结果",
-result_hint:"如果长时间无响应，可以先点“测试 API”确认 /api/ping 是否正常，再检查 OpenAI 配额。",
-short_hint:"建议补充信息（追问）：可以多写一些关键节点、转折点、你在意的东西。",
-placeholder_bg:"例：28岁，工作3年，想转行/想创业…",
-placeholder_tl:"用要点写：学校/工作/关键事件/决策/资源/人脉…",
-placeholder_target:"例：18岁高考 / 22岁毕业 / 2020年某次决定"
-},
-en:{
-app_title:"RE:LIFE | Loop",
-app_sub:"Rational life simulation · No fortune telling · No guarantees",
-your_info:"Your Information",
-background:"Background (required)",
-timeline:"Life Timeline (required)",
-target:"Target Point (required)",
-mode:"Mode",
-resources:"Skills / Resources (optional)",
-language:"Language",
-run:"Run Simulation",
-ping:"Test API",
-copy:"Copy Result",
-pdf:"Export PDF",
-share:"Share Link",
-clear:"Clear Output",
-result:"Result",
-result_hint:"If it takes too long, test /api/ping first, then check OpenAI billing.",
-short_hint:"Suggested: add more details (key events, turning points, motivations).",
-placeholder_bg:"e.g. 28 years old, 3 years working, want to switch career…",
-placeholder_tl:"List key events: school, jobs, decisions, resources, network…",
-placeholder_target:"e.g. age 18 exam / age 22 graduation / 2020 decision"
-}
+/* -------------------------------
+   Language System
+-------------------------------- */
+const lang = {
+    zh: {
+        background: "你的背景",
+        timeline: "人生时间线",
+        target: "目标点",
+        mode: "模式",
+        skills: "技能与资源",
+        generating: "生成中，请稍候...",
+        start: "开始模拟",
+        clear: "清空输出",
+        theme: "切换主题",
+        chooseLang: "选择语言"
+    },
+    en: {
+        background: "Your Background",
+        timeline: "Life Timeline",
+        target: "Target Point",
+        mode: "Mode",
+        skills: "Skills & Resources",
+        generating: "Generating...",
+        start: "Start Simulation",
+        clear: "Clear Output",
+        theme: "Toggle Theme",
+        chooseLang: "Choose Language"
+    }
 };
 
-
-/* ---------------------------
-应用语言到 UI
----------------------------- */
-function applyLang(lang){
-const t = LANG[lang];
-
-document.getElementById("t_app_title").textContent = t.app_title;
-document.getElementById("t_app_sub").textContent = t.app_sub;
-
-document.getElementById("t_your_info").textContent = t.your_info;
-document.getElementById("t_background_label").textContent = t.background;
-document.getElementById("background").placeholder = t.placeholder_bg;
-
-document.getElementById("t_timeline_label").textContent = t.timeline;
-document.getElementById("timeline").placeholder = t.placeholder_tl;
-
-document.getElementById("t_target_label").textContent = t.target;
-document.getElementById("target").placeholder = t.placeholder_target;
-
-document.getElementById("t_mode_label").textContent = t.mode;
-document.getElementById("t_resources_label").textContent = t.resources;
-document.getElementById("t_language_label").textContent = t.language;
-
-document.getElementById("btnRun").textContent = t.run;
-document.getElementById("btnPing").textContent = t.ping;
-document.getElementById("btnCopy").textContent = t.copy;
-document.getElementById("btnPDF").textContent = t.pdf;
-document.getElementById("btnShare").textContent = t.share;
-document.getElementById("btnClear").textContent = t.clear;
-
-document.getElementById("t_result_title").textContent = t.result;
-document.getElementById("t_result_hint").textContent = t.result_hint;
-
-document.getElementById("hintShort").textContent = t.short_hint;
+function applyLanguage() {
+    const l = document.getElementById("language").value;
+    document.getElementById("label-language").innerText = lang[l].chooseLang;
+    document.getElementById("label-background").innerText = lang[l].background;
+    document.getElementById("label-timeline").innerText = lang[l].timeline;
+    document.getElementById("label-target").innerText = lang[l].target;
+    document.getElementById("label-mode").innerText = lang[l].mode;
+    document.getElementById("label-skills").innerText = lang[l].skills;
+    document.getElementById("loading").innerText = lang[l].generating;
 }
-
-/* ---------------------------
-   API BASE
-   - 统一走同源 /api，避免 www / apex 不一致
----------------------------- */
-const API_BASE = "";
-
-/* ---------------------------
-DOM 快捷
----------------------------- */
-const $ = id => document.getElementById(id);
-const outEl = $("out");
-const statusEl = $("status");
-const progressBar = $("progressBar");
-const hintShortEl = $("hintShort");
-
-$("apiLabel").textContent = location.origin + "/api";
-
-/* ---------------------------
-状态 & 进度条
----------------------------- */
-function setStatus(s){ statusEl.textContent = s; }
-function setProgress(p){ progressBar.style.width = p + "%"; }
-
-/* ---------------------------
-通用 POST JSON
----------------------------- */
-async function postJSON(url, body){
-const ctrl = new AbortController();
-const t = setTimeout(()=>ctrl.abort(), 90000);
-
-try{
-const res = await fetch(url, {
-method:"POST",
-headers:{ "Content-Type":"application/json" },
-body: JSON.stringify(body),
-signal: ctrl.signal
+document.getElementById("language").addEventListener("change", () => {
+    localStorage.setItem("lang", document.getElementById("language").value);
+    applyLanguage();
 });
 
-const text = await res.text();
-const ct = res.headers.get("content-type") || "";
-
-if(!ct.includes("application/json")){
-throw new Error("Non-JSON response:\n" + text);
-}
-
-const data = JSON.parse(text);
-if(!res.ok) throw new Error(JSON.stringify(data));
-
-return data;
-} finally {
-clearTimeout(t);
-}
-}
-
-/* ---------------------------
-测试 API
----------------------------- */
-$("btnPing").onclick = async ()=>{
-setStatus("Testing...");
-setProgress(30);
-try{
-const r = await fetch(API_BASE + "/api/ping");
-const t = await r.text();
-outEl.textContent = t;
-setStatus("OK");
-setProgress(100);
-setTimeout(()=>setProgress(0),800);
-}catch(e){
-outEl.textContent = "Ping failed:\n" + e;
-setStatus("Failed");
-setProgress(0);
-}
-};
-
-/* ---------------------------
-复制结果
----------------------------- */
-$("btnCopy").onclick = async ()=>{
-const text = outEl.textContent.trim();
-if(!text){ alert("无内容"); return; }
-await navigator.clipboard.writeText(text);
-setStatus("已复制");
-};
-
-/* ---------------------------
-分享链接
----------------------------- */
-$("btnShare").onclick = ()=>{
-const params = new URLSearchParams({
-background:$("background").value,
-timeline:$("timeline").value,
-target:$("target").value,
-resources:$("resources").value,
-mode:$("mode").value,
-language:$("language").value
-});
-const url = location.origin + location.pathname + "?" + params.toString();
-navigator.clipboard.writeText(url);
-alert("已复制分享链接：\n" + url);
-};
-
-/* ---------------------------
-PDF 导出
----------------------------- */
-$("btnPDF").onclick = ()=>{
-const text = outEl.textContent.trim();
-if(!text){ alert("无内容"); return; }
-
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF({ unit:"pt", format:"a4" });
-
-doc.text("RE:LIFE Result", 40, 40);
-const lines = doc.splitTextToSize(text, 520);
-doc.text(lines, 40, 80);
-
-doc.save("RE_LIFE.pdf");
-};
-
-/* ---------------------------
-清空
----------------------------- */
-$("btnClear").onclick = ()=>{
-outEl.textContent = "";
-setStatus("已清空");
-setProgress(0);
-hintShortEl.style.display = "none";
-};
-
-/* ----------------------------------------------------
-新窗口：展示 A/B/C 路线 + 评分表 + 30 天计划 + 对话
------------------------------------------------------ */
-function openResultWindow({ text, routes, followups, plan30d, context }) {
-  const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-const w = window.open("", "_blank");
-if (!w) {
-alert("浏览器拦截了新窗口，请允许弹窗");
-return;
-}
-
-const lang = context.language === "en" ? "en" : "zh";
-
-const T = {
-zh:{
-title:"RE:LIFE 模拟结果",
-routes:"路线 A/B/C",
-scores:"评分维度",
-plan:"30 天行动计划",
-chat:"追问对话",
-ask:"提问",
-placeholder:"例如：我更适合 B 吗？最小风险路线是什么？",
-followups:"建议追问",
-ctx:"上下文摘要"
-},
-en:{
-title:"RE:LIFE Result",
-routes:"Routes A/B/C",
-scores:"Scores",
-plan:"30-Day Plan",
-chat:"Follow-up Chat",
-ask:"Ask",
-placeholder:"e.g. Am I more suitable for route B?",
-followups:"Suggested follow-ups",
-ctx:"Context Summary"
-}
-}[lang];
-
-const html = `
-<!doctype html>
-<html lang="${lang}">
-<head>
-<meta charset="utf-8" />
-<title>${T.title}</title>
-<style>
-body{
-margin:0;
-font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
-background:#0b1120;
-color:#e5e7eb;
-}
-.wrap{max-width:1100px;margin:24px auto;padding:0 16px;}
-h1{font-size:28px;margin:0 0 16px;}
-h2{font-size:18px;margin:18px 0 8px;}
-
-.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;}
-@media (max-width:900px){.grid{grid-template-columns:1fr;}}
-
-.card{
-background:rgba(15,23,42,.9);
-border-radius:16px;
-border:1px solid rgba(148,163,184,.4);
-padding:16px;
-}
-
-.routes{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
-.route-pill{
-flex:1 1 0;
-min-width:120px;
-padding:10px;
-border-radius:12px;
-border:1px solid rgba(148,163,184,.6);
-cursor:pointer;
-background:rgba(15,23,42,.8);
-}
-.route-pill.active{
-border-color:#4f46e5;
-box-shadow:0 0 0 1px rgba(79,70,229,.6);
-}
-.route-pill h3{margin:0 0 4px;font-size:14px;}
-.route-pill p{margin:0;font-size:12px;color:#9ca3af;}
-
-.scores-table{
-width:100%;
-border-collapse:collapse;
-margin-top:8px;
-font-size:12px;
-}
-.scores-table th,.scores-table td{
-border:1px solid rgba(148,163,184,.5);
-padding:4px 6px;
-text-align:center;
-}
-
-.plan-list{font-size:13px;margin-top:6px;}
-.plan-list li{margin-bottom:4px;}
-
-.chat-box{display:flex;flex-direction:column;gap:8px;}
-.chat-log{
-height:260px;
-overflow:auto;
-background:rgba(15,23,42,.8);
-border-radius:10px;
-padding:10px;
-border:1px solid rgba(148,163,184,.4);
-font-size:13px;
-}
-.chat-msg-user{color:#e5e7eb;margin-bottom:6px;}
-.chat-msg-ai{color:#a5b4fc;margin-bottom:10px;}
-
-.chat-input-row{display:flex;gap:8px;margin-top:4px;}
-.chat-input-row input{
-flex:1;
-padding:8px 10px;
-border-radius:999px;
-border:1px solid rgba(148,163,184,.6);
-background:rgba(15,23,42,.9);
-color:#e5e7eb;
-outline:none;
-}
-.chat-input-row button{
-padding:8px 14px;
-border-radius:999px;
-border:0;
-background:linear-gradient(135deg,#4f46e5,#6366f1);
-color:#0b1120;
-font-weight:600;
-cursor:pointer;
-}
-
-.followups{font-size:12px;color:#9ca3af;margin-top:6px;}
-.followups span{
-display:inline-block;
-padding:4px 8px;
-border-radius:999px;
-border:1px solid rgba(148,163,184,.6);
-margin:2px;
-cursor:pointer;
-}
-
-.ctx{font-size:11px;color:#9ca3af;margin-top:6px;}
-</style>
-</head>
-<body>
-<div class="wrap">
-<h1>${T.title}</h1>
-
-<div class="grid">
-<!-- 左侧：路线 + 评分 + 计划 -->
-<div class="card">
-<h2>${T.routes}</h2>
-<div class="routes" id="routes"></div>
-
-<h2>${T.scores}</h2>
-<table class="scores-table">
-<thead>
-<tr>
-<th>Route</th>
-<th>Risk</th>
-<th>Reward</th>
-<th>Time</th>
-<th>Mental</th>
-</tr>
-</thead>
-<tbody id="scoresBody"></tbody>
-</table>
-
-<h2>${T.plan}</h2>
-<ul class="plan-list" id="planList"></ul>
-
-<div class="ctx">
-<strong>${T.ctx}:</strong><br/>
-${escapeHtml(context.background)}<br/>
-${escapeHtml(context.timeline)}<br/>
-${escapeHtml(context.target)}
-</div>
-</div>
-
-<!-- 右侧：对话 -->
-<div class="card">
-<h2>${T.chat}</h2>
-<div class="chat-box">
-<div class="chat-log" id="chatLog"></div>
-<div class="followups" id="followupsBox"></div>
-
-<div class="chat-input-row">
-<input id="chatInput" placeholder="${T.placeholder}" />
-<button id="chatSend">${T.ask}</button>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-<script>
-const routes = ${JSON.stringify(routes || [])};
-const followups = ${JSON.stringify(followups || [])};
-const plan30d = ${JSON.stringify(plan30d || [])};
-const esc = (s)=>String(s ?? "").replace(/[&<>"\']/g, (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","\'":"&#39;"}[c]));
-const baseText = ${JSON.stringify(text || "")};
-const ctx = ${JSON.stringify(context || {})};
-
-const routesEl = document.getElementById("routes");
-const scoresBody = document.getElementById("scoresBody");
-const planList = document.getElementById("planList");
-const chatLog = document.getElementById("chatLog");
-const followupsBox = document.getElementById("followupsBox");
-const chatInput = document.getElementById("chatInput");
-const chatSend = document.getElementById("chatSend");
-
-function appendAI(msg){
-const div = document.createElement("div");
-div.className = "chat-msg-ai";
-div.textContent = msg;
-chatLog.appendChild(div);
-chatLog.scrollTop = chatLog.scrollHeight;
-}
-function appendUser(msg){
-const div = document.createElement("div");
-div.className = "chat-msg-user";
-div.textContent = "You: " + msg;
-chatLog.appendChild(div);
-chatLog.scrollTop = chatLog.scrollHeight;
-}
-
-appendAI(baseText);
-
-function renderRoutes(){
-routesEl.innerHTML = "";
-scoresBody.innerHTML = "";
-
-routes.forEach((r, idx)=>{
-const div = document.createElement("div");
-div.className = "route-pill" + (idx===0 ? " active" : "");
-div.innerHTML = "<h3>" + esc(r.id) + " · " + esc(r.title) + "</h3>" +
-              "<p>" + esc(r.summary) + "</p>";
-div.onclick = ()=>{
-document.querySelectorAll(".route-pill").forEach(x=>x.classList.remove("active"));
-div.classList.add("active");
-appendAI("[" + r.id + "] " + r.summary);
-};
-routesEl.appendChild(div);
-
-const s = r.score || {};
-const tr = document.createElement("tr");
-tr.innerHTML = "<td>" + esc(r.id) + "</td>" +
-             "<td>" + esc(s.risk ?? "-") + "</td>" +
-             "<td>" + esc(s.reward ?? "-") + "</td>" +
-             "<td>" + esc(s.timeCost ?? "-") + "</td>" +
-             "<td>" + esc(s.mentalCost ?? "-") + "</td>";
-scoresBody.appendChild(tr);
-});
-}
-
-function renderPlan(){
-planList.innerHTML = "";
-plan30d.forEach(p=>{
-const li = document.createElement("li");
-li.textContent = p;
-planList.appendChild(li);
-});
-}
-
-function renderFollowups(){
-followupsBox.innerHTML = "";
-if(!followups.length) return;
-
-followups.forEach(q=>{
-const span = document.createElement("span");
-span.textContent = q;
-span.onclick = ()=>{
-chatInput.value = q;
-chatInput.focus();
-};
-followupsBox.appendChild(span);
-});
-}
-
-renderRoutes();
-renderPlan();
-renderFollowups();
-
-async function sendChat(){
-const q = chatInput.value.trim();
-if(!q) return;
-
-appendUser(q);
-chatInput.value = "";
-appendAI("Thinking...");
-}
-
-chatSend.onclick = sendChat;
-chatInput.addEventListener("keydown", e=>{
-if(e.key==="Enter"){
-e.preventDefault();
-sendChat();
-}
-});
-</script>
-
-</body>
-</html>
-`;
-
-w.document.open();
-w.document.write(html);
-w.document.close();
-}
-
-/* ----------------------------------------------------
-开始模拟（主窗口）
------------------------------------------------------ */
-$("btnRun").onclick = async ()=>{
-const background = $("background").value.trim();
-const timeline = $("timeline").value.trim();
-const target = $("target").value.trim();
-const resources = $("resources").value.trim();
-const mode = $("mode").value;
-const language = $("language").value;
-
-if(background.length + timeline.length < 60){
-hintShortEl.style.display = "block";
-} else {
-hintShortEl.style.display = "none";
-}
-
-if(!background || !timeline || !target){
-outEl.textContent = "请填写完整信息";
-return;
-}
-
-setStatus("生成中...");
-setProgress(10);
-outEl.textContent = "⏳ 正在生成，请稍候…";
-
-try{
-let fake = 10;
-const timer = setInterval(()=>{
-fake = Math.min(fake+5, 85);
-setProgress(fake);
-}, 800);
-
-const data = await postJSON(API_BASE + "/api/generate", {
-background, timeline, target, resources, mode, language
+/* -------------------------------
+   Theme Switch
+-------------------------------- */
+document.getElementById("theme").addEventListener("click", () => {
+    document.body.classList.toggle("dark");
 });
 
-clearInterval(timer);
-setProgress(100);
+/* -------------------------------
+   Start Simulation
+-------------------------------- */
+document.getElementById("start").addEventListener("click", async () => {
+    const background = document.getElementById("background").value;
+    const timeline = document.getElementById("timeline").value;
+    const target = document.getElementById("target").value;
+    const mode = document.getElementById("mode").value;
+    const skills = document.getElementById("skills").value;
+    const langPref = document.getElementById("language").value;
 
-if(!data.ok){
-outEl.textContent = JSON.stringify(data, null, 2);
-return;
-}
+    const loading = document.getElementById("loading");
+    const output = document.getElementById("output");
+    const routeButtons = document.getElementById("routeButtons");
 
-outEl.textContent = data.text;
-setStatus("完成");
-setTimeout(()=>setProgress(0),1000);
+    loading.style.display = "block";
+    output.style.display = "none";
+    routeButtons.style.display = "none";
 
-openResultWindow({
-text: data.text,
-routes: data.routes,
-followups: data.followups,
-plan30d: data.plan30d,
-context:{ background, timeline, target, resources, language }
+    try {
+        const res = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                background,
+                timeline,
+                target,
+                mode,
+                skills,
+                lang: langPref
+            })
+        });
+
+        const data = await res.json();
+        output.innerText = data.result;
+        output.style.display = "block";
+        routeButtons.style.display = "block";
+
+    } catch (err) {
+        output.innerText = "❌ 发生错误：" + err.message;
+        output.style.display = "block";
+    }
+
+    loading.style.display = "none";
 });
 
-}catch(e){
-outEl.textContent = "错误：\n" + e;
-setStatus("失败");
-setProgress(0);
-}
-};
+/* -------------------------------
+   Clear Output
+-------------------------------- */
+document.getElementById("clear").addEventListener("click", () => {
+    document.getElementById("output").style.display = "none";
+    document.getElementById("routeButtons").style.display = "none";
+});
 
+/* -------------------------------
+   Copy Result
+-------------------------------- */
+document.getElementById("copyResult").addEventListener("click", () => {
+    const text = document.getElementById("output").innerText;
+    navigator.clipboard.writeText(text);
+});
+
+/* -------------------------------
+   Export PDF
+-------------------------------- */
+document.getElementById("exportPDF").addEventListener("click", () => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: "pt", format: "a4" });
+    const text = document.getElementById("output").innerText;
+
+    const lines = pdf.splitTextToSize(text, 500);
+    pdf.text(lines, 50, 50);
+    pdf.save("relife_result.pdf");
+});
+
+/* -------------------------------
+   Open Routes in New Window
+-------------------------------- */
+function openRoute(letter) {
+    const text = document.getElementById("output").innerText;
+    const win = window.open("", "_blank");
+    win.document.write("<pre style='font-family:Arial; white-space:pre-wrap;'>" + text + "</pre>");
+}
+
+document.getElementById("openA").addEventListener("click", () => openRoute("A"));
+document.getElementById("openB").addEventListener("click", () => openRoute("B"));
+document.getElementById("openC").addEventListener("click", () => openRoute("C"));
+
+/* -------------------------------
+   Load Language Preference
+-------------------------------- */
+window.onload = () => {
+    const saved = localStorage.getItem("lang");
+    if (saved) {
+        document.getElementById("language").value = saved;
+    }
+    applyLanguage();
+};
 </script>
 
 </body>
