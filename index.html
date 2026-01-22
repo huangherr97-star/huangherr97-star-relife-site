@@ -4,310 +4,923 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RE:LIFE | 回环</title>
-
-    <!-- Favicon -->
     <link rel="icon" href="/favicon.ico" />
 
-    <!-- Styles -->
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #f5f5f5;
-            color: #222;
-            transition: background 0.3s, color 0.3s;
-        }
-        body.dark {
-            background: #1e1e1e;
-            color: #ddd;
-        }
-        header {
-            padding: 20px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .container {
-            max-width: 900px;
-            margin: auto;
-            padding: 20px;
-        }
-        .section {
-            margin-bottom: 25px;
-        }
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
-        textarea, input, select {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 12px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 15px;
-        }
-        button {
-            padding: 10px 18px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-            margin-right: 10px;
-        }
-        button.primary {
-            background: #0078ff;
-            color: white;
-        }
-        button.secondary {
-            background: #ddd;
-        }
-        button.dark {
-            background: #444;
-            color: white;
-        }
-        .output-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            white-space: pre-wrap;
-            line-height: 1.6;
-        }
-        body.dark .output-card {
-            background: #2a2a2a;
-        }
-        .loading {
-            display: none;
-            margin-top: 10px;
-            font-style: italic;
-        }
-        .route-buttons {
-            margin-top: 10px;
-        }
-        .route-buttons button {
-            margin-right: 8px;
-        }
-    </style>
-
+    <!-- Chart.js for radar chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- jsPDF -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-</head>
 
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-soft: #111827;
+            --card: #020617;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.15);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --border: #1f2937;
+            --danger: #f97373;
+            --success: #4ade80;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #1f2937 0, #020617 45%, #000 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 18px 24px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(12px);
+            background: linear-gradient(to right, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.6));
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-mark {
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 30%, #38bdf8, #0ea5e9, #1d4ed8);
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.7);
+        }
+
+        .logo-text-main {
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .logo-text-sub {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pill {
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            padding: 18px;
+            gap: 18px;
+        }
+
+        .column {
+            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 55%),
+                        radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.12), transparent 55%),
+                        var(--bg-soft);
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.8);
+            animation: cardIn 0.5s ease-out;
+        }
+
+        .column-left {
+            flex: 0 0 40%;
+            min-width: 320px;
+        }
+
+        .column-right {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title span {
+            font-size: 11px;
+            text-transform: none;
+            color: var(--muted);
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: #e5e7eb;
+        }
+
+        .field-hint {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text);
+            font-size: 13px;
+            resize: vertical;
+            min-height: 60px;
+            outline: none;
+            transition: border 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
+            background: rgba(15, 23, 42, 1);
+        }
+
+        .field-group {
+            margin-bottom: 10px;
+        }
+
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        button {
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text);
+            padding: 7px 14px;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s, box-shadow 0.15s, border 0.15s;
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+            border-color: rgba(56, 189, 248, 0.9);
+            color: #0b1120;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(56, 189, 248, 0.4);
+        }
+
+        button.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 28px rgba(56, 189, 248, 0.55);
+        }
+
+        button.secondary:hover {
+            background: rgba(30, 64, 175, 0.7);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .btn-icon {
+            font-size: 14px;
+        }
+
+        .loading {
+            display: none;
+            font-size: 12px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            border: 2px solid rgba(148, 163, 184, 0.4);
+            border-top-color: var(--accent);
+            animation: spin 0.7s linear infinite;
+        }
+
+        .output-card {
+            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 55%),
+                        radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.12), transparent 55%),
+                        var(--card);
+            border-radius: 14px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            padding: 14px 14px 10px;
+            min-height: 120px;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 260px;
+            opacity: 0;
+            transform: translateY(6px);
+            animation: fadeUp 0.35s ease-out forwards;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .output-title {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            color: var(--muted);
+        }
+
+        .history-list {
+            margin-top: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: rgba(15, 23, 42, 0.9);
+            max-height: 160px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-item:hover {
+            background: rgba(30, 64, 175, 0.6);
+        }
+
+        .history-item.active {
+            background: rgba(30, 64, 175, 0.9);
+        }
+
+        .history-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .history-title {
+            font-weight: 500;
+        }
+
+        .history-sub {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .history-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+        }
+
+        .score-panel {
+            margin-top: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.9);
+            font-size: 11px;
+        }
+
+        .score-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .score-row label {
+            margin: 0;
+            min-width: 70px;
+            font-size: 11px;
+        }
+
+        .score-row input[type="range"] {
+            flex: 1;
+        }
+
+        .score-value {
+            width: 20px;
+            text-align: right;
+            color: var(--muted);
+        }
+
+        .chart-card {
+            margin-top: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+        }
+
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+            .column-left {
+                flex: none;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
 <body>
-<header>RE:LIFE | 回环</header>
+
+<header>
+    <div class="logo">
+        <div class="logo-mark"></div>
+        <div>
+            <div class="logo-text-main">RE:LIFE</div>
+            <div class="logo-text-sub">回环人生模拟 · Reset Life Loop</div>
+        </div>
+    </div>
+    <div class="header-right">
+        <div class="pill">v1.1 · Multi-run · Radar Scoring</div>
+    </div>
+</header>
 
 <div class="container">
+    <!-- 左侧：输入区 -->
+    <div class="column column-left">
+        <div class="section-title">
+            输入你的当前人生
+            <span>4 个字段 · 30 秒内完成</span>
+        </div>
 
-    <!-- Language Switch -->
-    <div class="section">
-        <label id="label-language">选择语言 / Choose Language</label>
-        <select id="language">
-            <option value="zh">中文</option>
-            <option value="en">English</option>
-        </select>
+        <div class="field-group">
+            <label>个人背景</label>
+            <div class="field-hint">例如：互联网产品经理 / 二线城市 / 工作 5 年，对未来有点迷茫</div>
+            <textarea id="field-background"></textarea>
+        </div>
+
+        <div class="field-group">
+            <label>年龄、学历、城市层级（可模糊）</label>
+            <div class="field-hint">例如：29 岁，本科，二线城市；或「快 30 了，本科，北漂」</div>
+            <textarea id="field-basic"></textarea>
+        </div>
+
+        <div class="field-group">
+            <label>人生经历时间线（关键节点）</label>
+            <div class="field-hint">例如：18 岁高考 / 22 岁毕业 / 24 岁转行 / 27 岁裸辞</div>
+            <textarea id="field-timeline"></textarea>
+        </div>
+
+        <div class="field-group">
+            <label>想回到的时间点（明确到年龄或年份）</label>
+            <div class="field-hint">例如：24 岁刚毕业那一年；或「2018 年刚入职第一份工作的时候」</div>
+            <textarea id="field-target"></textarea>
+        </div>
+
+        <div class="field-group">
+            <label>能力 / 资源（可选）</label>
+            <div class="field-hint">例如：写作能力强 / 家庭支持一般 / 性格偏内向但执行力强</div>
+            <textarea id="field-skills"></textarea>
+        </div>
+
+        <div class="field-group">
+            <label>模式选择</label>
+            <select id="field-mode">
+                <option value="abc">A/B/C 三路线对比</option>
+                <option value="single">单路线深描</option>
+                <option value="chat">连续对话探索</option>
+            </select>
+        </div>
+
+        <div class="btn-row">
+            <button class="primary" id="btn-generate">
+                <span class="btn-icon">▶</span>
+                生成模拟
+            </button>
+            <button class="secondary" id="btn-clear">
+                <span class="btn-icon">🧹</span>
+                清空当前结果
+            </button>
+            <button class="secondary" id="btn-export">
+                <span class="btn-icon">📄</span>
+                导出当前为 PDF
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <span>正在回环你的时间线...</span>
+        </div>
     </div>
 
-    <!-- User Inputs -->
-    <div class="section">
-        <label id="label-background">你的背景 / Your Background</label>
-        <textarea id="background" rows="3"></textarea>
+    <!-- 右侧：结果 + 历史 + 雷达图 -->
+    <div class="column column-right">
+        <div class="section-title">
+            当前模拟结果
+            <span id="current-run-label">尚未生成</span>
+        </div>
 
-        <label id="label-timeline">人生时间线 / Life Timeline</label>
-        <textarea id="timeline" rows="3"></textarea>
+        <div id="output-wrapper" style="display:none;">
+            <div class="output-card" id="output-card">
+                <div class="output-header">
+                    <div class="output-title" id="output-title">路线结果</div>
+                    <div class="tag" id="output-tag">A/B/C 对比</div>
+                </div>
+                <div id="output-text"></div>
+            </div>
 
-        <label id="label-target">目标点 / Target Point</label>
-        <textarea id="target" rows="3"></textarea>
+            <div class="btn-row" style="margin-top:8px;">
+                <button class="secondary" id="btn-copy">
+                    <span class="btn-icon">📋</span>
+                    复制结果
+                </button>
+                <button class="secondary" id="btn-open-window">
+                    <span class="btn-icon">🪟</span>
+                    在新窗口查看
+                </button>
+            </div>
 
-        <label id="label-mode">模式 / Mode</label>
-        <select id="mode">
-            <option value="abc">A/B/C 路线对比</option>
-            <option value="single">单路线</option>
-            <option value="chat">连续对话模式</option>
-        </select>
+            <div class="score-panel">
+                <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>为当前这次模拟打分（1-10）</span>
+                    <span style="color:var(--muted);">用于雷达图对比不同模拟</span>
+                </div>
+                <div class="score-row">
+                    <label>整体满意度</label>
+                    <input type="range" min="1" max="10" value="7" id="score-satisfaction" />
+                    <div class="score-value" id="score-satisfaction-val">7</div>
+                </div>
+                <div class="score-row">
+                    <label>稳定性</label>
+                    <input type="range" min="1" max="10" value="7" id="score-stability" />
+                    <div class="score-value" id="score-stability-val">7</div>
+                </div>
+                <div class="score-row">
+                    <label>成长性</label>
+                    <input type="range" min="1" max="10" value="7" id="score-growth" />
+                    <div class="score-value" id="score-growth-val">7</div>
+                </div>
+                <div class="score-row">
+                    <label>自由度</label>
+                    <input type="range" min="1" max="10" value="7" id="score-freedom" />
+                    <div class="score-value" id="score-freedom-val">7</div>
+                </div>
+                <div class="score-row">
+                    <label>关系质量</label>
+                    <input type="range" min="1" max="10" value="7" id="score-relationship" />
+                    <div class="score-value" id="score-relationship-val">7</div>
+                </div>
+                <div class="btn-row" style="margin-top:4px;">
+                    <button class="secondary" id="btn-save-score">
+                        <span class="btn-icon">💾</span>
+                        保存当前评分到雷达图
+                    </button>
+                </div>
+            </div>
+        </div>
 
-        <label id="label-skills">技能与资源 / Skills & Resources</label>
-        <textarea id="skills" rows="3"></textarea>
+        <div class="section-title" style="margin-top:4px;">
+            历史模拟
+            <span>点击切换查看 · 最多保留 10 条</span>
+        </div>
+        <div class="history-list" id="history-list"></div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <span>多次模拟雷达图对比</span>
+                <span id="chart-hint">保存评分后自动更新</span>
+            </div>
+            <canvas id="radarChart" height="180"></canvas>
+            <div class="chart-legend" id="chart-legend"></div>
+        </div>
     </div>
-
-    <!-- Buttons -->
-    <div class="section">
-        <button class="primary" id="start">开始模拟 / Start</button>
-        <button class="secondary" id="clear">清空输出 / Clear</button>
-        <button class="secondary" id="theme">切换主题 / Theme</button>
-    </div>
-
-    <!-- Loading -->
-    <div id="loading" class="loading">生成中，请稍候...</div>
-
-    <!-- Output -->
-    <div id="output" class="output-card" style="display:none;"></div>
-
-    <!-- Route Buttons -->
-    <div id="routeButtons" class="route-buttons" style="display:none;">
-        <button id="openA">打开路线 A</button>
-        <button id="openB">打开路线 B</button>
-        <button id="openC">打开路线 C</button>
-        <button id="copyResult">复制结果</button>
-        <button id="exportPDF">导出 PDF</button>
-    </div>
-
 </div>
 
-<!-- Main Script -->
 <script>
-/* -------------------------------
-   Language System
--------------------------------- */
-const lang = {
-    zh: {
-        background: "你的背景",
-        timeline: "人生时间线",
-        target: "目标点",
-        mode: "模式",
-        skills: "技能与资源",
-        generating: "生成中，请稍候...",
-        start: "开始模拟",
-        clear: "清空输出",
-        theme: "切换主题",
-        chooseLang: "选择语言"
-    },
-    en: {
-        background: "Your Background",
-        timeline: "Life Timeline",
-        target: "Target Point",
-        mode: "Mode",
-        skills: "Skills & Resources",
-        generating: "Generating...",
-        start: "Start Simulation",
-        clear: "Clear Output",
-        theme: "Toggle Theme",
-        chooseLang: "Choose Language"
+    // 全局状态
+    const state = {
+        runs: [],          // { id, title, mode, timestamp, resultText, scores }
+        currentRunId: null,
+        radarChart: null
+    };
+
+    function createRunTitle(index, mode) {
+        const n = index + 1;
+        const modeText = mode === "abc" ? "A/B/C" : (mode === "single" ? "单路线" : "对话");
+        return "第 " + n + " 次 · " + modeText;
     }
-};
 
-function applyLanguage() {
-    const l = document.getElementById("language").value;
-    document.getElementById("label-language").innerText = lang[l].chooseLang;
-    document.getElementById("label-background").innerText = lang[l].background;
-    document.getElementById("label-timeline").innerText = lang[l].timeline;
-    document.getElementById("label-target").innerText = lang[l].target;
-    document.getElementById("label-mode").innerText = lang[l].mode;
-    document.getElementById("label-skills").innerText = lang[l].skills;
-    document.getElementById("loading").innerText = lang[l].generating;
-}
-document.getElementById("language").addEventListener("change", () => {
-    localStorage.setItem("lang", document.getElementById("language").value);
-    applyLanguage();
-});
+    function formatTime(ts) {
+        const d = new Date(ts);
+        const h = String(d.getHours()).padStart(2, "0");
+        const m = String(d.getMinutes()).padStart(2, "0");
+        return h + ":" + m;
+    }
 
-/* -------------------------------
-   Theme Switch
--------------------------------- */
-document.getElementById("theme").addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-});
+    function getCurrentScoresFromUI() {
+        return {
+            satisfaction: Number(document.getElementById("score-satisfaction").value),
+            stability: Number(document.getElementById("score-stability").value),
+            growth: Number(document.getElementById("score-growth").value),
+            freedom: Number(document.getElementById("score-freedom").value),
+            relationship: Number(document.getElementById("score-relationship").value)
+        };
+    }
 
-/* -------------------------------
-   Start Simulation
--------------------------------- */
-document.getElementById("start").addEventListener("click", async () => {
-    const background = document.getElementById("background").value;
-    const timeline = document.getElementById("timeline").value;
-    const target = document.getElementById("target").value;
-    const mode = document.getElementById("mode").value;
-    const skills = document.getElementById("skills").value;
-    const langPref = document.getElementById("language").value;
+    function setScoreUI(scores) {
+        document.getElementById("score-satisfaction").value = scores.satisfaction;
+        document.getElementById("score-stability").value = scores.stability;
+        document.getElementById("score-growth").value = scores.growth;
+        document.getElementById("score-freedom").value = scores.freedom;
+        document.getElementById("score-relationship").value = scores.relationship;
 
-    const loading = document.getElementById("loading");
-    const output = document.getElementById("output");
-    const routeButtons = document.getElementById("routeButtons");
+        document.getElementById("score-satisfaction-val").innerText = scores.satisfaction;
+        document.getElementById("score-stability-val").innerText = scores.stability;
+        document.getElementById("score-growth-val").innerText = scores.growth;
+        document.getElementById("score-freedom-val").innerText = scores.freedom;
+        document.getElementById("score-relationship-val").innerText = scores.relationship;
+    }
 
-    loading.style.display = "block";
-    output.style.display = "none";
-    routeButtons.style.display = "none";
+    function attachScoreSlider(idSlider, idVal) {
+        const slider = document.getElementById(idSlider);
+        const val = document.getElementById(idVal);
+        slider.addEventListener("input", function () {
+            val.innerText = slider.value;
+        });
+    }
 
-    try {
-        const res = await fetch("/api/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                background,
-                timeline,
-                target,
-                mode,
-                skills,
-                lang: langPref
-            })
+    attachScoreSlider("score-satisfaction", "score-satisfaction-val");
+    attachScoreSlider("score-stability", "score-stability-val");
+    attachScoreSlider("score-growth", "score-growth-val");
+    attachScoreSlider("score-freedom", "score-freedom-val");
+    attachScoreSlider("score-relationship", "score-relationship-val");
+
+    function renderHistory() {
+        const list = document.getElementById("history-list");
+        list.innerHTML = "";
+        state.runs.forEach(function (run, index) {
+            const item = document.createElement("div");
+            item.className = "history-item" + (run.id === state.currentRunId ? " active" : "");
+            item.dataset.id = run.id;
+
+            const meta = document.createElement("div");
+            meta.className = "history-meta";
+
+            const title = document.createElement("div");
+            title.className = "history-title";
+            title.innerText = run.title;
+
+            const sub = document.createElement("div");
+            sub.className = "history-sub";
+            sub.innerText = formatTime(run.timestamp) + " · " + run.modeText;
+
+            meta.appendChild(title);
+            meta.appendChild(sub);
+
+            const badge = document.createElement("div");
+            badge.className = "history-badge";
+            badge.innerText = "评分已" + (run.scores ? "保存" : "未保存");
+
+            item.appendChild(meta);
+            item.appendChild(badge);
+
+            item.addEventListener("click", function () {
+                switchToRun(run.id);
+            });
+
+            list.appendChild(item);
+        });
+    }
+
+    function switchToRun(id) {
+        const run = state.runs.find(function (r) { return r.id === id; });
+        if (!run) return;
+        state.currentRunId = id;
+
+        document.getElementById("output-wrapper").style.display = "block";
+        document.getElementById("output-text").innerText = run.resultText;
+        document.getElementById("output-title").innerText = run.title;
+        document.getElementById("output-tag").innerText = run.modeText + " 模式";
+        document.getElementById("current-run-label").innerText = "当前：" + run.title;
+
+        if (run.scores) {
+            setScoreUI(run.scores);
+        }
+
+        renderHistory();
+    }
+
+    function updateRadarChart() {
+        const labels = ["整体满意度", "稳定性", "成长性", "自由度", "关系质量"];
+        const datasets = [];
+        const colors = [
+            "rgba(56, 189, 248, 0.7)",
+            "rgba(129, 140, 248, 0.7)",
+            "rgba(52, 211, 153, 0.7)",
+            "rgba(251, 191, 36, 0.7)",
+            "rgba(248, 113, 113, 0.7)"
+        ];
+
+        const legendContainer = document.getElementById("chart-legend");
+        legendContainer.innerHTML = "";
+
+        let colorIndex = 0;
+        state.runs.forEach(function (run) {
+            if (!run.scores) return;
+            const c = colors[colorIndex % colors.length];
+            datasets.push({
+                label: run.title,
+                data: [
+                    run.scores.satisfaction,
+                    run.scores.stability,
+                    run.scores.growth,
+                    run.scores.freedom,
+                    run.scores.relationship
+                ],
+                fill: true,
+                backgroundColor: c.replace("0.7", "0.18"),
+                borderColor: c,
+                pointBackgroundColor: c,
+                pointBorderColor: "#0b1120",
+                pointRadius: 3
+            });
+
+            const legendItem = document.createElement("div");
+            legendItem.className = "legend-item";
+            const colorDot = document.createElement("div");
+            colorDot.className = "legend-color";
+            colorDot.style.backgroundColor = c;
+            const text = document.createElement("span");
+            text.innerText = run.title;
+            legendItem.appendChild(colorDot);
+            legendItem.appendChild(text);
+            legendContainer.appendChild(legendItem);
+
+            colorIndex++;
         });
 
-        const data = await res.json();
-        output.innerText = data.result;
-        output.style.display = "block";
-        routeButtons.style.display = "block";
+        const ctx = document.getElementById("radarChart").getContext("2d");
+        if (state.radarChart) {
+            state.radarChart.destroy();
+        }
 
-    } catch (err) {
-        output.innerText = "❌ 发生错误：" + err.message;
-        output.style.display = "block";
+        state.radarChart = new Chart(ctx, {
+            type: "radar",
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    r: {
+                        angleLines: { color: "rgba(148, 163, 184, 0.4)" },
+                        grid: { color: "rgba(55, 65, 81, 0.8)" },
+                        suggestedMin: 0,
+                        suggestedMax: 10,
+                        ticks: {
+                            display: true,
+                            stepSize: 2,
+                            color: "rgba(148, 163, 184, 0.9)",
+                            backdropColor: "transparent"
+                        },
+                        pointLabels: {
+                            color: "rgba(209, 213, 219, 0.9)",
+                            font: { size: 11 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
     }
 
-    loading.style.display = "none";
-});
+    document.getElementById("btn-save-score").addEventListener("click", function () {
+        if (!state.currentRunId) return;
+        const run = state.runs.find(function (r) { return r.id === state.currentRunId; });
+        if (!run) return;
+        run.scores = getCurrentScoresFromUI();
+        renderHistory();
+        updateRadarChart();
+        document.getElementById("chart-hint").innerText = "已更新 · 你可以对比不同模拟的雷达图形状";
+    });
 
-/* -------------------------------
-   Clear Output
--------------------------------- */
-document.getElementById("clear").addEventListener("click", () => {
-    document.getElementById("output").style.display = "none";
-    document.getElementById("routeButtons").style.display = "none";
-});
+    document.getElementById("btn-generate").addEventListener("click", async function () {
+        const background = document.getElementById("field-background").value.trim();
+        const basic = document.getElementById("field-basic").value.trim();
+        const timeline = document.getElementById("field-timeline").value.trim();
+        const target = document.getElementById("field-target").value.trim();
+        const skills = document.getElementById("field-skills").value.trim();
+        const mode = document.getElementById("field-mode").value;
 
-/* -------------------------------
-   Copy Result
--------------------------------- */
-document.getElementById("copyResult").addEventListener("click", () => {
-    const text = document.getElementById("output").innerText;
-    navigator.clipboard.writeText(text);
-});
+        if (!background || !basic || !timeline || !target) {
+            alert("请至少完整填写前四个字段：个人背景 / 年龄学历城市 / 时间线 / 想回到的时间点。");
+            return;
+        }
 
-/* -------------------------------
-   Export PDF
--------------------------------- */
-document.getElementById("exportPDF").addEventListener("click", () => {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ unit: "pt", format: "a4" });
-    const text = document.getElementById("output").innerText;
+        const loading = document.getElementById("loading");
+        loading.style.display = "flex";
 
-    const lines = pdf.splitTextToSize(text, 500);
-    pdf.text(lines, 50, 50);
-    pdf.save("relife_result.pdf");
-});
+        try {
+            const payload = {
+                background: background,
+                basic: basic,
+                timeline: timeline,
+                target: target,
+                skills: skills,
+                mode: mode,
+                lang: "zh"
+            };
 
-/* -------------------------------
-   Open Routes in New Window
--------------------------------- */
-function openRoute(letter) {
-    const text = document.getElementById("output").innerText;
-    const win = window.open("", "_blank");
-    win.document.write("<pre style='font-family:Arial; white-space:pre-wrap;'>" + text + "</pre>");
-}
+            const res = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
 
-document.getElementById("openA").addEventListener("click", () => openRoute("A"));
-document.getElementById("openB").addEventListener("click", () => openRoute("B"));
-document.getElementById("openC").addEventListener("click", () => openRoute("C"));
+            const data = await res.json();
+            const text = data.result || JSON.stringify(data, null, 2);
 
-/* -------------------------------
-   Load Language Preference
--------------------------------- */
-window.onload = () => {
-    const saved = localStorage.getItem("lang");
-    if (saved) {
-        document.getElementById("language").value = saved;
-    }
-    applyLanguage();
-};
+            const runId = Date.now().toString();
+            const index = state.runs.length;
+            const title = createRunTitle(index, mode);
+            const modeText = mode === "abc" ? "A/B/C" : (mode === "single" ? "单路线" : "对话");
+
+            const run = {
+                id: runId,
+                title: title,
+                mode: mode,
+                modeText: modeText,
+                timestamp: Date.now(),
+                resultText: text,
+                scores: null
+            };
+
+            state.runs.push(run);
+            if (state.runs.length > 10) {
+                state.runs.shift();
+            }
+
+            state.currentRunId = runId;
+            document.getElementById("output-wrapper").style.display = "block";
+            document.getElementById("output-text").innerText = text;
+            document.getElementById("output-title").innerText = title;
+            document.getElementById("output-tag").innerText = modeText + " 模式";
+            document.getElementById("current-run-label").innerText = "当前：" + title;
+
+            renderHistory();
+        } catch (e) {
+            alert("生成过程中出现错误：" + e.message);
+        } finally {
+            loading.style.display = "none";
+        }
+    });
+
+    document.getElementById("btn-clear").addEventListener("click", function () {
+        document.getElementById("output-wrapper").style.display = "none";
+        document.getElementById("current-run-label").innerText = "尚未生成";
+    });
+
+    document.getElementById("btn-copy").addEventListener("click", function () {
+        const text = document.getElementById("output-text").innerText;
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        document.getElementById("chart-hint").innerText = "已复制当前结果到剪贴板";
+    });
+
+    document.getElementById("btn-open-window").addEventListener("click", function () {
+        const text = document.getElementById("output-text").innerText;
+        if (!text) return;
+        const w = window.open("", "_blank");
+        w.document.open();
+        w.document.write("<pre style='white-space:pre-wrap;font-family:system-ui,Segoe UI,Arial,sans-serif;font-size:13px;padding:16px;background:#020617;color:#e5e7eb;'>" +
+            text.replace(/</g, "&lt;").replace(/>/g, "&gt;") +
+            "</pre>");
+        w.document.close();
+    });
+
+    document.getElementById("btn-export").addEventListener("click", function () {
+        const text = document.getElementById("output-text").innerText;
+        if (!text) {
+            alert("当前没有可导出的结果。");
+            return;
+        }
+        const jsPDFLib = window.jspdf;
+        if (!jsPDFLib) {
+            alert("PDF 模块尚未加载，请稍后再试。");
+            return;
+        }
+        const pdf = new jsPDFLib.jsPDF({ unit: "pt", format: "a4" });
+        const lines = pdf.splitTextToSize(text, 500);
+        pdf.text(lines, 50, 50);
+        pdf.save("relife_result.pdf");
+    });
+
+    window.onload = function () {
+        document.getElementById("chart-hint").innerText = "生成模拟并保存评分后，这里会出现对比雷达图";
+    };
 </script>
 
 </body>
