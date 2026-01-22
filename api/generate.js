@@ -1,234 +1,122 @@
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Max-Age", "86400");
-  res.setHeader("Cache-Control", "no-store");
-}
-
-function json(res, code, obj) {
-  res.status(code).setHeader("Content-Type", "application/json; charset=utf-8");
-  res.end(JSON.stringify(obj));
-}
-
-function safe(x) {
-  return (x ?? "").toString().trim();
-}
-
-async function callOpenAI({ apiKey, prompt, timeoutMs = 85000, retries = 2 }) {
-  const url = "https://api.openai.com/v1/responses";
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), timeoutMs);
-
-    try {
-      const r = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4.1-mini",
-          input: [
-            {
-              role: "user",
-              content: [{ type: "input_text", text: prompt }],
-            },
-          ],
-          max_output_tokens: 1500,
-        }),
-        signal: ctrl.signal,
-      });
-
-      clearTimeout(t);
-
-      const data = await r.json().catch(() => null);
-
-      if (!r.ok) {
-        const msg = data ? JSON.stringify(data) : `${r.status} ${r.statusText}`;
-        const e = new Error(msg);
-        e.status = r.status;
-        throw e;
-      }
-
-      // 提取文本
-      let text = "";
-      if (data?.output?.[0]?.content?.[0]?.text) {
-        text = data.output[0].content[0].text;
-      } else if (typeof data.output_text === "string") {
-        text = data.output_text;
-      }
-
-      return { raw: data, text };
-    } catch (e) {
-      clearTimeout(t);
-      if (attempt < retries) {
-        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
-        continue;
-      }
-      throw e;
-    }
-  }
-}
-
-function buildPrompt({ background, timeline, target, resources, mode, question, lastResult, language }) {
-  const isEn = language === "en";
-
-  const rulesZh = `
-你是“RE:LIFE | 回环”人生模拟器的理性分析引擎。
-必须输出严格 JSON，不要输出 JSON 外的文字。
-`;
-
-  const rulesEn = `
-You are the reasoning engine of "RE:LIFE | Loop".
-You MUST output strict JSON only.
-`;
-
-  const rules = isEn ? rulesEn : rulesZh;
-
-  // chat 模式
-  if (mode === "chat") {
-    return `
-${rules}
-
-You will answer a follow-up question.
-
-Return JSON:
-{
-  "text": "...",
-  "followups": ["...", "..."],
-  "plan30d": ["week1", "week2", "week3", "week4"]
-}
-
-Background: ${background}
-Timeline: ${timeline}
-Target: ${target}
-Resources: ${resources}
-LastResult: ${lastResult}
-Question: ${question}
-`.trim();
-  }
-
-  // A/B/C 模式
-  return `
-${rules}
-
-Return JSON:
-{
-  "text": "...",
-  "routes": [
-    {
-      "id": "A",
-      "title": "...",
-      "summary": "...",
-      "score": {
-        "risk": 1-5,
-        "reward": 1-5,
-        "timeCost": 1-5,
-        "mentalCost": 1-5
-      }
-    },
-    {
-      "id": "B",
-      "title": "...",
-      "summary": "...",
-      "score": { ... }
-    },
-    {
-      "id": "C",
-      "title": "...",
-      "summary": "...",
-      "score": { ... }
-    }
-  ],
-  "followups": ["...", "..."],
-  "plan30d": ["week1", "week2", "week3", "week4"]
-}
-
-Background: ${background}
-Timeline: ${timeline}
-Target: ${target}
-Resources: ${resources}
-Language: ${language}
-`.trim();
-}
+import OpenAI from "openai";
 
 export default async function handler(req, res) {
-  setCors(res);
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-
-  if (req.method === "GET") {
-    return json(res, 200, {
-      ok: true,
-      msg: "RE:LIFE generate endpoint alive",
-      time: new Date().toISOString(),
-    });
-  }
-
-  if (req.method !== "POST") {
-    return json(res, 405, { ok: false, error: "Method Not Allowed" });
-  }
-
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return json(res, 500, { ok: false, error: "Missing OPENAI_API_KEY" });
-  }
-
-  let body = req.body || {};
-  if (typeof body === "string") {
-    try { body = JSON.parse(body); } catch { body = {}; }
-  }
-
-  const background = safe(body.background);
-  const timeline = safe(body.timeline);
-  const target = safe(body.target);
-  const resources = safe(body.resources);
-  const mode = safe(body.mode) || "abc";
-  const question = safe(body.question);
-  const lastResult = safe(body.lastResult);
-  const language = safe(body.language) === "en" ? "en" : "zh";
-
-  if (mode !== "chat") {
-    if (!background || !timeline || !target) {
-      return json(res, 400, {
-        ok: false,
-        error: "Missing required fields",
-        need: ["background", "timeline", "target"],
-      });
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Method not allowed" });
     }
-  }
 
-  if (mode === "chat" && !question) {
-    return json(res, 400, { ok: false, error: "Missing question for chat mode" });
-  }
+    const {
+        background,
+        basic,
+        timeline,
+        target,
+        skills,
+        mode,
+        lang
+    } = req.body;
 
-  const prompt = buildPrompt({
-    background, timeline, target, resources, mode, question, lastResult, language
-  });
-
-  try {
-    const { text } = await callOpenAI({ apiKey, prompt });
-
-    let parsed = null;
-    try { parsed = JSON.parse(text); }
-    catch { parsed = { text }; }
-
-    return json(res, 200, {
-      ok: true,
-      text: parsed.text || "",
-      routes: parsed.routes || [],
-      followups: parsed.followups || [],
-      plan30d: parsed.plan30d || [],
-      meta: { mode, language, time: new Date().toISOString() },
+    const client = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
     });
-  } catch (e) {
-    return json(res, e.status || 500, {
-      ok: false,
-      error: "OpenAI request failed",
-      detail: e.message,
-    });
-  }
+
+    // 语言模板
+    const L = {
+        zh: {
+            system: "你是 RE:LIFE 回环人生模拟器。你必须严格输出 JSON，不得包含任何解释性文字。",
+            scoreLabels: ["整体满意度", "稳定性", "成长性", "自由度", "关系质量"],
+            routeA: "路线 A：",
+            routeB: "路线 B：",
+            routeC: "路线 C：",
+            summary: "总结：",
+            chat: "对话模式："
+        },
+        en: {
+            system: "You are RE:LIFE, a rational life simulation engine. You must output STRICT JSON with no explanation.",
+            scoreLabels: ["Satisfaction", "Stability", "Growth", "Freedom", "Relationships"],
+            routeA: "Route A:",
+            routeB: "Route B:",
+            routeC: "Route C:",
+            summary: "Summary:",
+            chat: "Chat Mode:"
+        }
+    };
+
+    const T = L[lang] || L.zh;
+
+    // Prompt 构建
+    const prompt = `
+用户输入：
+- 个人背景：${background}
+- 年龄学历城市：${basic}
+- 人生经历时间线：${timeline}
+- 想回到的时间点：${target}
+- 能力资源：${skills}
+- 模式：${mode}
+
+请根据模式输出严格 JSON：
+
+{
+  "language": "${lang}",
+  "mode": "${mode}",
+
+  "scores": {
+    "satisfaction": 1-10 的整数,
+    "stability": 1-10 的整数,
+    "growth": 1-10 的整数,
+    "freedom": 1-10 的整数,
+    "relationship": 1-10 的整数
+  },
+
+  "routes": {
+    "A": "仅在 abc 模式输出",
+    "B": "仅在 abc 模式输出",
+    "C": "仅在 abc 模式输出",
+    "single": "仅在 single 模式输出"
+  },
+
+  "chat": [
+    {"role": "user", "content": "..."},
+    {"role": "assistant", "content": "..."}
+  ],
+
+  "summary": "对整体模拟的总结"
+}
+
+要求：
+- 必须是合法 JSON
+- 不得包含任何额外解释
+- 不得出现 markdown
+- 不得出现多余文本
+`;
+
+    try {
+        const completion = await client.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                { role: "system", content: T.system },
+                { role: "user", content: prompt }
+            ],
+            temperature: 0.7
+        });
+
+        const raw = completion.choices[0].message.content;
+
+        // 解析 JSON
+        let json;
+        try {
+            json = JSON.parse(raw);
+        } catch (e) {
+            return res.status(500).json({
+                error: "模型返回的 JSON 无法解析",
+                raw
+            });
+        }
+
+        return res.status(200).json(json);
+
+    } catch (err) {
+        return res.status(500).json({
+            error: err.message
+        });
+    }
 }
