@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RE:LIFE | 回环 · 命运模拟器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --bg: #0B1220; --card: #0E1628; --text: #E6EAF2; --primary: #4C6FFF; --accent: #22D3EE; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; justify-content: center; padding: 40px 20px; margin: 0; }
+        .card { background: var(--card); width: 100%; max-width: 550px; padding: 35px; border-radius: 24px; border: 1px solid #1C2433; box-shadow: 0 20px 60px rgba(0,0,0,0.5); text-align: center; }
+        .logo { width: 64px; height: 64px; margin-bottom: 20px; }
+        .header { font-weight: 800; font-size: 24px; letter-spacing: 6px; color: var(--primary); margin-bottom: 30px; }
+        textarea { width: 100%; height: 160px; padding: 18px; background: #0a0f1d; border: 1px solid #1C2433; border-radius: 12px; color: var(--text); font-size: 16px; margin-bottom: 20px; outline: none; transition: 0.3s; }
+        textarea:focus { border-color: var(--accent); }
+        button { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; }
+        #resultWrapper { margin-top: 35px; display: none; text-align: left; }
+        #captureArea { background: var(--card); padding: 25px; border-left: 4px solid var(--accent); position: relative; }
+        #captureArea::after { content: "RESETLIFE.BLOG | v0.3"; position: absolute; bottom: 8px; right: 12px; font-size: 9px; color: #24314a; }
+        .cursor { display: inline-block; width: 2px; height: 18px; background: var(--accent); margin-left: 4px; animation: blink 0.8s infinite; vertical-align: middle; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img src="public/logo.png" alt="RE:LIFE Logo" class="logo" onerror="this.style.display='none'">
+        <div class="header">RE:LIFE | 回环</div>
+        <textarea id="expInput" placeholder="请输入变量：经历 / 时间点 / 能力资源..."></textarea>
+        <button id="mainBtn" onclick="run()">执行命运重塑</button>
+
+        <div id="resultWrapper">
+            <div id="captureArea"><div id="resultText"></div></div>
+            <button onclick="download()" style="margin-top:15px; background:none; border:1px solid var(--accent); color:var(--accent); font-size:14px;">导出推演报告 (.PNG)</button>
+        </div>
+    </div>
+
+    <script>
+        function type(t, i, cb) {
+            const el = document.getElementById("resultText");
+            if (i < t.length) {
+                el.innerHTML = t.substring(0, i+1) + '<span class="cursor"></span>';
+                setTimeout(() => type(t, i + 1, cb), 40);
+            } else if (cb) { el.innerHTML = t; cb(); }
+        }
+
+        async function run() {
+            const input = document.getElementById('expInput').value;
+            const btn = document.getElementById('mainBtn');
+            if (!input.trim()) return alert("输入不能为空");
+            btn.disabled = true; btn.innerText = '正在计算模拟回路...';
+            document.getElementById('resultWrapper').style.display = 'block';
+            document.getElementById('resultText').innerHTML = '引擎初始化中...';
+
+            const res = await fetch('/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ experience: input })
+            });
+            const data = await res.json();
+            type(data.story, 0, () => { btn.disabled = false; btn.innerText = '再次模拟'; });
+        }
+
+        function download() {
+            html2canvas(document.getElementById('captureArea'), { backgroundColor: "#0E1628", scale: 2 }).then(canvas => {
+                const a = document.createElement('a');
+                a.download = 'RE_LIFE_REPORT.png';
+                a.href = canvas.toDataURL();
+                a.click();
+            });
+        }
+    </script>
+</body>
+</html>
