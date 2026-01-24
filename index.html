@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RE:LIFE | 因果重塑终端</title>
 
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
     :root {
         --bg: #030508;
@@ -14,6 +17,7 @@
         --primary: #3B82F6;
         --danger: #EF4444;
         --border: #1E293B;
+        --yellow: #FACC15;
     }
 
     body {
@@ -126,20 +130,55 @@
         background: rgba(255,255,255,0.02);
     }
 
-    .lang-switch {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        color: var(--sub);
-        cursor: pointer;
-        font-size: 14px;
+    .chart-block {
+        margin-top: 30px;
+        padding: 20px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 16px;
+        border: 1px solid var(--border);
     }
+
+    .bar-container {
+        margin-top: 20px;
+    }
+
+    .bar-label {
+        font-size: 13px;
+        color: var(--sub);
+        margin-bottom: 6px;
+    }
+
+    .bar-bg {
+        width: 100%;
+        height: 10px;
+        background: #1F2937;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        height: 10px;
+        border-radius: 6px;
+    }
+
+    .gravity-bar {
+        height: 12px;
+        background: #1F2937;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+
+    .gravity-fill {
+        height: 12px;
+        background: var(--yellow);
+        border-radius: 6px;
+    }
+
 </style>
 </head>
 
 <body>
-
-<div class="lang-switch">EN / ZH</div>
 
 <div class="container">
 
@@ -190,7 +229,7 @@
         </div>
 
         <div class="field">
-            <label>核心性格（如：懒惰、敏感、自卑…）</label>
+            <label>核心性格</label>
             <input id="personality">
         </div>
 
@@ -211,7 +250,7 @@
 
         <div class="field">
             <label>你的长期经历、心理压力、隐秘想法</label>
-            <textarea id="longtext" rows="5" placeholder="尽可能详细描述你的成长、挫折、关键节点…"></textarea>
+            <textarea id="longtext" rows="5"></textarea>
         </div>
 
         <div class="nav-btns">
@@ -263,6 +302,8 @@ function nextStep(n) {
     document.getElementById('step' + n).classList.add('active');
 }
 
+let radarChart;
+
 async function submitAll() {
     const out = document.getElementById('output');
     out.style.display = 'block';
@@ -295,10 +336,79 @@ async function submitAll() {
         });
 
         const data = await res.json();
-        out.innerHTML = `<strong>终局判定：</strong><br><br>${data.result || data.error}`;
+
+        renderFinal(data);
+
     } catch (e) {
         out.innerHTML = "推演失败，请检查网络或稍后再试。";
     }
+}
+
+function renderFinal(data) {
+    const out = document.getElementById('output');
+
+    out.innerHTML = `
+        <h2>终局判定</h2>
+        <p>${data.verdict_text}</p>
+
+        <div class="chart-block">
+            <canvas id="radarChart"></canvas>
+        </div>
+
+        <div class="bar-container">
+            <div class="bar-label">现实 vs 预期</div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width:${data.compare.reality}%; background:var(--danger);"></div>
+            </div>
+            <div class="bar-bg" style="margin-top:6px;">
+                <div class="bar-fill" style="width:${data.compare.expected}%; background:#6B7280;"></div>
+            </div>
+        </div>
+
+        <div style="margin-top:25px;">
+            <div class="bar-label">Character Gravity（真实度冲突）</div>
+            <div class="gravity-bar">
+                <div class="gravity-fill" style="width:${data.gravity}%;"></div>
+            </div>
+        </div>
+    `;
+
+    const ctx = document.getElementById('radarChart');
+
+    if (radarChart) radarChart.destroy();
+
+    radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['逻辑一致性', '性格真实度', '情绪稳定性', '资源匹配度', '事件可行性'],
+            datasets: [{
+                label: '评分',
+                data: [
+                    data.scores.logic,
+                    data.scores.character,
+                    data.scores.emotion,
+                    data.scores.resource,
+                    data.scores.feasibility
+                ],
+                backgroundColor: 'rgba(59,130,246,0.2)',
+                borderColor: 'rgba(59,130,246,1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(59,130,246,1)'
+            }]
+        },
+        options: {
+            scales: {
+                r: {
+                    angleLines: { color: '#1E293B' },
+                    grid: { color: '#1E293B' },
+                    pointLabels: { color: '#E4E4E7' },
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
 }
 </script>
 
