@@ -3,74 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RE:LIFE | 全量基准建模</title>
+    <title>RE:LIFE | 因果重塑终端</title>
     <style>
-        :root { --bg: #030508; --card: #0A0F16; --text: #E4E4E7; --primary: #3B82F6; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .panel { width: 100%; max-width: 700px; background: var(--card); border: 1px solid #1E293B; border-radius: 20px; padding: 30px; }
-        h2 { border-left: 4px solid var(--primary); padding-left: 15px; font-weight: 300; }
-        .input-group { margin-bottom: 25px; }
-        label { font-size: 12px; color: #71717A; display: block; margin-bottom: 8px; }
-        input, textarea, select { width: 100%; background: #111827; border: 1px solid #1E293B; border-radius: 8px; color: #fff; padding: 12px; outline: none; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; background: var(--primary); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; margin-top: 10px; }
-        #result { margin-top: 30px; padding: 20px; border: 1px dashed #333; display: none; line-height: 1.8; color: #AAA; }
+        :root { --bg: #030508; --card: #0A0F16; --text: #E4E4E7; --primary: #3B82F6; --warning: #F59E0B; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .panel { width: 100%; max-width: 600px; background: var(--card); border: 1px solid #1E293B; border-radius: 24px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        h2 { font-weight: 200; border-left: 4px solid var(--primary); padding-left: 15px; margin-bottom: 25px; }
+        .field { margin-bottom: 20px; }
+        label { font-size: 11px; color: #71717A; text-transform: uppercase; letter-spacing: 1px; }
+        input, select, textarea { width: 100%; background: #111827; border: 1px solid #1E293B; border-radius: 10px; color: #fff; padding: 12px; margin-top: 8px; outline: none; box-sizing: border-box; }
+        .btn { width: 100%; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn:disabled { background: #1E293B; cursor: not-allowed; }
+        #output { margin-top: 30px; padding: 20px; border: 1px dashed #333; border-radius: 12px; display: none; line-height: 1.6; font-size: 14px; background: rgba(255,255,255,0.01); }
     </style>
 </head>
 <body>
     <div class="panel">
         <h2>全量基准建模</h2>
-        
-        <div class="input-group">
-            <label>个人性格 (例: Leon - 傲慢，自尊心强，坐标上海)</label>
-            <input type="text" id="traits" placeholder="请输入性格关键词及坐标...">
+        <div class="field">
+            <label>个人代号与现状 (例: Leon - 性格傲慢，上海离职)</label>
+            <input type="text" id="status" placeholder="姓名、当前处境、核心性格...">
         </div>
-
-        <div class="input-group">
-            <label>过往经历描述 (愈详细推理愈准确)</label>
-            <textarea id="history" rows="4" placeholder="请输入详细的生活细节、颜值、家庭背景等..."></textarea>
+        <div class="field">
+            <label>历史细节描述 (愈详细推理愈准确)</label>
+            <textarea id="history" rows="4" placeholder="输入当年的生活细节、颜值、家庭背景、遗憾发生的瞬间..."></textarea>
         </div>
-
-        <div class="input-group">
-            <label>P4: 回溯精确点 & 期望改变</label>
-            <input type="text" id="time_point" placeholder="回溯的时间点...">
-            <textarea id="change" rows="2" placeholder="你打算做出怎样的具体改变？" style="margin-top:10px;"></textarea>
+        <div class="field">
+            <label>P4: 回溯精确点行为干预</label>
+            <textarea id="intervention" rows="2" placeholder="如果你带着现在的思维回到那一刻，你具体会怎么做？"></textarea>
         </div>
-
-        <div class="input-group">
+        <div class="field">
             <label>P5: 特殊能力注入 (可选)</label>
-            <select id="p5">
-                <option value="none">无特殊能力 (纯净模式)</option>
-                <option value="vision">预知未来</option>
-                <option value="power">绝对掌控</option>
+            <select id="ability">
+                <option value="无能力">无特殊能力 (逻辑纯净模式)</option>
+                <option value="预知未来">预知未来 (Vision)</option>
+                <option value="绝对掌控">绝对掌控 (Power)</option>
             </select>
         </div>
-
-        <button class="btn" onclick="simulate()">提交因果计算</button>
-
-        <div id="result">计算中...</div>
+        <button class="btn" id="subBtn" onclick="runSim()">提交因果计算</button>
+        <div id="output"></div>
     </div>
 
     <script>
-        async function simulate() {
-            const resBox = document.getElementById('result');
-            resBox.style.display = 'block';
-            resBox.innerHTML = "正在联络 OpenAI 边缘节点，分析因果坍缩率...";
+        async function runSim() {
+            const btn = document.getElementById('subBtn');
+            const out = document.getElementById('output');
+            btn.disabled = true;
+            out.style.display = 'block';
+            out.innerHTML = "正在联络逻辑引擎，模拟平行时空演化...";
 
             try {
-                const response = await fetch('/api/simulate', {
+                const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        traits: document.getElementById('traits').value,
-                        history: document.getElementById('history').value,
-                        change: document.getElementById('change').value,
-                        p5: document.getElementById('p5').value
+                        name: document.getElementById('status').value.split('-')[0],
+                        current_status: document.getElementById('status').value,
+                        history_context: document.getElementById('history').value,
+                        user_intervention: document.getElementById('intervention').value,
+                        ability: document.getElementById('ability').value
                     })
                 });
+
                 const data = await response.json();
-                resBox.innerHTML = "<strong>推演结论：</strong><br>" + data.result;
+                out.innerHTML = `<strong>判定报告：</strong><br><br>${data.result || data.error}`;
             } catch (e) {
-                resBox.innerHTML = "因果链路中断。请确保 Vercel 环境变量 OPENAI_API_KEY 已配置。";
+                out.innerHTML = "因果链路中断。请检查 Vercel 环境变量配置。";
+            } finally {
+                btn.disabled = false;
             }
         }
     </script>
