@@ -17,12 +17,40 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "system",
-            content:
-              "你是一个名为 RE:LIFE 的因果推演系统。风格：极度理性、冷幽默、拒绝鸡汤。根据受访者的性格缺陷和干预行为，判定其回溯后的成败。"
+            content: `
+你是 RE:LIFE 的因果推演引擎。请输出严格 JSON，不要任何解释。
+
+结构如下：
+{
+  "verdict_text": "终局判词（冷幽默、理性、残酷）",
+  "scores": {
+    "logic": 0-100,
+    "character": 0-100,
+    "emotion": 0-100,
+    "resource": 0-100,
+    "feasibility": 0-100
+  },
+  "compare": {
+    "expected": 0-100,
+    "reality": 0-100
+  },
+  "gravity": 0-100
+}
+
+gravity 越高表示“真实度冲突越强”，请根据用户性格、资源、行为逻辑判断。
+`
           },
           {
             role: "user",
-            content: `受访者：${name}。现状：${current_status}。历史细节：${history_context}。干预决策：${user_intervention}。注入能力：${ability}。请给出：成败判定、因果真实度评估、深度理性批判。`
+            content: `
+受访者：${name}
+现状：${current_status}
+历史细节：${history_context}
+干预决策：${user_intervention}
+特殊能力：${ability}
+
+请生成结构化终局判定。
+`
           }
         ]
       })
@@ -31,7 +59,10 @@ export default async function handler(req, res) {
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
 
-    res.status(200).json({ result: data.choices[0].message.content });
+    const parsed = JSON.parse(data.choices[0].message.content);
+
+    res.status(200).json(parsed);
+
   } catch (error) {
     res.status(500).json({ error: "API 调用失败: " + error.message });
   }
