@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RE:LIFE | 全量基准建模</title>
+    <style>
+        :root { --bg: #030508; --card: #0A0F16; --text: #E4E4E7; --primary: #3B82F6; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
+        .panel { width: 100%; max-width: 700px; background: var(--card); border: 1px solid #1E293B; border-radius: 20px; padding: 30px; }
+        h2 { border-left: 4px solid var(--primary); padding-left: 15px; font-weight: 300; }
+        .input-group { margin-bottom: 25px; }
+        label { font-size: 12px; color: #71717A; display: block; margin-bottom: 8px; }
+        input, textarea, select { width: 100%; background: #111827; border: 1px solid #1E293B; border-radius: 8px; color: #fff; padding: 12px; outline: none; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; background: var(--primary); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; margin-top: 10px; }
+        #result { margin-top: 30px; padding: 20px; border: 1px dashed #333; display: none; line-height: 1.8; color: #AAA; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h2>全量基准建模</h2>
+        
+        <div class="input-group">
+            <label>个人性格 (例: Leon - 傲慢，自尊心强，坐标上海)</label>
+            <input type="text" id="traits" placeholder="请输入性格关键词及坐标...">
+        </div>
+
+        <div class="input-group">
+            <label>过往经历描述 (愈详细推理愈准确)</label>
+            <textarea id="history" rows="4" placeholder="请输入详细的生活细节、颜值、家庭背景等..."></textarea>
+        </div>
+
+        <div class="input-group">
+            <label>P4: 回溯精确点 & 期望改变</label>
+            <input type="text" id="time_point" placeholder="回溯的时间点...">
+            <textarea id="change" rows="2" placeholder="你打算做出怎样的具体改变？" style="margin-top:10px;"></textarea>
+        </div>
+
+        <div class="input-group">
+            <label>P5: 特殊能力注入 (可选)</label>
+            <select id="p5">
+                <option value="none">无特殊能力 (纯净模式)</option>
+                <option value="vision">预知未来</option>
+                <option value="power">绝对掌控</option>
+            </select>
+        </div>
+
+        <button class="btn" onclick="simulate()">提交因果计算</button>
+
+        <div id="result">计算中...</div>
+    </div>
+
+    <script>
+        async function simulate() {
+            const resBox = document.getElementById('result');
+            resBox.style.display = 'block';
+            resBox.innerHTML = "正在联络 OpenAI 边缘节点，分析因果坍缩率...";
+
+            try {
+                const response = await fetch('/api/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        traits: document.getElementById('traits').value,
+                        history: document.getElementById('history').value,
+                        change: document.getElementById('change').value,
+                        p5: document.getElementById('p5').value
+                    })
+                });
+                const data = await response.json();
+                resBox.innerHTML = "<strong>推演结论：</strong><br>" + data.result;
+            } catch (e) {
+                resBox.innerHTML = "因果链路中断。请确保 Vercel 环境变量 OPENAI_API_KEY 已配置。";
+            }
+        }
+    </script>
+</body>
+</html>
